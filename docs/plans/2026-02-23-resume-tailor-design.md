@@ -184,20 +184,46 @@ User:
 
 ## HTML Scraping
 
-Same approach as web-annotator (`/api/snapshot/route.ts`):
-- `fetch()` with User-Agent header
-- `linkedom` to parse HTML into DOM
-- `@mozilla/readability` to extract article content
-- Fallback: user pastes raw text if scraping fails
+Two-tier approach — Jina Reader as primary, Readability as fallback:
 
-Separate research pending on whether to build a reusable scraping microservice.
+```typescript
+async function scrapeForAI(url: string): Promise<string> {
+  // Primary: Jina Reader (handles JS, returns clean markdown)
+  try {
+    const res = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { 'Accept': 'text/markdown' },
+    });
+    if (res.ok) return await res.text();
+  } catch (e) {
+    console.warn('Jina Reader failed, falling back to Readability', e);
+  }
+
+  // Fallback: linkedom + Readability (static pages only)
+  const html = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 ...' },
+  }).then(r => r.text());
+  const { parseHTML } = await import('linkedom');
+  const { Readability } = await import('@mozilla/readability');
+  const { document } = parseHTML(html);
+  const article = new Readability(document).parse();
+  return article?.textContent ?? '';
+}
+```
+
+- **Jina Reader**: Free 10M tokens, handles JS-rendered pages, returns LLM-optimized markdown
+- **Readability fallback**: Same as web-annotator, for offline/rate-limited cases
+- **Manual paste**: Always available as last resort
+
+Research note: Firecrawl (YC S24) is the leading tool in this space but at $16-83/mo
+is overkill for current needs. Revisit if anti-bot bypass or site-wide crawling is needed.
+Consider building a reusable scraping CF Worker only if 5+ projects need this.
 
 ## Key Dependencies
 
 - `next` — framework
 - `ai` + `@ai-sdk/openai` — Vercel AI SDK
 - `@libsql/client` — Turso driver
-- `@mozilla/readability` + `linkedom` — HTML scraping
+- `@mozilla/readability` + `linkedom` — HTML scraping fallback
 - `@codemirror/lang-latex` — editor
 - `monaco-editor` — diff view
 - WASM LaTeX engine (SwiftLaTeX or texlive.js) — client-side compilation
