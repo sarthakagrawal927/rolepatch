@@ -7,6 +7,7 @@ import { basicSetup } from 'codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { updateResume } from '@/lib/actions/resume-actions';
 import { compileTypst } from '@/lib/typst-compiler';
+import { convertLatexToTypst } from '@/lib/actions/convert-action';
 
 interface Props {
   resumeId: string;
@@ -19,6 +20,7 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
   const [saving, setSaving] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [compileError, setCompileError] = useState<string | null>(null);
+  const [converting, setConverting] = useState(false);
 
   const save = useCallback(async () => {
     if (!viewRef.current) return;
@@ -36,6 +38,26 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
     }
     setSaving(false);
   }, [resumeId, pdfUrl]);
+
+  const convertFromLatex = useCallback(async () => {
+    if (!viewRef.current) return;
+    const source = viewRef.current.state.doc.toString();
+    if (!source.includes('\\begin{') && !source.includes('\\documentclass')) {
+      setCompileError('Content does not appear to be LaTeX');
+      return;
+    }
+    setConverting(true);
+    setCompileError(null);
+    try {
+      const typstSource = await convertLatexToTypst(source);
+      viewRef.current.dispatch({
+        changes: { from: 0, to: viewRef.current.state.doc.length, insert: typstSource },
+      });
+    } catch (err) {
+      setCompileError(err instanceof Error ? err.message : 'Conversion failed');
+    }
+    setConverting(false);
+  }, []);
 
   useEffect(() => {
     if (!editorContainerRef.current || viewRef.current) return;
@@ -79,14 +101,23 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
     <>
       <div className="w-1/2 flex flex-col overflow-hidden border-r">
         <div className="flex items-center justify-between px-3 py-1.5 border-b bg-gray-50">
-          <span className="text-xs text-gray-500">{saving ? 'Saving...' : 'Typst'}</span>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            Compile
-          </button>
+          <span className="text-xs text-gray-500">{saving ? 'Saving...' : converting ? 'Converting...' : 'Typst'}</span>
+          <div className="flex gap-1.5">
+            <button
+              onClick={convertFromLatex}
+              disabled={saving || converting}
+              className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+            >
+              Convert from LaTeX
+            </button>
+            <button
+              onClick={save}
+              disabled={saving || converting}
+              className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Compile
+            </button>
+          </div>
         </div>
         <div ref={editorContainerRef} className="flex-1 overflow-hidden" />
       </div>
