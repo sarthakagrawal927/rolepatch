@@ -31,32 +31,26 @@ export async function convertLatexToTypst(latexSource: string): Promise<string> 
   s = s.replace(/\\end\{enumerate\}/g, '');
 
   // \resumeSubheading{title}{date}{subtitle}{location}
-  s = s.replace(
-    /\\resumeSubheading\s*\{([^}]*)\}\s*\{([^}]*)\}\s*\{([^}]*)\}\s*\{([^}]*)\}/g,
-    (_m, title, date, subtitle, location) => {
-      let out = `#grid(columns: (1fr, auto), text(weight: "bold")[${title}], [${date}])\n`;
-      if (subtitle || location) {
-        out += `#grid(columns: (1fr, auto), text(style: "italic", size: 9pt)[${subtitle}], text(style: "italic", size: 9pt)[${location}])\n`;
-      }
-      return out;
+  s = replaceMultiArgCommand(s, 'resumeSubheading', 4, (args) => {
+    const [title, date, subtitle, location] = args;
+    let out = `#grid(columns: (1fr, auto), text(weight: "bold")[${title}], [${date}])\n`;
+    if (subtitle || location) {
+      out += `#grid(columns: (1fr, auto), text(style: "italic", size: 9pt)[${subtitle}], text(style: "italic", size: 9pt)[${location}])\n`;
     }
-  );
+    return out;
+  });
 
   // \resumeProjectHeading{title}{date}
-  s = s.replace(
-    /\\resumeProjectHeading\s*\{([^}]*)\}\s*\{([^}]*)\}/g,
-    (_m, title, date) => `#grid(columns: (1fr, auto), [${title}], [${date}])\n`
-  );
+  s = replaceMultiArgCommand(s, 'resumeProjectHeading', 2, (args) => {
+    const [title, date] = args;
+    return `#grid(columns: (1fr, auto), [${title}], [${date}])\n`;
+  });
 
   // \resumeItem{text} → - text
-  s = s.replace(/\\resumeItem\{/g, '- ');
-  // Close the trailing } from resumeItem — match the next } that closes it
-  // This is tricky with nested braces; do a simple pass
-  s = fixUnclosedResumeItems(s);
+  s = replaceCommand(s, 'resumeItem', (content) => `- ${content}`);
 
   // \resumeSubItem{text} → - text
-  s = s.replace(/\\resumeSubItem\{/g, '- ');
-  s = fixUnclosedResumeItems(s);
+  s = replaceCommand(s, 'resumeSubItem', (content) => `- ${content}`);
 
   // \item text → - text
   s = s.replace(/\\item\s*/g, '- ');
@@ -179,9 +173,35 @@ function findClosingBrace(s: string, start: number): number {
   return -1;
 }
 
-/** After converting \resumeItem{ to "- ", close the dangling } */
-function fixUnclosedResumeItems(s: string): string {
-  // Each "- " line that came from resumeItem has a trailing } to remove
-  // Simple heuristic: on lines starting with "- ", remove trailing }
-  return s.replace(/^(- .+)\}\s*$/gm, '$1');
+/** Replace \cmd{arg1}{arg2}...{argN} handling nested braces */
+function replaceMultiArgCommand(s: string, cmd: string, argCount: number, fn: (args: string[]) => string): string {
+  const pattern = new RegExp(`\\\\${cmd}\\s*\\{`, 'g');
+  let match;
+  while ((match = pattern.exec(s)) !== null) {
+    const start = match.index;
+    let pos = start + match[0].length;
+    const args: string[] = [];
+    let ok = true;
+    // Parse first arg (we're already past the opening brace)
+    const end0 = findClosingBrace(s, pos);
+    if (end0 === -1) { ok = false; break; }
+    args.push(s.slice(pos, end0));
+    pos = end0 + 1;
+    // Parse remaining args
+    for (let i = 1; i < argCount; i++) {
+      // Skip whitespace between args
+      const nextBrace = s.indexOf('{', pos);
+      if (nextBrace === -1 || s.slice(pos, nextBrace).trim() !== '') { ok = false; break; }
+      pos = nextBrace + 1;
+      const end = findClosingBrace(s, pos);
+      if (end === -1) { ok = false; break; }
+      args.push(s.slice(pos, end));
+      pos = end + 1;
+    }
+    if (!ok) break;
+    const replacement = fn(args);
+    s = s.slice(0, start) + replacement + s.slice(pos);
+    pattern.lastIndex = start + replacement.length;
+  }
+  return s;
 }
