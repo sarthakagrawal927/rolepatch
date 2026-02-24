@@ -21,6 +21,7 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [compileError, setCompileError] = useState<string | null>(null);
   const [converting, setConverting] = useState(false);
+  const pdfUrlRef = useRef<string | null>(null);
 
   const save = useCallback(async () => {
     if (!viewRef.current) return;
@@ -30,14 +31,18 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
     await updateResume(resumeId, source);
     try {
       const url = await compileTypst(source);
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
+      pdfUrlRef.current = url;
       setPdfUrl(url);
     } catch (err) {
       console.error('Compilation failed:', err);
       setCompileError(err instanceof Error ? err.message : 'Compilation failed');
     }
     setSaving(false);
-  }, [resumeId, pdfUrl]);
+  }, [resumeId]);
+
+  const saveRef = useRef(save);
+  saveRef.current = save;
 
   const convertFromLatex = useCallback(async () => {
     if (!viewRef.current) return;
@@ -67,7 +72,7 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
         key: 'Mod-s',
         preventDefault: true,
         run: () => {
-          save();
+          saveRef.current();
           return true;
         },
       },
@@ -95,7 +100,7 @@ export function LatexEditor({ resumeId, initialSource }: Props) {
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [initialSource, save]);
+  }, [initialSource]);
 
   return (
     <>
