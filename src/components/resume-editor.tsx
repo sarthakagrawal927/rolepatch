@@ -30,7 +30,46 @@ const FONT_OPTIONS = [
 
 const STORAGE_KEY = 'resume-tailor-config';
 // Content area per page: 11in page - 0.5in top padding - 0.5in bottom padding
-const PAGE_CONTENT_HEIGHT_IN = 10;
+const PAGE_CONTENT_PX = 10 * 96; // 960px
+
+/** Walk the measurement div and find smart page break offsets (in px).
+ *  Avoids orphaning headings at the bottom of a page. */
+function calculateBreakPoints(el: HTMLElement): number[] {
+  const total = el.scrollHeight;
+  if (total <= PAGE_CONTENT_PX) return [0];
+
+  // Collect positions of h2/h3 headings — never break right before these
+  const headings = el.querySelectorAll('h2, h3');
+  const avoidBreakAfter: { top: number; safeTop: number }[] = [];
+  for (const h of headings) {
+    const hEl = h as HTMLElement;
+    const top = hEl.offsetTop;
+    // Keep heading + at least its next sibling together
+    const next = hEl.nextElementSibling as HTMLElement | null;
+    const bottom = next
+      ? next.offsetTop + Math.min(next.offsetHeight, 60)
+      : top + hEl.offsetHeight;
+    avoidBreakAfter.push({ top, safeTop: bottom });
+  }
+
+  const breaks: number[] = [0];
+  let idealBreak = PAGE_CONTENT_PX;
+
+  while (idealBreak < total) {
+    let adjusted = idealBreak;
+    // If the break falls inside a heading zone, move it before the heading
+    for (const zone of avoidBreakAfter) {
+      if (idealBreak > zone.top && idealBreak < zone.safeTop) {
+        adjusted = zone.top;
+        break;
+      }
+    }
+    breaks.push(adjusted);
+    idealBreak = adjusted + PAGE_CONTENT_PX;
+  }
+
+  return breaks;
+}
 
 function loadConfig() {
   if (typeof window === 'undefined') return null;
@@ -51,7 +90,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   const [saving, setSaving] = useState(false);
   const [source, setSource] = useState(initialSource);
   const [showConfig, setShowConfig] = useState(false);
-  const [pageCount, setPageCount] = useState(1);
+  const [breakPoints, setBreakPoints] = useState<number[]>([0]);
   const configRef = useRef<HTMLDivElement>(null);
 
   const [fontSize, setFontSize] = useState(10.5);
@@ -78,18 +117,17 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     saveConfig({ fontSize, lineHeight, fontFamily, margin });
   }, [fontSize, lineHeight, fontFamily, margin]);
 
-  // Track page count via ResizeObserver on the measurement div
+  // Track page breaks via ResizeObserver on the measurement div
   useEffect(() => {
     const el = measureRef.current;
     if (!el) return;
     const update = () => {
-      const contentHeightPx = el.scrollHeight;
-      const pageContentPx = PAGE_CONTENT_HEIGHT_IN * 96;
-      setPageCount(Math.max(1, Math.ceil(contentHeightPx / pageContentPx)));
+      setBreakPoints(calculateBreakPoints(el));
     };
     const observer = new ResizeObserver(update);
     observer.observe(el);
-    update();
+    // Small delay to let fonts/layout settle
+    requestAnimationFrame(update);
     return () => observer.disconnect();
   }, []);
 
@@ -189,8 +227,8 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
           </Link>
           <span className="text-sm font-medium text-gray-700 truncate">{resumeName}</span>
 
-          <span className={`text-xs tabular-nums ${pageCount > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
-            {pageCount === 1 ? '1 page' : `${pageCount} pages`}
+          <span className={`text-xs tabular-nums ${breakPoints.length > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+            {breakPoints.length === 1 ? '1 page' : `${breakPoints.length} pages`}
           </span>
 
           <span className="text-xs text-gray-400">
@@ -285,10 +323,10 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
         </div>
 
         {/* Visible page cards */}
-        {Array.from({ length: pageCount }, (_, i) => (
+        {breakPoints.map((offsetPx, i) => (
           <div key={i} className="resume-page" style={cssVars}>
             <div className="resume-page-clip">
-              <div style={i > 0 ? { marginTop: `${-i * PAGE_CONTENT_HEIGHT_IN}in` } : undefined}>
+              <div style={offsetPx > 0 ? { marginTop: `-${offsetPx}px` } : undefined}>
                 <Markdown>{source}</Markdown>
               </div>
             </div>
