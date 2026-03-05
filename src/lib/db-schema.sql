@@ -38,3 +38,12 @@ CREATE TABLE IF NOT EXISTS cover_letters (
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
+
+CREATE TABLE IF NOT EXISTS stash_entries (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL DEFAULT 'experience',
+  label TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);

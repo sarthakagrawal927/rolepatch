@@ -44,3 +44,12 @@ export interface AIProviderConfig {
   apiKey: string;
   model: string;
 }
+
+export interface StashEntry {
+  id: string;
+  category: string;
+  label: string;
+  content: string;
+  created_at: number;
+  updated_at: number;
+}
