@@ -1,32 +1,76 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import type { JobApplication, Resume, TailoredResume } from '@/lib/types';
 import { tailorResume } from '@/lib/actions/tailor-action';
 import { saveTailoredResume } from '@/lib/actions/job-actions';
 import { ResumeDiff } from '@/components/resume-diff';
+import { useAuth } from '@/components/auth-provider';
+import {
+  localGetResume,
+  localGetTailoredResumes,
+  localSaveTailoredResume,
+  localListStashEntries,
+} from '@/lib/local-storage';
 
 interface TailorFlowProps {
   job: JobApplication;
-  resume: Resume;
+  serverResume: Resume | null;
   existingTailored: TailoredResume[];
 }
 
-export function TailorFlow({ job, resume, existingTailored }: TailorFlowProps) {
-  const latestTailored = existingTailored[0] ?? null;
+export function TailorFlow({ job, serverResume, existingTailored }: TailorFlowProps) {
+  const { isGuest } = useAuth();
+  const [resume, setResume] = useState<Resume | null>(serverResume);
+  const [tailoredList, setTailoredList] = useState(existingTailored);
+
+  // For guests, resolve resume and tailored from localStorage
+  useEffect(() => {
+    if (isGuest) {
+      if (!serverResume) {
+        const local = localGetResume(job.resume_id);
+        if (local) setResume(local);
+      }
+      const localTailored = localGetTailoredResumes(job.id);
+      if (localTailored.length > 0) {
+        setTailoredList(localTailored);
+      }
+    }
+  }, [isGuest, serverResume, job.resume_id, job.id]);
+
+  const latestTailored = tailoredList[0] ?? null;
   const [tailoredSource, setTailoredSource] = useState<string | null>(
     latestTailored?.source ?? null,
   );
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Sync tailoredSource when tailoredList updates from localStorage
+  useEffect(() => {
+    const latest = tailoredList[0] ?? null;
+    if (latest?.source && !tailoredSource) {
+      setTailoredSource(latest.source);
+    }
+  }, [tailoredList]);
+
   function handleGenerate() {
+    if (!resume) return;
     setError(null);
     startTransition(async () => {
       try {
         const aiConfig = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
-        const result = await tailorResume(resume.source, job.jd_text, aiConfig);
+        // For guests, pass stash content from localStorage
+        let stashContent: string | undefined;
+        if (isGuest) {
+          const stashEntries = localListStashEntries();
+          if (stashEntries.length > 0) {
+            stashContent = stashEntries
+              .map((e) => `### [${e.category}] ${e.label}\n${e.content}`)
+              .join('\n\n');
+          }
+        }
+        const result = await tailorResume(resume.source, job.jd_text, aiConfig, stashContent);
         setTailoredSource(result);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to generate tailored resume');
@@ -35,14 +79,26 @@ export function TailorFlow({ job, resume, existingTailored }: TailorFlowProps) {
   }
 
   function handleSave() {
-    if (!tailoredSource) return;
+    if (!tailoredSource || !resume) return;
     startTransition(async () => {
       try {
-        await saveTailoredResume(job.id, resume.id, tailoredSource);
+        if (isGuest) {
+          localSaveTailoredResume(job.id, resume.id, tailoredSource);
+        } else {
+          await saveTailoredResume(job.id, resume.id, tailoredSource);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save tailored resume');
       }
     });
+  }
+
+  if (!resume) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-gray-500">
+        Resume not found. It may have been deleted.
+      </div>
+    );
   }
 
   return (

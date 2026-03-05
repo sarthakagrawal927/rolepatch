@@ -3,9 +3,39 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createResume } from '@/lib/actions/resume-actions';
+import { useAuth } from '@/components/auth-provider';
+import { localCreateResume } from '@/lib/local-storage';
+
+const DEFAULT_MARKDOWN_TEMPLATE = `# Your Name
+
+your.email@example.com | (555) 123-4567 | City, ST
+[LinkedIn](https://linkedin.com/in/yourprofile) | [GitHub](https://github.com/yourprofile)
+
+---
+
+## Experience
+
+**Job Title** — _Company Name_ | Start – End
+
+- Accomplishment or responsibility
+- Another accomplishment with measurable impact
+
+## Education
+
+**Degree, Major** — _University Name_ | Graduation Year
+
+Relevant coursework or honors
+
+## Skills
+
+**Languages:** JavaScript, TypeScript, Python
+**Frameworks:** React, Next.js, Node.js
+**Tools:** Git, Docker, AWS
+`;
 
 export function CreateResumeButton() {
   const router = useRouter();
+  const { isGuest } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,7 +66,12 @@ export function CreateResumeButton() {
     if (!trimmed) return;
     setLoading(true);
     try {
-      const id = await createResume(trimmed);
+      let id: string;
+      if (isGuest) {
+        id = localCreateResume(trimmed, DEFAULT_MARKDOWN_TEMPLATE);
+      } else {
+        id = await createResume(trimmed);
+      }
       close();
       router.push(`/editor/${id}`);
     } finally {

@@ -1,17 +1,26 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import type { JobApplication, Resume, CoverLetter } from '@/lib/types';
 import { generateCoverLetter, updateCoverLetter } from '@/lib/actions/cover-letter-action';
+import { useAuth } from '@/components/auth-provider';
+import {
+  localGetResume,
+  localGetCoverLetter,
+  localSaveCoverLetter,
+  localUpdateCoverLetter,
+} from '@/lib/local-storage';
 
 interface CoverLetterEditorProps {
   job: JobApplication;
-  resume: Resume;
+  serverResume: Resume | null;
   existingLetter: CoverLetter | null;
 }
 
-export function CoverLetterEditor({ job, resume, existingLetter }: CoverLetterEditorProps) {
+export function CoverLetterEditor({ job, serverResume, existingLetter }: CoverLetterEditorProps) {
+  const { isGuest } = useAuth();
+  const [resume, setResume] = useState<Resume | null>(serverResume);
   const [content, setContent] = useState(existingLetter?.content ?? '');
   const [letterId, setLetterId] = useState(existingLetter?.id ?? '');
   const [generating, setGenerating] = useState(false);
@@ -20,7 +29,25 @@ export function CoverLetterEditor({ job, resume, existingLetter }: CoverLetterEd
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
+  // Guest: resolve resume and existing cover letter from localStorage
+  useEffect(() => {
+    if (isGuest) {
+      if (!serverResume) {
+        const local = localGetResume(job.resume_id);
+        if (local) setResume(local);
+      }
+      if (!existingLetter) {
+        const localLetter = localGetCoverLetter(job.id);
+        if (localLetter) {
+          setContent(localLetter.content);
+          setLetterId(localLetter.id);
+        }
+      }
+    }
+  }, [isGuest, serverResume, existingLetter, job.resume_id, job.id]);
+
   function handleGenerate() {
+    if (!resume) return;
     setError(null);
     setGenerating(true);
     startTransition(async () => {
@@ -35,9 +62,15 @@ export function CoverLetterEditor({ job, resume, existingLetter }: CoverLetterEd
           aiConfig,
         );
         setContent(result);
-        // The server action saves and returns text; we need the new ID for future saves
-        // Reset letterId so next save works via a regeneration flow
-        setLetterId('');
+        // For guests, also save locally
+        if (isGuest) {
+          const id = localSaveCoverLetter(job.id, resume.id, result, '');
+          setLetterId(id);
+        } else {
+          // The server action saves and returns text; we need the new ID for future saves
+          // Reset letterId so next save works via a regeneration flow
+          setLetterId('');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to generate cover letter');
       } finally {
@@ -52,7 +85,11 @@ export function CoverLetterEditor({ job, resume, existingLetter }: CoverLetterEd
     setSaveMessage(null);
     startTransition(async () => {
       try {
-        await updateCoverLetter(letterId, content);
+        if (isGuest) {
+          localUpdateCoverLetter(letterId, content);
+        } else {
+          await updateCoverLetter(letterId, content);
+        }
         setSaveMessage('Saved!');
         setTimeout(() => setSaveMessage(null), 2000);
       } catch (err) {
@@ -64,6 +101,14 @@ export function CoverLetterEditor({ job, resume, existingLetter }: CoverLetterEd
   }
 
   const isLoading = generating || saving || isPending;
+
+  if (!resume) {
+    return (
+      <div className="flex items-center justify-center py-12 text-gray-500">
+        Resume not found. It may have been deleted.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

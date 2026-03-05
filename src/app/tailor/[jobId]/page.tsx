@@ -12,8 +12,6 @@ export default async function TailorPage({ params }: { params: Promise<{ jobId: 
   if (!job) notFound();
 
   const resume = await getResume(job.resume_id);
-  if (!resume) notFound();
-
   const tailored = await getTailoredResumes(jobId);
 
   return (
@@ -25,7 +23,7 @@ export default async function TailorPage({ params }: { params: Promise<{ jobId: 
         </div>
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">Back</Link>
       </header>
-      <TailorFlow job={job} resume={resume} existingTailored={tailored} />
+      <TailorFlow job={job} serverResume={resume} existingTailored={tailored} />
     </main>
   );
 }

@@ -12,8 +12,6 @@ export default async function CoverLetterPage({ params }: { params: Promise<{ jo
   if (!job) notFound();
 
   const resume = await getResume(job.resume_id);
-  if (!resume) notFound();
-
   const existing = await getCoverLetter(jobId);
 
   return (
@@ -22,7 +20,7 @@ export default async function CoverLetterPage({ params }: { params: Promise<{ jo
         <h1 className="text-2xl font-bold">Cover Letter</h1>
         <p className="text-gray-500">{job.role} at {job.company}</p>
       </header>
-      <CoverLetterEditor job={job} resume={resume} existingLetter={existing} />
+      <CoverLetterEditor job={job} serverResume={resume} existingLetter={existing} />
     </main>
   );
 }

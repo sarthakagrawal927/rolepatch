@@ -1,10 +1,11 @@
-import type { Resume, StashEntry, TailoredResume, CoverLetter } from '@/lib/types';
+import type { Resume, StashEntry, TailoredResume, CoverLetter, JobApplication } from '@/lib/types';
 
 const KEYS = {
   resumes: 'rt-resumes',
   stash: 'rt-stash',
   tailored: 'rt-tailored',
   coverLetters: 'rt-cover-letters',
+  jobs: 'rt-jobs',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -74,6 +75,18 @@ export function localUpdateStashEntry(id: string, category: string, label: strin
 
 export function localDeleteStashEntry(id: string): void {
   setItems(KEYS.stash, getItems<StashEntry>(KEYS.stash).filter(e => e.id !== id));
+}
+
+// --- Job Applications (guest metadata) ---
+export function localListJobs(): Pick<JobApplication, 'id' | 'company' | 'role' | 'status' | 'created_at'>[] {
+  return getItems<any>(KEYS.jobs).sort((a: any, b: any) => b.created_at - a.created_at);
+}
+
+export function localSaveJob(id: string, company: string, role: string, resumeId: string): void {
+  const now = Math.floor(Date.now() / 1000);
+  const jobs = getItems<any>(KEYS.jobs);
+  jobs.push({ id, company, role, resume_id: resumeId, status: 'draft', created_at: now });
+  setItems(KEYS.jobs, jobs);
 }
 
 // --- Tailored Resumes ---

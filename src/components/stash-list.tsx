@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { StashEntry } from '@/lib/types';
 import { createStashEntry, updateStashEntry, deleteStashEntry } from '@/lib/actions/stash-actions';
+import { useAuth } from '@/components/auth-provider';
+import {
+  localListStashEntries,
+  localCreateStashEntry,
+  localUpdateStashEntry,
+  localDeleteStashEntry,
+} from '@/lib/local-storage';
 
 const CATEGORIES = ['experience', 'skills', 'projects', 'education', 'certifications', 'other'];
 
@@ -18,11 +25,19 @@ function stripMarkdown(text: string): string {
 }
 
 interface StashListProps {
-  entries: StashEntry[];
+  serverEntries: StashEntry[];
 }
 
-export function StashList({ entries }: StashListProps) {
+export function StashList({ serverEntries }: StashListProps) {
   const router = useRouter();
+  const { isGuest } = useAuth();
+  const [entries, setEntries] = useState(serverEntries);
+
+  useEffect(() => {
+    if (isGuest) {
+      setEntries(localListStashEntries());
+    }
+  }, [isGuest]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StashEntry | null>(null);
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -71,13 +86,23 @@ export function StashList({ entries }: StashListProps) {
 
     setLoading(true);
     try {
-      if (editing) {
-        await updateStashEntry(editing.id, category, trimmedLabel, trimmedContent);
+      if (isGuest) {
+        if (editing) {
+          localUpdateStashEntry(editing.id, category, trimmedLabel, trimmedContent);
+        } else {
+          localCreateStashEntry(category, trimmedLabel, trimmedContent);
+        }
+        close();
+        setEntries(localListStashEntries());
       } else {
-        await createStashEntry(category, trimmedLabel, trimmedContent);
+        if (editing) {
+          await updateStashEntry(editing.id, category, trimmedLabel, trimmedContent);
+        } else {
+          await createStashEntry(category, trimmedLabel, trimmedContent);
+        }
+        close();
+        router.refresh();
       }
-      close();
-      router.refresh();
     } finally {
       setLoading(false);
     }
@@ -87,9 +112,15 @@ export function StashList({ entries }: StashListProps) {
     if (!editing) return;
     setLoading(true);
     try {
-      await deleteStashEntry(editing.id);
-      close();
-      router.refresh();
+      if (isGuest) {
+        localDeleteStashEntry(editing.id);
+        close();
+        setEntries(localListStashEntries());
+      } else {
+        await deleteStashEntry(editing.id);
+        close();
+        router.refresh();
+      }
     } finally {
       setLoading(false);
     }

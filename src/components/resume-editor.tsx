@@ -9,12 +9,14 @@ import { markdown } from '@codemirror/lang-markdown';
 import Markdown from 'react-markdown';
 import Link from 'next/link';
 import { updateResume } from '@/lib/actions/resume-actions';
+import { useAuth } from '@/components/auth-provider';
+import { localGetResume, localUpdateResume } from '@/lib/local-storage';
 import '@/styles/resume-print.css';
 
 interface Props {
   resumeId: string;
-  initialSource: string;
-  resumeName: string;
+  initialSource: string | null;
+  resumeName: string | null;
 }
 
 const FONT_OPTIONS = [
@@ -117,11 +119,16 @@ function saveConfig(cfg: { fontSize: number; lineHeight: number; fontFamily: str
 }
 
 export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
+  const { isGuest } = useAuth();
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
-  const [source, setSource] = useState(initialSource);
+  const [resolvedName, setResolvedName] = useState(resumeName ?? '');
+
+  // For guests, initialSource may be null — resolve from localStorage
+  const [source, setSource] = useState(initialSource ?? '');
+  const [ready, setReady] = useState(initialSource !== null);
   const [showConfig, setShowConfig] = useState(false);
   const [breakPoints, setBreakPoints] = useState<number[]>([0]);
   const configRef = useRef<HTMLDivElement>(null);
@@ -131,6 +138,18 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   const [fontFamily, setFontFamily] = useState(FONT_OPTIONS[0].value);
   const [margin, setMargin] = useState(0.5);
   const configLoaded = useRef(false);
+
+  // Guest: load resume from localStorage if server returned null
+  useEffect(() => {
+    if (initialSource === null && isGuest) {
+      const local = localGetResume(resumeId);
+      if (local) {
+        setSource(local.source);
+        setResolvedName(local.name);
+        setReady(true);
+      }
+    }
+  }, [initialSource, isGuest, resumeId]);
 
   // Load config from localStorage after hydration
   useEffect(() => {
@@ -180,16 +199,20 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     if (!viewRef.current) return;
     const text = viewRef.current.state.doc.toString();
     setSaving(true);
-    await updateResume(resumeId, text);
+    if (isGuest) {
+      localUpdateResume(resumeId, text);
+    } else {
+      await updateResume(resumeId, text);
+    }
     setSource(text);
     setSaving(false);
-  }, [resumeId]);
+  }, [resumeId, isGuest]);
 
   const saveRef = useRef(save);
   saveRef.current = save;
 
   useEffect(() => {
-    if (!editorContainerRef.current || viewRef.current) return;
+    if (!editorContainerRef.current || viewRef.current || !ready) return;
 
     const saveKeymap = keymap.of([
       {
@@ -209,7 +232,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     });
 
     const state = EditorState.create({
-      doc: initialSource,
+      doc: source,
       extensions: [
         basicSetup,
         oneDark,
@@ -232,7 +255,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [initialSource]);
+  }, [ready]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -244,6 +267,14 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     '--resume-font-family': fontFamily,
     '--resume-margin': `${margin}in`,
   } as React.CSSProperties;
+
+  if (!ready) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-gray-500">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <>
@@ -258,7 +289,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" /></svg>
           </Link>
-          <span className="text-sm font-medium text-gray-700 truncate">{resumeName}</span>
+          <span className="text-sm font-medium text-gray-700 truncate">{resolvedName}</span>
 
           <span className={`text-xs tabular-nums ${breakPoints.length > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
             {breakPoints.length === 1 ? '1 page' : `${breakPoints.length} pages`}

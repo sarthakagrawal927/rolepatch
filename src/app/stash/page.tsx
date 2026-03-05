@@ -14,7 +14,7 @@ export default async function StashPage() {
       <p className="text-gray-500 mb-8">
         Extra content blocks the AI can pull from when tailoring your resume for specific jobs.
       </p>
-      <StashList entries={entries} />
+      <StashList serverEntries={entries} />
     </main>
   );
 }

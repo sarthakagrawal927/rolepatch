@@ -4,13 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { scrapeJobUrl } from '@/lib/actions/scrape-action';
 import { createJobApplication } from '@/lib/actions/job-actions';
+import { useAuth } from '@/components/auth-provider';
+import { localSaveJob, localListResumes } from '@/lib/local-storage';
 
 interface NewJobButtonProps {
   resumes: { id: string; name: string }[];
 }
 
-export function NewJobButton({ resumes }: NewJobButtonProps) {
+export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
   const router = useRouter();
+  const { isGuest } = useAuth();
+  const [resumes, setResumes] = useState(serverResumes);
   const [open, setOpen] = useState(false);
   const [resumeId, setResumeId] = useState('');
   const [url, setUrl] = useState('');
@@ -18,6 +22,14 @@ export function NewJobButton({ resumes }: NewJobButtonProps) {
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // For guests, supplement with localStorage resumes
+  useEffect(() => {
+    if (isGuest) {
+      const localResumes = localListResumes().map(r => ({ id: r.id, name: r.name }));
+      setResumes(localResumes);
+    }
+  }, [isGuest]);
 
   useEffect(() => {
     if (open && inputRef.current) inputRef.current.focus();
@@ -66,6 +78,10 @@ export function NewJobButton({ resumes }: NewJobButtonProps) {
         scraped.html,
         scraped.text,
       );
+      // For guests, also save job metadata in localStorage
+      if (isGuest) {
+        localSaveJob(jobId, scraped.company, scraped.role, resumeId);
+      }
       close();
       router.push(`/tailor/${jobId}`);
     } catch (err) {
