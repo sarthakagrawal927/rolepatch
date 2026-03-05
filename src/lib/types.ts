@@ -1,3 +1,12 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  image: string;
+  created_at: number;
+  updated_at: number;
+}
+
 export interface Resume {
   id: string;
   name: string;

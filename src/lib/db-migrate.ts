@@ -58,6 +58,25 @@ async function migrate() {
     }
   }
 
+  // Add user_id column to all content tables
+  const tablesNeedingUserId = ['resumes', 'job_applications', 'tailored_resumes', 'cover_letters', 'stash_entries'];
+  for (const table of tablesNeedingUserId) {
+    try {
+      await db.execute(`ALTER TABLE ${table} ADD COLUMN user_id TEXT`);
+      console.log(`Added user_id column to ${table}`);
+    } catch {
+      // Column already exists — safe to ignore
+    }
+  }
+
+  // Add unique index for job_applications URL when user_id is NULL
+  try {
+    await db.execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_job_applications_cleaned_url ON job_applications (url) WHERE user_id IS NULL`);
+    console.log('Created idx_job_applications_cleaned_url index');
+  } catch {
+    // Index already exists — safe to ignore
+  }
+
   console.log('Migration complete');
 }
 
