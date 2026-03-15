@@ -83,27 +83,27 @@ export function CreateResumeButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600 transition-colors"
       >
         + New Resume
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={close} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
-            <h2 className="text-lg font-semibold mb-4">New Resume</h2>
+          <div className="absolute inset-0 bg-black/60 modal-backdrop" onClick={close} />
+          <div className="relative bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 modal-content">
+            <h2 className="text-lg font-semibold mb-5">New Resume</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Name</label>
                 <input
                   ref={inputRef}
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Software Engineer Resume"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                  className="input-base"
                 />
               </div>
 
@@ -112,14 +112,14 @@ export function CreateResumeButton() {
                   type="button"
                   onClick={close}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !name.trim()}
-                  className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors"
                 >
                   {loading ? 'Creating...' : 'Create'}
                 </button>

@@ -14,6 +14,15 @@ import {
 
 const CATEGORIES = ['experience', 'skills', 'projects', 'education', 'certifications', 'other'];
 
+const CATEGORY_ICONS: Record<string, string> = {
+  experience: '💼',
+  skills: '⚡',
+  projects: '🔧',
+  education: '🎓',
+  certifications: '📜',
+  other: '📌',
+};
+
 function stripMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -137,28 +146,40 @@ export function StashList({ serverEntries }: StashListProps) {
       <div className="flex justify-end mb-6">
         <button
           onClick={openNew}
-          className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600 transition-colors"
         >
           + Add Entry
         </button>
       </div>
 
       {entries.length === 0 ? (
-        <p className="text-gray-500">No stash entries yet. Add one to get started.</p>
+        <div className="border border-dashed border-gray-700 rounded-xl py-16 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-500">
+              <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-300">No stash entries yet</p>
+          <p className="text-xs text-gray-500 mt-1">Save resume snippets to reuse across applications</p>
+        </div>
       ) : (
         <div className="space-y-8">
           {Object.entries(grouped).map(([cat, items]) => (
             <section key={cat}>
-              <h2 className="text-lg font-semibold mb-4 capitalize">{cat}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-base">{CATEGORY_ICONS[cat] ?? '📌'}</span>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 capitalize">{cat}</h2>
+                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">{items.length}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {items.map((entry) => (
                   <div
                     key={entry.id}
                     onClick={() => openEdit(entry)}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-green-500 dark:hover:border-green-500 transition-colors cursor-pointer"
+                    className="group border border-gray-800 rounded-xl p-4 hover:border-green-500/50 hover:bg-gray-900/50 transition-all cursor-pointer"
                   >
-                    <h3 className="font-semibold text-sm mb-2">{entry.label}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 whitespace-pre-line">
+                    <h3 className="font-medium text-sm text-white group-hover:text-green-400 transition-colors">{entry.label}</h3>
+                    <p className="text-xs text-gray-500 line-clamp-3 whitespace-pre-line mt-2 leading-relaxed">
                       {stripMarkdown(entry.content)}
                     </p>
                   </div>
@@ -171,77 +192,81 @@ export function StashList({ serverEntries }: StashListProps) {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={close} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold mb-4">
-              {editing ? 'Edit Entry' : 'Add Entry'}
+          <div className="absolute inset-0 bg-black/60 modal-backdrop" onClick={close} />
+          <div className="relative bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 modal-content">
+            <h2 className="text-lg font-semibold mb-5">
+              {editing ? 'Edit Entry' : 'New Stash Entry'}
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                  className="input-base"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      {CATEGORY_ICONS[cat]} {cat.charAt(0).toUpperCase() + cat.slice(1)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Label</label>
                 <input
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   placeholder="e.g., ML Engineer at Startup X"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                  className="input-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Content</label>
                 <textarea
                   rows={6}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Markdown content..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                  className="input-base resize-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={close}
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                {editing && (
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  {editing && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={loading}
+                      className="px-3 py-2 text-xs font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      {loading ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={handleDelete}
+                    onClick={close}
                     disabled={loading}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
                   >
-                    {loading ? 'Deleting...' : 'Delete'}
+                    Cancel
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={loading || !label.trim() || !content.trim()}
-                  className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-40 transition-colors"
-                >
-                  {loading ? 'Saving...' : 'Save'}
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={loading || !label.trim() || !content.trim()}
+                    className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors"
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

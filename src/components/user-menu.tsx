@@ -43,7 +43,7 @@ export function UserMenu() {
     return (
       <button
         onClick={() => signIn('google')}
-        className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+        className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white text-gray-900 hover:bg-gray-200 transition-colors"
       >
         Sign in
       </button>
@@ -56,23 +56,23 @@ export function UserMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-2">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
         {image ? (
-          <Image src={image} alt="" width={28} height={28} className="rounded-full" />
+          <Image src={image} alt="" width={28} height={28} className="rounded-full ring-2 ring-gray-700" />
         ) : (
-          <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-medium">
+          <div className="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-medium ring-2 ring-gray-700">
             {name[0] ?? '?'}
           </div>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50">
-          <div className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 truncate">
+        <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-lg shadow-xl py-1 z-50 modal-content">
+          <div className="px-3 py-2 text-sm text-gray-300 border-b border-gray-800 truncate">
             {email}
           </div>
           <button
             onClick={() => signOut()}
-            className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
           >
             Sign out
           </button>

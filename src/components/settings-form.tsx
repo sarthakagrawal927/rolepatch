@@ -45,56 +45,80 @@ export function SettingsForm() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium mb-1">Base URL</label>
-        <input
-          type="text"
-          value={settings.baseURL}
-          onChange={(e) => {
-            setSettings((prev) => ({ ...prev, baseURL: e.target.value }));
-            setSaved(false);
-          }}
-          placeholder="https://api.openai.com/v1"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-        />
-        <p className="text-xs text-gray-500 mt-1">Any OpenAI-compatible API endpoint</p>
+    <div className="space-y-1">
+      {/* Provider config card */}
+      <div className="border border-gray-800 rounded-xl p-6 space-y-5 bg-gray-900/30">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-green-500">
+              <path d="M8 1L2 4v4c0 3.3 2.6 6.4 6 7 3.4-.6 6-3.7 6-7V4L8 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M6 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">AI Provider</h2>
+            <p className="text-xs text-gray-500">Any OpenAI-compatible endpoint</p>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Base URL</label>
+          <input
+            type="text"
+            value={settings.baseURL}
+            onChange={(e) => {
+              setSettings((prev) => ({ ...prev, baseURL: e.target.value }));
+              setSaved(false);
+            }}
+            placeholder="https://api.openai.com/v1"
+            className="input-base"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">API Key</label>
+          <input
+            type="password"
+            value={settings.apiKey}
+            onChange={(e) => {
+              setSettings((prev) => ({ ...prev, apiKey: e.target.value }));
+              setSaved(false);
+            }}
+            placeholder="sk-..."
+            className="input-base"
+          />
+          <p className="text-xs text-gray-600 mt-1.5">Leave empty to use the free gateway</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Model</label>
+          <input
+            type="text"
+            value={settings.model}
+            onChange={(e) => {
+              setSettings((prev) => ({ ...prev, model: e.target.value }));
+              setSaved(false);
+            }}
+            placeholder="auto"
+            className="input-base"
+          />
+          <p className="text-xs text-gray-600 mt-1.5">&quot;auto&quot; lets the gateway pick the best available model</p>
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">API Key</label>
-        <input
-          type="password"
-          value={settings.apiKey}
-          onChange={(e) => {
-            setSettings((prev) => ({ ...prev, apiKey: e.target.value }));
-            setSaved(false);
-          }}
-          placeholder="sk-..."
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-        />
+      {/* Save button */}
+      <div className="flex justify-end pt-4">
+        <button
+          onClick={handleSave}
+          className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all ${
+            saved
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+              : 'bg-white text-gray-900 hover:bg-gray-200'
+          }`}
+        >
+          {saved ? 'Saved' : 'Save Settings'}
+        </button>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Model</label>
-        <input
-          type="text"
-          value={settings.model}
-          onChange={(e) => {
-            setSettings((prev) => ({ ...prev, model: e.target.value }));
-            setSaved(false);
-          }}
-          placeholder="auto"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-        />
-      </div>
-
-      <button
-        onClick={handleSave}
-        className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 text-sm font-medium transition-colors"
-      >
-        {saved ? 'Saved!' : 'Save Settings'}
-      </button>
     </div>
   );
 }

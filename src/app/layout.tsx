@@ -25,6 +25,12 @@ export const metadata: Metadata = {
   description: "Tailor your resume to job descriptions with AI",
 };
 
+const NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/stash", label: "Stash" },
+  { href: "/settings", label: "Settings" },
+];
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -36,7 +42,7 @@ export default async function RootLayout({
   const isLanding = pathname === "/";
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -44,29 +50,28 @@ export default async function RootLayout({
         <SaaSMakerFeedback />
         <AuthProvider session={session}>
           {!isLanding && (
-            <nav className="border-b border-gray-200 dark:border-gray-800">
-              <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-6">
-                <Link href="/" className="font-semibold">
+            <nav className="sticky top-0 z-40 border-b border-gray-800/80 bg-[#0a0a0a]/80 backdrop-blur-xl">
+              <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-1">
+                <Link href="/" className="font-semibold text-white mr-6 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-md bg-green-500 flex items-center justify-center text-[10px] font-bold text-white">R</span>
                   Resume Tailor
                 </Link>
-                <Link
-                  href="/dashboard"
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/settings"
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                >
-                  Settings
-                </Link>
-                <Link
-                  href="/stash"
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                >
-                  Stash
-                </Link>
+                {NAV_LINKS.map((link) => {
+                  const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        isActive
+                          ? "bg-gray-800 text-white font-medium"
+                          : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
                 <div className="ml-auto">
                   <UserMenu />
                 </div>

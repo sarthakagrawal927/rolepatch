@@ -95,31 +95,31 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
     <>
       <button
         onClick={handleOpen}
-        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600 transition-colors"
       >
         + Add Job
       </button>
 
       {toast && (
-        <div className="fixed bottom-4 right-4 z-50 bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 right-4 z-50 bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-2 rounded-lg shadow-lg">
           {toast}
         </div>
       )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={close} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold mb-4">Add Job Application</h2>
+          <div className="absolute inset-0 bg-black/60 modal-backdrop" onClick={close} />
+          <div className="relative bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 modal-content">
+            <h2 className="text-lg font-semibold mb-5">Add Job Application</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {resumes.length > 1 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resume</label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Resume</label>
                   <select
                     value={resumeId}
                     onChange={(e) => setResumeId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                    className="input-base"
                   >
                     {resumes.map((r) => (
                       <option key={r.id} value={r.id}>{r.name}</option>
@@ -129,32 +129,34 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job URL</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Job URL</label>
                 <input
                   ref={inputRef}
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://boards.greenhouse.io/..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                  className="input-base"
                 />
               </div>
 
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+              {error && (
+                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</div>
+              )}
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={close}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !url.trim()}
-                  className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors"
                 >
                   {loading ? 'Scraping...' : 'Add Job'}
                 </button>

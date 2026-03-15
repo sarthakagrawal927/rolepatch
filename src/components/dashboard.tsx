@@ -15,12 +15,12 @@ const STATUS_OPTIONS: JobApplication['status'][] = [
 ];
 
 const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string; border: string }> = {
-  draft: { label: 'Draft', dot: 'bg-gray-400', bg: 'bg-gray-500/10', text: 'text-gray-500 dark:text-gray-400', border: 'border-gray-200 dark:border-gray-800' },
-  tailored: { label: 'Tailored', dot: 'bg-blue-400', bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
-  applied: { label: 'Applied', dot: 'bg-amber-400', bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-  interview: { label: 'Interview', dot: 'bg-purple-400', bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
-  offer: { label: 'Offer', dot: 'bg-emerald-400', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
-  rejected: { label: 'Rejected', dot: 'bg-red-400', bg: 'bg-red-500/10', text: 'text-red-500 dark:text-red-400', border: 'border-red-200 dark:border-red-800' },
+  draft: { label: 'Draft', dot: 'bg-gray-400', bg: 'bg-gray-500/10', text: 'text-gray-400', border: 'border-gray-800' },
+  tailored: { label: 'Tailored', dot: 'bg-blue-400', bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-800' },
+  applied: { label: 'Applied', dot: 'bg-amber-400', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-800' },
+  interview: { label: 'Interview', dot: 'bg-purple-400', bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-800' },
+  offer: { label: 'Offer', dot: 'bg-emerald-400', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-800' },
+  rejected: { label: 'Rejected', dot: 'bg-red-400', bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-800' },
 };
 
 interface DashboardProps {
