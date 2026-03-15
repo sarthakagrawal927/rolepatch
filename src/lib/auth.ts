@@ -26,6 +26,20 @@ export const authOptions: NextAuthOptions = {
           user.image ?? '',
         ],
       });
+
+      // Initialize token balance for new users (3 free tokens)
+      const result = await db.execute({
+        sql: 'SELECT id FROM users WHERE email = ?',
+        args: [user.email],
+      });
+      const userId = result.rows[0]?.id as string;
+      if (userId) {
+        await db.execute({
+          sql: `INSERT OR IGNORE INTO token_balances (user_id, balance, total_purchased, total_used) VALUES (?, 3, 0, 0)`,
+          args: [userId],
+        });
+      }
+
       return true;
     },
     async jwt({ token, user }) {
