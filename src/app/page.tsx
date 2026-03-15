@@ -500,15 +500,17 @@ export default function LandingPage() {
       <footer className="border-t border-gray-800/50 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded bg-green-500 flex items-center justify-center text-[8px] font-bold text-white">R</span>
+            <span className="w-5 h-5 rounded bg-green-500 flex items-center justify-center text-[7px] font-bold text-white">RP</span>
             <span className="font-semibold text-gray-300">RolePatch</span>
           </div>
           <span>{"\u00a9"} {new Date().getFullYear()} RolePatch</span>
           <div className="flex gap-6">
             <Link href="/dashboard" className="hover:text-gray-200 transition-colors">App</Link>
             <Link href="/pricing" className="hover:text-gray-200 transition-colors">Pricing</Link>
-            <Link href="/settings" className="hover:text-gray-200 transition-colors">Settings</Link>
-            <Link href="/stash" className="hover:text-gray-200 transition-colors">Stash</Link>
+            <Link href="/tools" className="hover:text-gray-200 transition-colors">Tools</Link>
+            <Link href="/blog" className="hover:text-gray-200 transition-colors">Blog</Link>
+            <Link href="/privacy" className="hover:text-gray-200 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gray-200 transition-colors">Terms</Link>
           </div>
         </div>
       </footer>

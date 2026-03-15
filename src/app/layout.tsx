@@ -38,13 +38,13 @@ export const metadata: Metadata = {
     siteName: "RolePatch",
     title: "RolePatch — AI Resume Tailoring with Diff View",
     description: "Tailor your resume to any job description with AI. See exactly what changed word by word.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "RolePatch — See every change in your resume" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "RolePatch — See every change in your resume" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "RolePatch — AI Resume Tailoring with Diff View",
     description: "Tailor your resume to any job description with AI. See exactly what changed.",
-    images: ["/og-image.png"],
+    images: ["/og-image.svg"],
   },
   robots: {
     index: true,
