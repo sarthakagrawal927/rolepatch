@@ -11,7 +11,47 @@ interface ScrapeResult {
   role: string;
 }
 
+function validateUrl(raw: string): URL {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error('Invalid URL');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Only http and https URLs are allowed');
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // Block localhost variants
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '0.0.0.0') {
+    throw new Error('Internal URLs are not allowed');
+  }
+
+  // Block private/reserved IP ranges
+  const ipMatch = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipMatch) {
+    const [, a, b] = ipMatch.map(Number);
+    if (
+      a === 10 ||                              // 10.0.0.0/8
+      (a === 172 && b >= 16 && b <= 31) ||     // 172.16.0.0/12
+      (a === 192 && b === 168) ||              // 192.168.0.0/16
+      a === 127 ||                              // 127.0.0.0/8
+      (a === 169 && b === 254) ||              // 169.254.0.0/16 (link-local / cloud metadata)
+      a === 0                                   // 0.0.0.0/8
+    ) {
+      throw new Error('Internal URLs are not allowed');
+    }
+  }
+
+  return parsed;
+}
+
 export async function scrapeJobUrl(url: string): Promise<ScrapeResult> {
+  validateUrl(url);
+
   // Primary: Jina Reader
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
