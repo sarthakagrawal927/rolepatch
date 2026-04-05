@@ -17,8 +17,8 @@ const STATUS_OPTIONS: JobApplication['status'][] = [
 ];
 
 const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string; border: string }> = {
-  draft: { label: 'Draft', dot: 'bg-muted-foreground', bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' },
-  tailored: { label: 'Tailored', dot: 'bg-primary', bg: 'bg-primary/5', text: 'text-primary', border: 'border-primary/20' },
+  draft: { label: 'Draft', dot: 'bg-muted-foreground', bg: 'bg-muted', text: 'text-[var(--muted-foreground)]', border: 'border-[var(--border)]' },
+  tailored: { label: 'Tailored', dot: 'bg-[var(--primary)]', bg: 'bg-[var(--primary)]/5', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20' },
   applied: { label: 'Applied', dot: 'bg-accent', bg: 'bg-accent/5', text: 'text-accent', border: 'border-accent/20' },
   interview: { label: 'Interview', dot: 'bg-accent', bg: 'bg-accent/10', text: 'text-accent', border: 'border-accent/30' },
   offer: { label: 'Offer', dot: 'bg-accent', bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/40' },
@@ -87,7 +87,7 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
       {/* Header */}
       <div className="mb-12">
         <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-sm font-medium text-muted-foreground mt-2 opacity-80">
+        <p className="text-sm font-medium text-[var(--muted-foreground)] mt-2 opacity-80">
           {isGuest ? 'Guest mode — sign in to save to the cloud' : 'Manage your professional assets with ResumeTailor'}
         </p>
       </div>
@@ -97,14 +97,14 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
         <div className="grid grid-cols-3 gap-6 mb-12">
           {[
             { label: 'Total Applications', value: stats.total, accent: 'text-foreground' },
-            { label: 'Active Pipeline', value: stats.active, accent: 'text-primary' },
+            { label: 'Active Pipeline', value: stats.active, accent: 'text-[var(--primary)]' },
             { label: 'Offers Secured', value: stats.offers, accent: 'text-accent' },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-card border border-border/50 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-[var(--card)] border border-[var(--border)]/50 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow"
             >
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+              <p className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">{stat.label}</p>
               <p className={`text-3xl font-black mt-2 tracking-tight ${stat.accent}`}>{stat.value}</p>
             </div>
           ))}
@@ -115,25 +115,25 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
       <section className="mb-16">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/5 flex items-center justify-center text-[var(--primary)] shadow-sm">
               <FileText className="w-5 h-5" />
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold">Resumes</h2>
-              <p className="text-xs font-medium text-muted-foreground opacity-60">Your base documents</p>
+              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">Your base documents</p>
             </div>
-            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">{resumes.length}</span>
+            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">{resumes.length}</span>
           </div>
           <CreateResumeButton />
         </div>
 
         {resumes.length === 0 ? (
-          <div className="border border-dashed border-border rounded-2xl py-20 flex flex-col items-center justify-center bg-muted/20">
-            <div className="w-16 h-16 rounded-full bg-background border border-border flex items-center justify-center mb-6 shadow-sm">
-              <FileText className="w-8 h-8 text-muted-foreground/30" />
+          <div className="border border-dashed border-[var(--border)] rounded-2xl py-20 flex flex-col items-center justify-center bg-muted/20">
+            <div className="w-16 h-16 rounded-full bg-background border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
+              <FileText className="w-8 h-8 text-[var(--muted-foreground)]/30" />
             </div>
             <p className="text-sm font-bold text-foreground">No resumes curated yet</p>
-            <p className="text-xs font-medium text-muted-foreground mt-2">Create your primary resume to begin the tailoring process</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">Create your primary resume to begin the tailoring process</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -141,18 +141,18 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
               <Link
                 key={r.id}
                 href={`/editor/${r.id}`}
-                className="group relative bg-card border border-border/60 rounded-2xl p-6 hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5"
+                className="group relative bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl p-6 hover:border-[var(--primary)]/40 transition-all hover:shadow-xl hover:shadow-primary/5"
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold truncate text-foreground group-hover:text-primary transition-colors text-lg">
+                    <h3 className="font-bold truncate text-foreground group-hover:text-[var(--primary)] transition-colors text-lg">
                       {r.name}
                     </h3>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2 opacity-60">
+                    <p className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mt-2 opacity-60">
                       Refined {timeAgo(r.updated_at)}
                     </p>
                   </div>
-                  <div className="ml-3 text-muted-foreground group-hover:text-primary transition-colors group-hover:translate-x-1 duration-200">
+                  <div className="ml-3 text-[var(--muted-foreground)] group-hover:text-[var(--primary)] transition-colors group-hover:translate-x-1 duration-200">
                     <ArrowRight className="w-5 h-5" />
                   </div>
                 </div>
@@ -177,25 +177,25 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold">Applications</h2>
-              <p className="text-xs font-medium text-muted-foreground opacity-60">Your active job pipeline</p>
+              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">Your active job pipeline</p>
             </div>
-            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">{jobs.length}</span>
+            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">{jobs.length}</span>
           </div>
           <NewJobButton resumes={resumes.map(r => ({ id: r.id, name: r.name }))} />
         </div>
 
         {jobs.length === 0 ? (
-          <div className="border border-dashed border-border rounded-2xl py-20 flex flex-col items-center justify-center bg-muted/20">
-            <div className="w-16 h-16 rounded-full bg-background border border-border flex items-center justify-center mb-6 shadow-sm">
-              <Globe className="w-8 h-8 text-muted-foreground/30" />
+          <div className="border border-dashed border-[var(--border)] rounded-2xl py-20 flex flex-col items-center justify-center bg-muted/20">
+            <div className="w-16 h-16 rounded-full bg-background border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
+              <Globe className="w-8 h-8 text-[var(--muted-foreground)]/30" />
             </div>
             <p className="text-sm font-bold text-foreground">No active applications</p>
-            <p className="text-xs font-medium text-muted-foreground mt-2">Add your target job URL to start the AI tailoring engine</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">Add your target job URL to start the AI tailoring engine</p>
           </div>
         ) : (
-          <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl overflow-hidden shadow-sm">
             {/* Table header */}
-            <div className="grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-4 bg-muted/30 border-b border-border text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            <div className="grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-4 bg-muted/30 border-b border-[var(--border)] text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">
               <span>Position</span>
               <span>Organization</span>
               <span>Status</span>
@@ -210,12 +210,12 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
                 <Link
                   key={job.id}
                   href={`/tailor/${job.id}`}
-                  className={`group grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-border/40' : ''}`}
+                  className={`group grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-[var(--border)]/40' : ''}`}
                 >
                   <span className="font-bold truncate text-foreground group-hover:text-accent transition-colors">
                     {job.role || 'Untitled Role'}
                   </span>
-                  <span className="text-sm font-medium text-muted-foreground truncate opacity-80">
+                  <span className="text-sm font-medium text-[var(--muted-foreground)] truncate opacity-80">
                     {job.company || 'Unknown Company'}
                   </span>
                   <div onClick={(e) => e.preventDefault()} onMouseDown={(e) => e.stopPropagation()}>
@@ -230,9 +230,9 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
                     </select>
                   </div>
                   <span className="font-bold">
-                    {ats ? <ATSScoreMini score={ats.tailored} /> : <span className="text-[10px] font-black text-muted-foreground opacity-30">N/A</span>}
+                    {ats ? <ATSScoreMini score={ats.tailored} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">N/A</span>}
                   </span>
-                  <span className="text-[10px] font-bold text-muted-foreground text-right opacity-60">
+                  <span className="text-[10px] font-bold text-[var(--muted-foreground)] text-right opacity-60">
                     {timeAgo(job.created_at)}
                   </span>
                 </Link>
