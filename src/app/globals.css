@@ -23,7 +23,7 @@
   --ring: oklch(0.25 0.02 0);
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
