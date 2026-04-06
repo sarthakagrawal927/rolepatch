@@ -52,6 +52,38 @@ export interface AIProviderConfig {
   model: string;
 }
 
+export interface FitScoreDimension {
+  name: string;
+  score: number;
+  weight: number;
+  detail: string;
+}
+
+export interface FitScore {
+  id: string;
+  job_id: string;
+  overall_score: number;
+  dimensions: FitScoreDimension[];
+  strengths: string[];
+  gaps: string[];
+  recommendation: string;
+  created_at: number;
+}
+
+export interface InterviewStory {
+  id: string;
+  job_id: string;
+  theme: string;
+  jd_requirement: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  reflection: string;
+  best_for: string[];
+  created_at: number;
+}
+
 export interface StashEntry {
   id: string;
   category: string;

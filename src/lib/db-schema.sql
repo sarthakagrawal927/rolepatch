@@ -86,3 +86,30 @@ CREATE TABLE IF NOT EXISTS payments (
   dodo_payload TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
+
+CREATE TABLE IF NOT EXISTS fit_scores (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES job_applications(id),
+  user_id TEXT,
+  overall_score INTEGER NOT NULL DEFAULT 0,
+  dimensions TEXT NOT NULL DEFAULT '[]',
+  strengths TEXT NOT NULL DEFAULT '[]',
+  gaps TEXT NOT NULL DEFAULT '[]',
+  recommendation TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS interview_stories (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES job_applications(id),
+  user_id TEXT,
+  theme TEXT NOT NULL DEFAULT '',
+  jd_requirement TEXT NOT NULL DEFAULT '',
+  situation TEXT NOT NULL DEFAULT '',
+  task TEXT NOT NULL DEFAULT '',
+  action TEXT NOT NULL DEFAULT '',
+  result TEXT NOT NULL DEFAULT '',
+  reflection TEXT NOT NULL DEFAULT '',
+  best_for TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);

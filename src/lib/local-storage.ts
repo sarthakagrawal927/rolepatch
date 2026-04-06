@@ -1,4 +1,4 @@
-import type { Resume, StashEntry, TailoredResume, CoverLetter, JobApplication } from '@/lib/types';
+import type { Resume, StashEntry, TailoredResume, CoverLetter, JobApplication, FitScore, InterviewStory } from '@/lib/types';
 
 const KEYS = {
   resumes: 'rt-resumes',
@@ -6,6 +6,8 @@ const KEYS = {
   tailored: 'rt-tailored',
   coverLetters: 'rt-cover-letters',
   jobs: 'rt-jobs',
+  fitScores: 'rt-fit-scores',
+  interviewStories: 'rt-interview-stories',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -145,4 +147,35 @@ export function localUpdateCoverLetter(id: string, content: string): void {
     items[idx].updated_at = Math.floor(Date.now() / 1000);
     setItems(KEYS.coverLetters, items);
   }
+}
+
+// --- Fit Scores ---
+export function localGetFitScore(jobId: string): FitScore | null {
+  return getItems<FitScore>(KEYS.fitScores).find(f => f.job_id === jobId) ?? null;
+}
+
+export function localSaveFitScore(fitScore: FitScore): void {
+  const items = getItems<FitScore>(KEYS.fitScores).filter(f => f.job_id !== fitScore.job_id);
+  items.push(fitScore);
+  setItems(KEYS.fitScores, items);
+}
+
+export function localListFitScores(): Record<string, number> {
+  const scores: Record<string, number> = {};
+  for (const f of getItems<FitScore>(KEYS.fitScores)) {
+    scores[f.job_id] = f.overall_score;
+  }
+  return scores;
+}
+
+// --- Interview Stories ---
+export function localGetInterviewStories(jobId: string): InterviewStory[] {
+  return getItems<InterviewStory>(KEYS.interviewStories).filter(s => s.job_id === jobId);
+}
+
+export function localSaveInterviewStories(stories: InterviewStory[]): void {
+  if (stories.length === 0) return;
+  const jobId = stories[0].job_id;
+  const existing = getItems<InterviewStory>(KEYS.interviewStories).filter(s => s.job_id !== jobId);
+  setItems(KEYS.interviewStories, [...existing, ...stories]);
 }

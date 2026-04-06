@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { getJobApplication, getTailoredResumes } from '@/lib/actions/job-actions';
 import { getResume } from '@/lib/actions/resume-actions';
+import { getFitScore } from '@/lib/actions/fit-score-action';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { TailorFlow } from '@/components/tailor-flow';
@@ -11,8 +12,11 @@ export default async function TailorPage({ params }: { params: Promise<{ jobId: 
   const job = await getJobApplication(jobId);
   if (!job) notFound();
 
-  const resume = await getResume(job.resume_id);
-  const tailored = await getTailoredResumes(jobId);
+  const [resume, tailored, fitScore] = await Promise.all([
+    getResume(job.resume_id),
+    getTailoredResumes(jobId),
+    getFitScore(jobId),
+  ]);
 
   return (
     <main className="h-screen flex flex-col">
@@ -23,7 +27,7 @@ export default async function TailorPage({ params }: { params: Promise<{ jobId: 
         </div>
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">Back</Link>
       </header>
-      <TailorFlow job={job} serverResume={resume} existingTailored={tailored} />
+      <TailorFlow job={job} serverResume={resume} existingTailored={tailored} existingFitScore={fitScore} />
     </main>
   );
 }

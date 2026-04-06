@@ -8,8 +8,11 @@ import { saveTailoredResume } from '@/lib/actions/job-actions';
 import { getTokenBalance } from '@/lib/actions/token-actions';
 import { ResumeDiff } from '@/components/resume-diff';
 import { ATSScoreBadge } from '@/components/ats-score-badge';
+import { FitScoreCard } from '@/components/fit-score-card';
 import { calculateATSScore } from '@/lib/ats-score';
+import { generateFitScore } from '@/lib/actions/fit-score-action';
 import { useAuth } from '@/components/auth-provider';
+import type { FitScore } from '@/lib/types';
 import {
   localGetResume,
   localGetTailoredResumes,
@@ -21,13 +24,16 @@ interface TailorFlowProps {
   job: JobApplication;
   serverResume: Resume | null;
   existingTailored: TailoredResume[];
+  existingFitScore?: FitScore | null;
 }
 
-export function TailorFlow({ job, serverResume, existingTailored }: TailorFlowProps) {
+export function TailorFlow({ job, serverResume, existingTailored, existingFitScore }: TailorFlowProps) {
   const { isGuest } = useAuth();
   const [resume, setResume] = useState<Resume | null>(serverResume);
   const [tailoredList, setTailoredList] = useState(existingTailored);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [fitScore, setFitScore] = useState<FitScore | null>(existingFitScore ?? null);
+  const [fitScoreLoading, setFitScoreLoading] = useState(false);
 
   // Fetch token balance on mount for signed-in users
   useEffect(() => {
@@ -153,6 +159,21 @@ export function TailorFlow({ job, serverResume, existingTailored }: TailorFlowPr
     );
   }
 
+  function handleFitScore() {
+    if (!resume) return;
+    setFitScoreLoading(true);
+    const settings = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
+    generateFitScore(resume.source, job.jd_text, job.id, settings.model)
+      .then((result) => {
+        setFitScore(result);
+        if (!isGuest) {
+          getTokenBalance().then(setTokenBalance).catch(() => {});
+        }
+      })
+      .catch(() => {})
+      .finally(() => setFitScoreLoading(false));
+  }
+
   const showNoTokens = !isGuest && tokenBalance !== null && tokenBalance <= 0;
 
   return (
@@ -172,10 +193,31 @@ export function TailorFlow({ job, serverResume, existingTailored }: TailorFlowPr
             </a>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <pre className="whitespace-pre-wrap text-sm text-gray-200 font-sans leading-relaxed">
             {job.jd_text}
           </pre>
+
+          {/* Fit Score + Interview Prep section */}
+          <div className="border-t border-gray-800 pt-4 space-y-3">
+            {fitScore ? (
+              <FitScoreCard fitScore={fitScore} />
+            ) : (
+              <button
+                onClick={handleFitScore}
+                disabled={fitScoreLoading || !resume}
+                className="w-full px-3 py-2.5 text-sm font-medium rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5 text-[var(--primary)] hover:bg-[var(--primary)]/10 disabled:opacity-40 transition-colors"
+              >
+                {fitScoreLoading ? 'Analyzing fit...' : 'Analyze Job Fit'}
+              </button>
+            )}
+            <Link
+              href={`/interview-prep/${job.id}`}
+              className="block w-full px-3 py-2.5 text-sm font-medium rounded-xl border border-[var(--border)]/60 text-[var(--muted-foreground)] hover:bg-muted/10 transition-colors text-center"
+            >
+              Interview Prep (STAR Stories)
+            </Link>
+          </div>
         </div>
       </div>
 

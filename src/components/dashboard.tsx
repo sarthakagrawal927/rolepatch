@@ -10,6 +10,7 @@ import { CreateResumeButton } from '@/components/create-resume-button';
 import { NewJobButton } from '@/components/new-job-button';
 import { MigrationBanner } from '@/components/migration-banner';
 import { ATSScoreMini } from '@/components/ats-score-badge';
+import { FitScoreBadge } from '@/components/fit-score-card';
 import { FileText, Globe, ArrowRight } from 'lucide-react';
 
 const STATUS_OPTIONS: JobApplication['status'][] = [
@@ -28,6 +29,7 @@ const statusConfig: Record<string, { label: string; dot: string; bg: string; tex
 interface DashboardProps {
   serverResumes: Resume[];
   serverJobs: JobApplication[];
+  serverFitScores?: Record<string, number>;
 }
 
 function timeAgo(unixSeconds: number): string {
@@ -39,11 +41,12 @@ function timeAgo(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
+export function Dashboard({ serverResumes, serverJobs, serverFitScores }: DashboardProps) {
   const { isGuest } = useAuth();
   const [resumes, setResumes] = useState(serverResumes);
   const [jobs, setJobs] = useState<Pick<JobApplication, 'id' | 'company' | 'role' | 'status' | 'created_at'>[]>(serverJobs);
   const [atsScores, setAtsScores] = useState<Record<string, { original: number; tailored: number }>>({});
+  const [fitScores] = useState<Record<string, number>>(serverFitScores ?? {});
 
   // Intentional: hydrate from localStorage for guest users after auth context resolves
   useEffect(() => {
@@ -195,22 +198,24 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
         ) : (
           <div className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl overflow-hidden shadow-sm">
             {/* Table header */}
-            <div className="grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-4 bg-muted/30 border-b border-[var(--border)] text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">
+            <div className="grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px] gap-4 px-6 py-4 bg-muted/30 border-b border-[var(--border)] text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">
               <span>Position</span>
               <span>Organization</span>
               <span>Status</span>
-              <span>ATS Score</span>
+              <span>Fit</span>
+              <span>ATS</span>
               <span className="text-right">Initiated</span>
             </div>
             {/* Table rows */}
             {jobs.map((job, i) => {
               const cfg = statusConfig[job.status] ?? statusConfig.draft;
               const ats = atsScores[job.id];
+              const fit = fitScores[job.id];
               return (
                 <Link
                   key={job.id}
                   href={`/tailor/${job.id}`}
-                  className={`group grid grid-cols-[1.2fr_1fr_140px_80px_100px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-[var(--border)]/40' : ''}`}
+                  className={`group grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-[var(--border)]/40' : ''}`}
                 >
                   <span className="font-bold truncate text-foreground group-hover:text-accent transition-colors">
                     {job.role || 'Untitled Role'}
@@ -230,7 +235,10 @@ export function Dashboard({ serverResumes, serverJobs }: DashboardProps) {
                     </select>
                   </div>
                   <span className="font-bold">
-                    {ats ? <ATSScoreMini score={ats.tailored} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">N/A</span>}
+                    {fit != null ? <FitScoreBadge score={fit} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">--</span>}
+                  </span>
+                  <span className="font-bold">
+                    {ats ? <ATSScoreMini score={ats.tailored} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">--</span>}
                   </span>
                   <span className="text-[10px] font-bold text-[var(--muted-foreground)] text-right opacity-60">
                     {timeAgo(job.created_at)}

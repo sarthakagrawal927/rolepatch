@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, ArrowRight, Zap, Star, Shield, Search, FileText, Layout, BarChart3, Globe } from "lucide-react";
+import { Check, ArrowRight, Zap, Star, Shield, Search, FileText, Layout, BarChart3, Globe, Target, MessageSquare } from "lucide-react";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -8,7 +8,7 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   url: "https://resumetailor.com",
-  description: "AI-powered resume tailoring with transparent diff view. See exactly what changed, word by word.",
+  description: "AI-powered resume tailoring with job fit scoring, interview prep, and transparent diff view. See exactly what changed, word by word.",
   offers: {
     "@type": "Offer",
     price: "0",
@@ -78,7 +78,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
-              Don&apos;t just apply. Dominate the ATS with surgical AI rewriting that aligns your experience perfectly to every job description.
+              Don&apos;t just apply. Score your fit, tailor your resume, and prep for interviews — all from one AI-powered command center.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -133,9 +133,12 @@ export default function LandingPage() {
             
             <div className="grid md:grid-cols-3 gap-10">
               {[
-                { icon: Search, title: "Deep JD Analysis", desc: "Extracts hard skills, soft skills, and cultural nuances from any job posting instantly." },
-                { icon: Zap, title: "Contextual Rewriting", desc: "Our AI doesn't just swap words; it re-contextualizes your experience to match the role's needs." },
-                { icon: BarChart3, title: "Success Tracking", desc: "Monitor which versions of your resume get the most engagement and interview invites." }
+                { icon: Target, title: "Job Fit Score", desc: "AI evaluates your match across 5 weighted dimensions — role alignment, skills, experience level, keywords, and culture fit. Know before you apply." },
+                { icon: Zap, title: "Contextual Rewriting", desc: "Our AI doesn't just swap words; it re-contextualizes your experience to match the role's needs. See every change in a word-level diff." },
+                { icon: MessageSquare, title: "Interview Prep", desc: "Auto-generates STAR+R stories mapped to the job requirements. Walk into every interview with rehearsed, quantified answers." },
+                { icon: Search, title: "Deep JD Analysis", desc: "Extracts hard skills, soft skills, and cultural nuances from any job posting. Paste a URL and we scrape the rest." },
+                { icon: BarChart3, title: "ATS Optimization", desc: "Real-time keyword scoring shows exactly which terms you're hitting and missing. Close the gap before you submit." },
+                { icon: FileText, title: "Cover Letters", desc: "AI-generated cover letters with company research baked in. Maps your proof points directly to their requirements." },
               ].map((f, i) => (
                 <div key={i} className="group p-10 rounded-[40px] bg-[#0c0c0c] border border-white/5 hover:border-indigo-500/50 transition-all duration-500 hover:translate-y-[-8px]">
                   <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-8 group-hover:scale-110 transition-transform duration-500">
