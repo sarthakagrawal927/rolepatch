@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  alternates: { canonical: 'https://resumetailor.ai/privacy' },
+  alternates: { canonical: 'https://rolepatch.com/privacy' },
 };
 
 export default function PrivacyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">What We Collect</h2>
-          <p>When you use ResumeTailor, we process the following data:</p>
+          <p>When you use RolePatch, we process the following data:</p>
           <ul className="list-disc ml-5 mt-2 space-y-1">
             <li><strong className="text-gray-300">Account data:</strong> Email address and name (via Google Sign-In)</li>
             <li><strong className="text-gray-300">Resume content:</strong> The text you paste or type into the editor</li>
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">Guest Mode</h2>
-          <p>You can use ResumeTailor without creating an account. In guest mode, your data is stored in your browser&apos;s localStorage and never sent to our servers (except for AI generation, which is stateless).</p>
+          <p>You can use RolePatch without creating an account. In guest mode, your data is stored in your browser&apos;s localStorage and never sent to our servers (except for AI generation, which is stateless).</p>
         </section>
 
         <section>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">Contact</h2>
-          <p>Questions about privacy? Email <strong className="text-gray-300">privacy@resumetailor.ai</strong></p>
+          <p>Questions about privacy? Email <strong className="text-gray-300">privacy@rolepatch.com</strong></p>
         </section>
       </div>
     </main>

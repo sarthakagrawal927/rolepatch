@@ -43,9 +43,9 @@ At 30 minutes per tailored resume, applying to 5 jobs per day means 2.5 hours ju
 
 ## The Solution: AI + Transparency
 
-Tools like [ResumeTailor](/) can tailor your resume in seconds. But the key differentiator is **seeing what changed**. A diff view shows you every word the AI modified, so you stay in control and your resume still sounds like you.
+Tools like [RolePatch](/) can tailor your resume in seconds. But the key differentiator is **seeing what changed**. A diff view shows you every word the AI modified, so you stay in control and your resume still sounds like you.
 
-[Try ResumeTailor free — 3 tokens, no credit card →](/dashboard)`,
+[Try RolePatch free — 3 tokens, no credit card →](/dashboard)`,
   },
   'ats-score-explained': {
     title: 'ATS Scores Explained: What They Are and Why They Matter',
@@ -73,7 +73,7 @@ Most ATS systems use a threshold — typically 60-80% — below which your resum
 
 ## How to Check Your Score
 
-You can use [ResumeTailor's free keyword checker](/tools/keywords) to see your match score instantly. Paste your resume and the job description, and see exactly which keywords you're matching and which you're missing.
+You can use [RolePatch's free keyword checker](/tools/keywords) to see your match score instantly. Paste your resume and the job description, and see exactly which keywords you're matching and which you're missing.
 
 ## How to Improve It
 
@@ -124,7 +124,7 @@ Every industry has jargon. Using it signals insider knowledge.
 1. **Read the JD three times** — once for overview, once for required skills, once for nice-to-haves
 2. **Look for repeated words** — if "data analysis" appears 4 times, it's critical
 3. **Check "requirements" vs. "nice to have"** — requirements are must-match keywords
-4. **Use the keyword checker** — [ResumeTailor's free tool](/tools/keywords) extracts and compares automatically
+4. **Use the keyword checker** — [RolePatch's free tool](/tools/keywords) extracts and compares automatically
 
 ## Common Mistakes
 
@@ -145,7 +145,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `https://resumetailor.ai/blog/${slug}` },
+    alternates: { canonical: `https://rolepatch.com/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.description,

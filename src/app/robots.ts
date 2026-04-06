@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/editor/', '/tailor/', '/cover-letter/'],
       },
     ],
-    sitemap: 'https://resumetailor.ai/sitemap.xml',
+    sitemap: 'https://rolepatch.com/sitemap.xml',
   };
 }

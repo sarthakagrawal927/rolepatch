@@ -124,7 +124,7 @@ export default function DiffToolPage() {
             href="/dashboard"
             className="inline-block bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-bold px-6 py-3 rounded-xl transition-colors"
           >
-            Try ResumeTailor free &rarr;
+            Try RolePatch free &rarr;
           </Link>
         </div>
       </div>

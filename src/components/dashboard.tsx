@@ -91,7 +91,7 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores }: Dashbo
       <div className="mb-12">
         <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm font-medium text-[var(--muted-foreground)] mt-2 opacity-80">
-          {isGuest ? 'Guest mode — sign in to save to the cloud' : 'Manage your professional assets with ResumeTailor'}
+          {isGuest ? 'Guest mode — sign in to save to the cloud' : 'Manage your professional assets'}
         </p>
       </div>
 

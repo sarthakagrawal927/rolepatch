@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Pricing',
   description: 'Token-based pricing for AI resume tailoring. Start with 3 free tokens. No subscription required.',
-  alternates: { canonical: 'https://resumetailor.ai/pricing' },
+  alternates: { canonical: 'https://rolepatch.com/pricing' },
 };
 
 const FAQ = [

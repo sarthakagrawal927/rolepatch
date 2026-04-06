@@ -3,8 +3,8 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Blog',
-  description: 'Resume tips, job search strategies, and AI-powered career advice from ResumeTailor.',
-  alternates: { canonical: 'https://resumetailor.ai/blog' },
+  description: 'Resume tips, job search strategies, and AI-powered career advice from RolePatch.',
+  alternates: { canonical: 'https://rolepatch.com/blog' },
 };
 
 interface BlogPost {

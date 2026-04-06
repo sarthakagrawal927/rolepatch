@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  alternates: { canonical: 'https://resumetailor.ai/terms' },
+  alternates: { canonical: 'https://rolepatch.com/terms' },
 };
 
 export default function TermsPage() {
@@ -14,7 +14,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">Service</h2>
-          <p>ResumeTailor is an AI-powered resume tailoring tool. We provide AI-generated suggestions for improving your resume to match job descriptions. The output is a suggestion — you are responsible for reviewing and approving all changes before using them.</p>
+          <p>RolePatch is an AI-powered resume tailoring tool. We provide AI-generated suggestions for improving your resume to match job descriptions. The output is a suggestion — you are responsible for reviewing and approving all changes before using them.</p>
         </section>
 
         <section>
@@ -41,7 +41,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">Acceptable Use</h2>
-          <p>Do not use ResumeTailor to generate fraudulent resumes, impersonate others, or submit misleading applications. We reserve the right to terminate accounts that violate these terms.</p>
+          <p>Do not use RolePatch to generate fraudulent resumes, impersonate others, or submit misleading applications. We reserve the right to terminate accounts that violate these terms.</p>
         </section>
 
         <section>
@@ -51,7 +51,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">Contact</h2>
-          <p>Questions? Email <strong className="text-gray-300">hello@resumetailor.ai</strong></p>
+          <p>Questions? Email <strong className="text-gray-300">hello@rolepatch.com</strong></p>
         </section>
       </div>
     </main>

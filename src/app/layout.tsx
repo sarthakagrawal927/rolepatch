@@ -23,26 +23,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ResumeTailor — AI Resume Tailoring with Diff View",
-    template: "%s | ResumeTailor",
+    default: "RolePatch — AI Resume Tailoring with Diff View",
+    template: "%s | RolePatch",
   },
   description: "Tailor your resume to any job description with AI. Job fit scoring, interview prep with STAR stories, ATS optimization, cover letters, and word-level diff view.",
   keywords: ["resume tailor", "AI resume", "ATS score", "resume diff", "job application", "cover letter generator", "resume keywords", "resume optimizer", "job fit score", "interview prep", "STAR stories"],
-  authors: [{ name: "ResumeTailor" }],
-  creator: "ResumeTailor",
-  metadataBase: new URL("https://resumetailor.ai"),
+  authors: [{ name: "RolePatch" }],
+  creator: "RolePatch",
+  metadataBase: new URL("https://rolepatch.com"),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://resumetailor.ai",
-    siteName: "ResumeTailor",
-    title: "ResumeTailor — AI Resume Tailoring with Diff View",
+    url: "https://rolepatch.com",
+    siteName: "RolePatch",
+    title: "RolePatch — AI Resume Tailoring with Diff View",
     description: "Tailor your resume to any job description with AI. See exactly what changed word by word.",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "ResumeTailor — See every change in your resume" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "RolePatch — See every change in your resume" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ResumeTailor — AI Resume Tailoring with Diff View",
+    title: "RolePatch — AI Resume Tailoring with Diff View",
     description: "Tailor your resume to any job description with AI. See exactly what changed.",
     images: ["/og-image.svg"],
   },
@@ -52,12 +52,13 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 },
   },
   alternates: {
-    canonical: "https://resumetailor.ai",
+    canonical: "https://rolepatch.com",
   },
 };
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/tools", label: "Free Tools" },
   { href: "/stash", label: "Stash" },
   { href: "/pricing", label: "Pricing" },
   { href: "/settings", label: "Settings" },
@@ -82,11 +83,11 @@ export default async function RootLayout({
         <SaaSMakerFeedback />
         <AuthProvider session={session}>
           {!isLanding && (
-            <nav className="sticky top-0 z-40 border-b border-gray-800/80 bg-[var(--background)]/80 backdrop-blur-xl">
+            <nav className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-xl">
               <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-1">
-                <Link href="/" className="font-semibold text-white mr-6 flex items-center gap-2">
+                <Link href="/" className="font-semibold text-foreground mr-6 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-md bg-[var(--accent)] flex items-center justify-center text-[10px] font-bold text-white">RP</span>
-                  ResumeTailor
+                  RolePatch
                 </Link>
                 {NAV_LINKS.map((link) => {
                   const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
@@ -96,8 +97,8 @@ export default async function RootLayout({
                       href={link.href}
                       className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                         isActive
-                          ? "bg-gray-800 text-white font-medium"
-                          : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                          ? "bg-[var(--muted)] text-foreground font-medium"
+                          : "text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--muted)]"
                       }`}
                     >
                       {link.label}
