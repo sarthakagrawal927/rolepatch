@@ -47,17 +47,17 @@ export function ATSScoreBadge({ score, matchedKeywords, missingKeywords, label }
           />
         </svg>
         <div className="text-left">
-          {label && <p className="text-[10px] text-gray-500 leading-none">{label}</p>}
+          {label && <p className="text-[10px] text-[var(--muted-foreground)] leading-none">{label}</p>}
           <p className={`text-sm font-bold ${color.text} leading-tight`}>{score}</p>
         </div>
       </button>
 
       {/* Expanded keyword panel */}
       {expanded && (
-        <div className="absolute top-full mt-2 right-0 z-50 w-80 max-h-72 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 shadow-xl p-4">
+        <div className="absolute top-full mt-2 right-0 z-50 w-80 max-h-72 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold text-gray-300 uppercase tracking-wider">ATS Keyword Analysis</h4>
-            <button onClick={() => setExpanded(false)} className="text-gray-500 hover:text-gray-300 text-xs">Close</button>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">ATS Keyword Analysis</h4>
+            <button onClick={() => setExpanded(false)} className="text-[var(--muted-foreground)] hover:text-foreground text-xs">Close</button>
           </div>
 
           {matchedKeywords.length > 0 && (

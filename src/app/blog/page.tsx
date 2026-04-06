@@ -44,7 +44,7 @@ export default function BlogPage() {
     <main className="max-w-4xl mx-auto px-6 py-10">
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight">Blog</h1>
-        <p className="text-gray-400 mt-2">Resume tips, job search strategies, and career advice.</p>
+        <p className="text-[var(--muted-foreground)] mt-2">Resume tips, job search strategies, and career advice.</p>
       </div>
 
       <div className="space-y-6">
@@ -52,14 +52,14 @@ export default function BlogPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="block border border-gray-800 rounded-xl p-6 hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/[0.02] transition-all"
+            className="block border border-[var(--border)] rounded-xl p-6 hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/[0.02] transition-all"
           >
-            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+            <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)] mb-3">
               <time dateTime={post.date}>{new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
               <span>{post.readTime} read</span>
             </div>
-            <h2 className="text-lg font-semibold text-white mb-2">{post.title}</h2>
-            <p className="text-sm text-gray-400 leading-relaxed">{post.description}</p>
+            <h2 className="text-lg font-semibold text-foreground mb-2">{post.title}</h2>
+            <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{post.description}</p>
           </Link>
         ))}
       </div>

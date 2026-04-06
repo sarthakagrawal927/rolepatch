@@ -64,7 +64,7 @@ export function ResumeDiff({ original, modified, onModifiedChange }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-gray-900/50">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)] bg-[var(--card)]/50">
         <div className="flex items-center gap-3 text-xs">
           <span className="text-[var(--accent)]">+{additions} additions</span>
           <span className="text-red-400">-{removals} removals</span>
@@ -72,14 +72,14 @@ export function ResumeDiff({ original, modified, onModifiedChange }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSplitView(!splitView)}
-            className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+            className="text-xs px-2 py-1 rounded border border-[var(--border)] text-[var(--muted-foreground)] hover:text-foreground hover:border-[var(--muted-foreground)] transition-colors"
           >
             {splitView ? 'Inline' : 'Split'}
           </button>
           {!editing ? (
             <button
               onClick={() => { setEditContent(modified); setEditing(true); }}
-              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+              className="text-xs px-2 py-1 rounded border border-[var(--border)] text-[var(--muted-foreground)] hover:text-foreground hover:border-[var(--muted-foreground)] transition-colors"
             >
               Edit
             </button>
@@ -87,7 +87,7 @@ export function ResumeDiff({ original, modified, onModifiedChange }: Props) {
             <>
               <button
                 onClick={handleCancelEdit}
-                className="text-xs px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
+                className="text-xs px-2 py-1 rounded text-[var(--muted-foreground)] hover:text-foreground transition-colors"
               >
                 Cancel
               </button>
@@ -108,7 +108,7 @@ export function ResumeDiff({ original, modified, onModifiedChange }: Props) {
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-4 bg-[var(--background)] text-gray-200 text-sm font-mono resize-none focus:outline-none"
+            className="w-full h-full p-4 bg-[var(--background)] text-foreground text-sm font-mono resize-none focus:outline-none"
           />
         ) : (
           <ReactDiffViewer

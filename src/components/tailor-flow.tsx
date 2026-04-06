@@ -153,7 +153,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
 
   if (!resume) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
+      <div className="flex-1 flex items-center justify-center text-[var(--muted-foreground)]">
         Resume not found. It may have been deleted.
       </div>
     );
@@ -179,9 +179,9 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Left panel: Job Description */}
-      <div className="w-1/3 border-r border-gray-800 flex flex-col">
-        <div className="px-4 py-3 border-b border-gray-800 bg-gray-900/50">
-          <h2 className="text-sm font-semibold text-gray-300">Job Description</h2>
+      <div className="w-1/3 border-r border-[var(--border)] flex flex-col">
+        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/50">
+          <h2 className="text-sm font-semibold text-foreground">Job Description</h2>
           {job.url && (
             <a
               href={job.url}
@@ -194,12 +194,12 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
           )}
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <pre className="whitespace-pre-wrap text-sm text-gray-200 font-sans leading-relaxed">
+          <pre className="whitespace-pre-wrap text-sm text-foreground font-sans leading-relaxed">
             {job.jd_text}
           </pre>
 
           {/* Fit Score + Interview Prep section */}
-          <div className="border-t border-gray-800 pt-4 space-y-3">
+          <div className="border-t border-[var(--border)] pt-4 space-y-3">
             {fitScore ? (
               <FitScoreCard fitScore={fitScore} />
             ) : (
@@ -223,13 +223,13 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
 
       {/* Right panel: Resume / Tailored output */}
       <div className="w-2/3 flex flex-col">
-        <div className="px-4 py-3 border-b border-gray-800 bg-gray-900/50 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-gray-300">
+              <h2 className="text-sm font-semibold text-foreground">
                 {tailoredSource ? 'Tailored Resume (diff)' : 'Original Resume'}
               </h2>
-              <p className="text-xs text-gray-500">{resume.name}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">{resume.name}</p>
             </div>
 
             {/* ATS Score badges */}
@@ -243,7 +243,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
                 />
                 {tailoredATS && (
                   <>
-                    <span className="text-gray-600 text-xs">{'\u2192'}</span>
+                    <span className="text-[var(--muted-foreground)] text-xs">{'\u2192'}</span>
                     <ATSScoreBadge
                       score={tailoredATS.score}
                       matchedKeywords={tailoredATS.matchedKeywords}
@@ -258,13 +258,13 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
           <div className="flex items-center gap-2">
             {/* Token balance indicator for signed-in users */}
             {!isGuest && tokenBalance !== null && (
-              <span className="text-xs text-gray-500 mr-1">
+              <span className="text-xs text-[var(--muted-foreground)] mr-1">
                 Uses 1 token ({tokenBalance} remaining)
               </span>
             )}
             <Link
               href={`/cover-letter/${job.id}`}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 transition-colors"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-[var(--border)] text-foreground hover:bg-[var(--muted)] transition-colors"
             >
               Generate Cover Letter
             </Link>
@@ -272,7 +272,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
               <button
                 onClick={handleSave}
                 disabled={isPending}
-                className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                className="px-3 py-1.5 text-sm font-medium rounded-lg border border-[var(--border)] text-foreground hover:bg-[var(--muted)] disabled:opacity-40 transition-colors"
               >
                 {isPending ? 'Saving...' : 'Accept & Save'}
               </button>
@@ -319,7 +319,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
             />
           ) : (
             <div className="h-full overflow-y-auto p-4">
-              <pre className="whitespace-pre-wrap text-sm text-gray-200 font-mono leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm text-foreground font-mono leading-relaxed">
                 {resume.source}
               </pre>
             </div>

@@ -19,7 +19,7 @@ export function TokenBalance() {
   return (
     <Link
       href="/pricing"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-800 border border-gray-700 text-sm hover:border-gray-600 transition-colors"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--card)] border border-[var(--border)] text-sm hover:border-[var(--muted-foreground)] transition-colors"
       title="Token balance"
     >
       <span className="text-xs">&#9889;</span>

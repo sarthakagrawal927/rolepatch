@@ -83,7 +83,7 @@ export function CreateResumeButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600 transition-colors"
+        className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--border)] text-foreground hover:bg-[var(--muted)] hover:border-[var(--muted-foreground)] transition-colors"
       >
         + New Resume
       </button>
@@ -91,12 +91,12 @@ export function CreateResumeButton() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 modal-backdrop" onClick={close} />
-          <div className="relative bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 modal-content">
+          <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 modal-content">
             <h2 className="text-lg font-semibold mb-5">New Resume</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Name</label>
+                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Name</label>
                 <input
                   ref={inputRef}
                   type="text"
@@ -112,7 +112,7 @@ export function CreateResumeButton() {
                   type="button"
                   onClick={close}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[var(--muted-foreground)] hover:text-foreground transition-colors"
                 >
                   Cancel
                 </button>

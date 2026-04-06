@@ -121,7 +121,7 @@ export function InterviewPrep({ job, resume, existingStories }: InterviewPrepPro
         <div className="flex items-center gap-2">
           <Link
             href={`/tailor/${job.id}`}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:bg-gray-800 transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-[var(--border)] text-foreground hover:bg-[var(--muted)] transition-colors"
           >
             Back to Tailor
           </Link>

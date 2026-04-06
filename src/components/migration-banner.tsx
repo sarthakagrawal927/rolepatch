@@ -65,8 +65,8 @@ export function MigrationBanner() {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-700 bg-neutral-900 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-      <p className="text-sm text-neutral-300">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <p className="text-sm text-foreground">
         We found {parts.join(', ')} saved locally. Import them to your account?
       </p>
       <div className="flex gap-2 shrink-0">
@@ -80,7 +80,7 @@ export function MigrationBanner() {
         <button
           onClick={handleDismiss}
           disabled={loading}
-          className="px-3 py-1.5 text-sm font-medium rounded-md border border-neutral-600 text-neutral-300 hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border)] text-foreground hover:bg-[var(--muted)] disabled:opacity-50 transition-colors"
         >
           Dismiss
         </button>

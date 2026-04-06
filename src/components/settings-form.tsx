@@ -47,7 +47,7 @@ export function SettingsForm() {
   return (
     <div className="space-y-1">
       {/* Provider config card */}
-      <div className="border border-gray-800 rounded-xl p-6 space-y-5 bg-gray-900/30">
+      <div className="border border-[var(--border)] rounded-xl p-6 space-y-5 bg-[var(--card)]/30">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--accent)]">
@@ -57,12 +57,12 @@ export function SettingsForm() {
           </div>
           <div>
             <h2 className="text-sm font-semibold">AI Provider</h2>
-            <p className="text-xs text-gray-500">Any OpenAI-compatible endpoint</p>
+            <p className="text-xs text-[var(--muted-foreground)]">Any OpenAI-compatible endpoint</p>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Base URL</label>
+          <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Base URL</label>
           <input
             type="text"
             value={settings.baseURL}
@@ -76,7 +76,7 @@ export function SettingsForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">API Key</label>
+          <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">API Key</label>
           <input
             type="password"
             value={settings.apiKey}
@@ -87,11 +87,11 @@ export function SettingsForm() {
             placeholder="sk-..."
             className="input-base"
           />
-          <p className="text-xs text-gray-600 mt-1.5">Leave empty to use the free gateway</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1.5">Leave empty to use the free gateway</p>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Model</label>
+          <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Model</label>
           <input
             type="text"
             value={settings.model}
@@ -102,7 +102,7 @@ export function SettingsForm() {
             placeholder="auto"
             className="input-base"
           />
-          <p className="text-xs text-gray-600 mt-1.5">&quot;auto&quot; lets the gateway pick the best available model</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1.5">&quot;auto&quot; lets the gateway pick the best available model</p>
         </div>
       </div>
 
