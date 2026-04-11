@@ -94,11 +94,16 @@ export function InterviewPrep({ job, resume, existingStories }: InterviewPrepPro
     startTransition(async () => {
       try {
         const settings = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
+        const aiConfig = {
+          endpointUrl: settings.endpointUrl || '',
+          apiKey: settings.apiKey || '',
+          model: settings.model || '',
+        };
         const result = await generateInterviewStories(
           resume.source,
           job.jd_text,
           job.id,
-          settings.model,
+          aiConfig,
         );
         setStories(result);
       } catch (err) {

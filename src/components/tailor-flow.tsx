@@ -107,6 +107,11 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
     startTransition(async () => {
       try {
         const settings = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
+        const aiConfig = {
+          endpointUrl: settings.endpointUrl || '',
+          apiKey: settings.apiKey || '',
+          model: settings.model || '',
+        };
         // For guests, pass stash content from localStorage
         let stashContent: string | undefined;
         if (isGuest) {
@@ -117,7 +122,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
               .join('\n\n');
           }
         }
-        const result = await tailorResume(resume.source, job.jd_text, settings.model, stashContent);
+        const result = await tailorResume(resume.source, job.jd_text, aiConfig, stashContent);
         setTailoredSource(result);
 
         // Refresh token balance after successful generation
@@ -163,7 +168,12 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
     if (!resume) return;
     setFitScoreLoading(true);
     const settings = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
-    generateFitScore(resume.source, job.jd_text, job.id, settings.model)
+    const aiConfig = {
+      endpointUrl: settings.endpointUrl || '',
+      apiKey: settings.apiKey || '',
+      model: settings.model || '',
+    };
+    generateFitScore(resume.source, job.jd_text, job.id, aiConfig)
       .then((result) => {
         setFitScore(result);
         if (!isGuest) {

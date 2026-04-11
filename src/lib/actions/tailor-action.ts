@@ -5,11 +5,12 @@ import { getAIModel } from '@/lib/ai';
 import { listStashEntries } from '@/lib/actions/stash-actions';
 import { debitToken, creditTokens } from '@/lib/actions/token-actions';
 import { getCurrentUserId } from '@/lib/auth-utils';
+import type { AIProviderConfig } from '@/lib/types';
 
 export async function tailorResume(
   resumeSource: string,
   jdText: string,
-  modelOverride?: string,
+  aiConfig: AIProviderConfig,
   stashContent?: string,
 ): Promise<string> {
   // Debit token before AI call
@@ -42,7 +43,7 @@ export async function tailorResume(
     }
 
     const { text } = await generateText({
-      model: getAIModel(modelOverride),
+      model: getAIModel(aiConfig),
       system: `You are a resume tailoring expert. You receive a Markdown resume and a job description. Modify the resume content to better match the job while keeping the Markdown structure intact. Only modify content (summary, experience bullets, skills). Do not change headings or structure. Return ONLY the complete modified Markdown, no explanation.`,
       prompt: `## Base Resume (Markdown):\n${resumeSource}\n\n## Job Description:\n${jdText}${stashSection}\n\n## Instructions:\n- Emphasize relevant experience and skills that match the JD\n- Reword bullet points to use keywords from the JD where truthful\n- Reorder skills to prioritize those mentioned in the JD\n- If any stashed content is highly relevant to the JD, incorporate it naturally into the appropriate resume section\n- Keep it honest — do not fabricate experience`,
     });

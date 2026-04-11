@@ -1,47 +1,46 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
-// vi.mock is hoisted, so use vi.hoisted to create the mock function
-const { mockGoogle } = vi.hoisted(() => ({
-  mockGoogle: vi.fn((model: string) => ({ modelId: model })),
-}));
+const { mockCreateOpenAICompatible, mockChatModel } = vi.hoisted(() => {
+  const mockChatModel = vi.fn((model: string) => ({ modelId: model }));
+  return {
+    mockChatModel,
+    mockCreateOpenAICompatible: vi.fn(() => ({ chatModel: mockChatModel })),
+  };
+});
 
-vi.mock('@ai-sdk/google', () => ({
-  google: mockGoogle,
+vi.mock('@ai-sdk/openai-compatible', () => ({
+  createOpenAICompatible: mockCreateOpenAICompatible,
 }));
 
 import { getAIModel } from '@/lib/ai';
 
 describe('getAIModel', () => {
-  const originalEnv = { ...process.env };
+  it('creates provider with the given config and returns a chat model', () => {
+    const config = {
+      endpointUrl: 'https://api.example.com/v1',
+      apiKey: 'sk-test-123',
+      model: 'gpt-4o',
+    };
+    const result = getAIModel(config);
 
-  beforeEach(() => {
-    delete process.env.AI_MODEL;
-    mockGoogle.mockClear();
+    expect(mockCreateOpenAICompatible).toHaveBeenCalledWith({
+      baseURL: 'https://api.example.com/v1',
+      apiKey: 'sk-test-123',
+      name: 'custom',
+    });
+    expect(mockChatModel).toHaveBeenCalledWith('gpt-4o');
+    expect(result).toEqual({ modelId: 'gpt-4o' });
   });
 
-  afterEach(() => {
-    process.env = { ...originalEnv };
-  });
+  it('passes empty strings when config fields are empty', () => {
+    const config = { endpointUrl: '', apiKey: '', model: '' };
+    getAIModel(config);
 
-  it('returns gemini-2.5-pro by default when no override or env var', () => {
-    getAIModel();
-    expect(mockGoogle).toHaveBeenCalledWith('gemini-2.5-pro');
-  });
-
-  it('uses AI_MODEL env var when set', () => {
-    process.env.AI_MODEL = 'gemini-2.0-flash';
-    getAIModel();
-    expect(mockGoogle).toHaveBeenCalledWith('gemini-2.0-flash');
-  });
-
-  it('modelOverride takes precedence over env var', () => {
-    process.env.AI_MODEL = 'gemini-2.0-flash';
-    getAIModel('gemini-1.5-pro');
-    expect(mockGoogle).toHaveBeenCalledWith('gemini-1.5-pro');
-  });
-
-  it('rejects unknown model and falls back to default', () => {
-    getAIModel('evil-model-name');
-    expect(mockGoogle).toHaveBeenCalledWith('gemini-2.5-pro');
+    expect(mockCreateOpenAICompatible).toHaveBeenCalledWith({
+      baseURL: '',
+      apiKey: '',
+      name: 'custom',
+    });
+    expect(mockChatModel).toHaveBeenCalledWith('');
   });
 });

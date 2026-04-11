@@ -53,13 +53,18 @@ export function CoverLetterEditor({ job, serverResume, existingLetter }: CoverLe
     startTransition(async () => {
       try {
         const settings = JSON.parse(localStorage.getItem('ai-settings') ?? '{}');
+        const aiConfig = {
+          endpointUrl: settings.endpointUrl || '',
+          apiKey: settings.apiKey || '',
+          model: settings.model || '',
+        };
         const result = await generateCoverLetter(
           resume.source,
           job.jd_text,
           job.company,
           job.id,
           resume.id,
-          settings.model,
+          aiConfig,
         );
         setContent(result);
         // For guests, also save locally

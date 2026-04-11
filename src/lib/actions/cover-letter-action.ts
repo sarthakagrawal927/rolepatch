@@ -4,7 +4,7 @@ import { generateText } from 'ai';
 import { getAIModel } from '@/lib/ai';
 import { db } from '@/lib/db';
 import { v4 as uuid } from 'uuid';
-import type { CoverLetter } from '@/lib/types';
+import type { CoverLetter, AIProviderConfig } from '@/lib/types';
 import { scrapeJobUrl } from './scrape-action';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { debitToken, creditTokens } from '@/lib/actions/token-actions';
@@ -24,7 +24,7 @@ export async function generateCoverLetter(
   company: string,
   jobId: string,
   resumeId: string,
-  modelOverride?: string,
+  aiConfig: AIProviderConfig,
 ): Promise<string> {
   // Debit token before AI call
   const userId = await getCurrentUserId();
@@ -57,7 +57,7 @@ export async function generateCoverLetter(
     }
 
     const { text } = await generateText({
-      model: getAIModel(modelOverride),
+      model: getAIModel(aiConfig),
       system: `You are a professional cover letter writer. Using the candidate's resume, the job description, and research about the company, write a compelling cover letter. Return ONLY the cover letter text, no explanation.`,
       prompt: `## Resume:\n${resumeSource}\n\n## Job Description:\n${jdText}\n\n## Company Research:\n${companyResearch || 'No research available.'}\n\n## Instructions:\n- Connect candidate's experience to the specific role\n- Reference company values/mission where genuine\n- Keep it concise (3-4 paragraphs)\n- Professional but not generic`,
     });

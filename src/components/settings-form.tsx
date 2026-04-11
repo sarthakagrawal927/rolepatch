@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Settings {
-  baseURL: string;
+  endpointUrl: string;
   apiKey: string;
   model: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  baseURL: 'https://free-ai-gateway.sarthakagrawal927.workers.dev/v1',
+  endpointUrl: '',
   apiKey: '',
-  model: 'auto',
+  model: '',
 };
 
 const STORAGE_KEY = 'ai-settings';
@@ -23,9 +23,9 @@ function loadInitialSettings(): Settings {
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        baseURL: parsed.baseURL || DEFAULT_SETTINGS.baseURL,
+        endpointUrl: parsed.endpointUrl || parsed.baseURL || '',
         apiKey: parsed.apiKey || '',
-        model: parsed.model || 'auto',
+        model: parsed.model || '',
       };
     }
   } catch {
@@ -37,12 +37,63 @@ function loadInitialSettings(): Settings {
 export function SettingsForm() {
   const [settings, setSettings] = useState<Settings>(loadInitialSettings);
   const [saved, setSaved] = useState(false);
+  const [models, setModels] = useState<string[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  async function fetchModels() {
+    if (!settings.endpointUrl) return;
+    setModelsLoading(true);
+    setModelsError(null);
+    try {
+      const res = await fetch('/api/ai/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpointUrl: settings.endpointUrl,
+          apiKey: settings.apiKey,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setModelsError(data.error || 'Failed to fetch models');
+        setModels([]);
+      } else {
+        setModels(data.models || []);
+        if (data.models?.length > 0) {
+          setDropdownOpen(true);
+        }
+      }
+    } catch {
+      setModelsError('Failed to connect');
+      setModels([]);
+    } finally {
+      setModelsLoading(false);
+    }
+  }
 
   function handleSave() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  const filteredModels = settings.model
+    ? models.filter((m) => m.toLowerCase().includes(settings.model.toLowerCase()))
+    : models;
 
   return (
     <div className="space-y-1">
@@ -62,12 +113,12 @@ export function SettingsForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Base URL</label>
+          <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Endpoint URL</label>
           <input
             type="text"
-            value={settings.baseURL}
+            value={settings.endpointUrl}
             onChange={(e) => {
-              setSettings((prev) => ({ ...prev, baseURL: e.target.value }));
+              setSettings((prev) => ({ ...prev, endpointUrl: e.target.value }));
               setSaved(false);
             }}
             placeholder="https://api.openai.com/v1"
@@ -87,22 +138,64 @@ export function SettingsForm() {
             placeholder="sk-..."
             className="input-base"
           />
-          <p className="text-xs text-[var(--muted-foreground)] mt-1.5">Leave empty to use the free gateway</p>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Model</label>
-          <input
-            type="text"
-            value={settings.model}
-            onChange={(e) => {
-              setSettings((prev) => ({ ...prev, model: e.target.value }));
-              setSaved(false);
-            }}
-            placeholder="auto"
-            className="input-base"
-          />
-          <p className="text-xs text-[var(--muted-foreground)] mt-1.5">&quot;auto&quot; lets the gateway pick the best available model</p>
+          <div className="relative" ref={comboboxRef}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={settings.model}
+                onChange={(e) => {
+                  setSettings((prev) => ({ ...prev, model: e.target.value }));
+                  setSaved(false);
+                  if (models.length > 0) setDropdownOpen(true);
+                }}
+                onFocus={() => {
+                  if (models.length > 0) setDropdownOpen(true);
+                }}
+                placeholder="Enter model name or fetch available models"
+                className="input-base flex-1"
+              />
+              <button
+                type="button"
+                onClick={fetchModels}
+                disabled={!settings.endpointUrl || modelsLoading}
+                className="px-3 py-2 text-xs font-medium rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)] disabled:opacity-40 transition-colors shrink-0"
+              >
+                {modelsLoading ? 'Loading...' : 'Fetch Models'}
+              </button>
+            </div>
+
+            {/* Dropdown */}
+            {dropdownOpen && filteredModels.length > 0 && (
+              <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-lg">
+                {filteredModels.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setSettings((prev) => ({ ...prev, model: m }));
+                      setDropdownOpen(false);
+                      setSaved(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-[var(--muted)] transition-colors"
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {modelsError && (
+            <p className="text-xs text-red-400 mt-1.5">{modelsError}</p>
+          )}
+          {models.length > 0 && !modelsError && (
+            <p className="text-xs text-[var(--muted-foreground)] mt-1.5">
+              {models.length} model{models.length !== 1 ? 's' : ''} available
+            </p>
+          )}
         </div>
       </div>
 

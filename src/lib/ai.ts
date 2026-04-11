@@ -1,16 +1,11 @@
-import { google } from '@ai-sdk/google';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import type { AIProviderConfig } from '@/lib/types';
 
-const ALLOWED_MODELS = new Set([
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.0-pro',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-]);
-
-export function getAIModel(modelOverride?: string) {
-  const requested = modelOverride || process.env.AI_MODEL || 'gemini-2.5-pro';
-  const model = ALLOWED_MODELS.has(requested) ? requested : 'gemini-2.5-pro';
-  return google(model);
+export function getAIModel(config: AIProviderConfig) {
+  const provider = createOpenAICompatible({
+    baseURL: config.endpointUrl,
+    apiKey: config.apiKey,
+    name: 'custom',
+  });
+  return provider.chatModel(config.model);
 }
