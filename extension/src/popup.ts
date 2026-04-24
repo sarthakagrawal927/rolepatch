@@ -56,9 +56,17 @@ async function main(): Promise<void> {
         type: 'TAILOR_JOB',
         payload: job,
       });
-      if (!res.ok) throw new Error(res.error ?? 'request failed');
+      const apiBase = await getApiBase();
+      if (!res.ok) {
+        if (res.redirect_url) {
+          chrome.tabs.create({ url: `${apiBase}${res.redirect_url}` });
+        }
+        throw new Error(res.error ?? 'request failed');
+      }
       setStatus('Done. Opening RolePatch…', 'success');
-      if (res.url) chrome.tabs.create({ url: res.url });
+      if (res.redirect_url) {
+        chrome.tabs.create({ url: `${apiBase}${res.redirect_url}` });
+      }
     } catch (err) {
       setStatus(err instanceof Error ? err.message : String(err), 'error');
     } finally {

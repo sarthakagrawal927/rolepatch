@@ -27,18 +27,27 @@ async function postTailor(job: ScrapedJob): Promise<TailorResponse> {
   if (cookieHeader) headers['x-rolepatch-session'] = cookieHeader;
 
   try {
+    const body = {
+      url: job.url,
+      title: job.title,
+      company: job.company,
+      jd_text: job.description,
+    };
     const res = await fetch(`${apiBase}${TAILOR_ENDPOINT}`, {
       method: 'POST',
       headers,
       credentials: 'include',
-      body: JSON.stringify(job),
+      body: JSON.stringify(body),
     });
 
+    const data = (await res.json().catch(() => ({}))) as TailorResponse;
     if (!res.ok) {
-      return { ok: false, error: `HTTP ${res.status}` };
+      return {
+        ok: false,
+        error: data.error ?? `HTTP ${res.status}`,
+        redirect_url: data.redirect_url,
+      };
     }
-
-    const data = (await res.json()) as TailorResponse;
     return data;
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };

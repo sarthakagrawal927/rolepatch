@@ -12,6 +12,7 @@ export type ExtensionMessage =
 
 export interface TailorResponse {
   ok: boolean;
-  url?: string;
+  job_id?: string;
+  redirect_url?: string;
   error?: string;
 }
