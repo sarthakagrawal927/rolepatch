@@ -36,10 +36,16 @@ yarn-error.log*
 
 # playwright
 .playwright-mcp/
+/playwright-report/
+/test-results/
 
 # local tooling
 .claude/
 .metadata_never_index
+
+# personal / research scratch (not part of the app)
+/get-a-job/
+/research/
 
 # vercel
 .vercel
