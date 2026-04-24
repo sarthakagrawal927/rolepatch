@@ -99,6 +99,16 @@ CREATE TABLE IF NOT EXISTS fit_scores (
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
+CREATE TABLE IF NOT EXISTS outreach_emails (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES job_applications(id),
+  resume_id TEXT NOT NULL REFERENCES resumes(id),
+  subject TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
+  user_id TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
 CREATE TABLE IF NOT EXISTS interview_stories (
   id TEXT PRIMARY KEY,
   job_id TEXT NOT NULL REFERENCES job_applications(id),

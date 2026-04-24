@@ -1,4 +1,4 @@
-import type { Resume, StashEntry, TailoredResume, CoverLetter, JobApplication, FitScore, InterviewStory } from '@/lib/types';
+import type { Resume, StashEntry, TailoredResume, CoverLetter, JobApplication, FitScore, InterviewStory, OutreachEmail } from '@/lib/types';
 
 const KEYS = {
   resumes: 'rt-resumes',
@@ -8,6 +8,7 @@ const KEYS = {
   jobs: 'rt-jobs',
   fitScores: 'rt-fit-scores',
   interviewStories: 'rt-interview-stories',
+  outreachEmails: 'rt-outreach-emails',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -178,4 +179,18 @@ export function localSaveInterviewStories(stories: InterviewStory[]): void {
   const jobId = stories[0].job_id;
   const existing = getItems<InterviewStory>(KEYS.interviewStories).filter(s => s.job_id !== jobId);
   setItems(KEYS.interviewStories, [...existing, ...stories]);
+}
+
+// --- Outreach Emails ---
+export function localGetOutreachEmail(jobId: string): OutreachEmail | null {
+  return getItems<OutreachEmail>(KEYS.outreachEmails).find(o => o.job_id === jobId) ?? null;
+}
+
+export function localSaveOutreachEmail(jobId: string, resumeId: string, subject: string, body: string): string {
+  const id = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  const items = getItems<OutreachEmail>(KEYS.outreachEmails).filter(o => o.job_id !== jobId);
+  items.push({ id, job_id: jobId, resume_id: resumeId, subject, body, created_at: now });
+  setItems(KEYS.outreachEmails, items);
+  return id;
 }

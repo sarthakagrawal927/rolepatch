@@ -8,7 +8,7 @@ import { v4 as uuid } from 'uuid';
 // Types
 // ---------------------------------------------------------------------------
 
-export type TokenDebitType = 'tailor' | 'cover_letter' | 'fit_score' | 'interview_prep';
+export type TokenDebitType = 'tailor' | 'cover_letter' | 'fit_score' | 'interview_prep' | 'outreach_email';
 export type TokenCreditType = 'purchase' | 'refund' | 'signup_bonus';
 type TokenType = TokenDebitType | TokenCreditType;
 
@@ -25,6 +25,7 @@ const VALID_DEBIT_TYPES: ReadonlySet<TokenDebitType> = new Set([
   'cover_letter',
   'fit_score',
   'interview_prep',
+  'outreach_email',
 ]);
 
 const VALID_CREDIT_TYPES: ReadonlySet<TokenCreditType> = new Set([

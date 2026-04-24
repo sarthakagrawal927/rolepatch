@@ -59,7 +59,7 @@ async function migrate() {
   }
 
   // Add user_id column to all content tables
-  const tablesNeedingUserId = ['resumes', 'job_applications', 'tailored_resumes', 'cover_letters', 'stash_entries'];
+  const tablesNeedingUserId = ['resumes', 'job_applications', 'tailored_resumes', 'cover_letters', 'stash_entries', 'outreach_emails'];
   for (const table of tablesNeedingUserId) {
     try {
       await db.execute(`ALTER TABLE ${table} ADD COLUMN user_id TEXT`);
