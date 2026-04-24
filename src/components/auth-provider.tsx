@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ session, children }: { session: Session | null; children: React.ReactNode }) {
-  const userId = (session as Session & { userId?: string })?.userId ?? null;
+  const userId = session?.user?.id ?? null;
   return (
     <SessionProvider session={session}>
       <AuthContext.Provider value={{ isGuest: !userId, userId }}>

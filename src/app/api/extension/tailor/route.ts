@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import type { Session } from 'next-auth';
 
 // CORS for the Chrome extension. The extension origin is
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   let session: Session | null = null;
   try {
-    session = await getServerSession(authOptions);
+    session = await auth();
   } catch {
     session = null;
   }

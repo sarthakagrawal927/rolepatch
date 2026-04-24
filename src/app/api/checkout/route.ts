@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import DodoPayments from 'dodopayments';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { getProductId } from '@/lib/token-config';
-import type { Session } from 'next-auth';
 
 let _client: DodoPayments | null = null;
 
@@ -20,7 +18,7 @@ function getClient() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
@@ -31,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid pack' }, { status: 400 });
   }
 
-  const userId = (session as Session & { userId?: string }).userId;
+  const userId = session.user.id;
   if (!userId) {
     return NextResponse.json({ error: 'User not found' }, { status: 401 });
   }
