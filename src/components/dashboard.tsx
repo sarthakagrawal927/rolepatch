@@ -7,6 +7,7 @@ import { localListResumes, localListJobs, localUpdateJobStatus } from '@/lib/loc
 import { updateJobStatus } from '@/lib/actions/job-actions';
 import type { Resume, JobApplication } from '@/lib/types';
 import { CreateResumeButton } from '@/components/create-resume-button';
+import { ResumeImportButton } from '@/components/resume-import-button';
 import { NewJobButton } from '@/components/new-job-button';
 import { MigrationBanner } from '@/components/migration-banner';
 import { ATSScoreMini } from '@/components/ats-score-badge';
@@ -127,7 +128,10 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores }: Dashbo
             </div>
             <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">{resumes.length}</span>
           </div>
-          <CreateResumeButton />
+          <div className="flex items-center gap-2">
+            <ResumeImportButton />
+            <CreateResumeButton />
+          </div>
         </div>
 
         {resumes.length === 0 ? (
