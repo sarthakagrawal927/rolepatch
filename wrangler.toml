@@ -20,13 +20,11 @@ simple = { limit = 100, period = 60 }
 
 [vars]
 NODE_ENV = "production"
+# All AI traffic routes through free-ai-gateway (single Fleet-wide Workers AI
+# chokepoint with daily Neuron budget). Override per-env if needed.
+AI_BASE_URL = "https://free-ai-gateway.sarthakagrawal927.workers.dev/v1"
 
 # Browser Rendering binding — replaces broken puppeteer-core + @sparticuz/chromium.
 # Available on Workers Paid plan. Used by src/lib/pdf.ts renderPdf().
 [browser]
 binding = "BROWSER"
-
-# Workers AI binding for resume tailoring + cover letter generation.
-# Replaces external AI_BASE_URL/AI_API_KEY (paid).
-[ai]
-binding = "AI"
