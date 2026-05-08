@@ -1,5 +1,18 @@
 name: CI
 on: [push, pull_request]
 jobs:
-  foundry:
-    uses: sarthakagrawal927/saas-maker/.github/workflows/foundry-ci.yml@v1
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.19'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm run --if-present lint
+      - run: pnpm run --if-present test
+      - run: pnpm cf:build
