@@ -9,6 +9,7 @@ import { UserMenu } from '@/components/user-menu';
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/tools', label: 'Free Tools' },
+  { href: '/evidence', label: 'Evidence' },
   { href: '/stash', label: 'Stash' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/settings', label: 'Settings' },

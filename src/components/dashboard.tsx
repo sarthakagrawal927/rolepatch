@@ -4,6 +4,7 @@ import { AlertCircle, ArrowRight, Calendar, FileText, Globe, Sparkles } from 'lu
 import Link from 'next/link';
 import { useEffect, useMemo,useState } from 'react';
 
+import { AchievementEvidenceBank } from '@/components/achievement-evidence-bank';
 import { ApplicationCampaignTracker } from '@/components/application-campaign-tracker';
 import { ATSScoreMini } from '@/components/ats-score-badge';
 import { useAuth } from '@/components/auth-provider';
@@ -15,8 +16,8 @@ import { MigrationBanner } from '@/components/migration-banner';
 import { NewJobButton } from '@/components/new-job-button';
 import { ResumeImportButton } from '@/components/resume-import-button';
 import { updateJobDetails,updateJobStatus } from '@/lib/actions/job-actions';
-import { localListJobs, localListResumes, localUpdateJobDetails,localUpdateJobStatus } from '@/lib/local-storage';
-import type { JobApplication, JobDetailsPatch,Resume } from '@/lib/types';
+import { localListAchievementEvidence, localListJobs, localListResumes, localUpdateJobDetails,localUpdateJobStatus } from '@/lib/local-storage';
+import type { AchievementEvidence, JobApplication, JobDetailsPatch,Resume } from '@/lib/types';
 
 const STATUS_OPTIONS: JobApplication['status'][] = [
   'draft', 'tailored', 'applied', 'interview', 'offer', 'rejected',
@@ -52,6 +53,7 @@ interface DashboardProps {
   serverResumes: Resume[];
   serverJobs: JobApplication[];
   serverFitScores?: Record<string, number>;
+  serverEvidence?: AchievementEvidence[];
 }
 
 function toDashboardJob(j: JobApplication): DashboardJob {
@@ -81,12 +83,13 @@ function timeAgo(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function Dashboard({ serverResumes, serverJobs, serverFitScores }: DashboardProps) {
+export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEvidence = [] }: DashboardProps) {
   const { isGuest } = useAuth();
   const [resumes, setResumes] = useState(serverResumes);
   const [jobs, setJobs] = useState<DashboardJob[]>(serverJobs.map(toDashboardJob));
   const [atsScores, setAtsScores] = useState<Record<string, { original: number; tailored: number }>>({});
   const [fitScores] = useState<Record<string, number>>(serverFitScores ?? {});
+  const [evidence, setEvidence] = useState(serverEvidence);
   const [detailsJobId, setDetailsJobId] = useState<string | null>(null);
   const [nowSec, setNowSec] = useState<number>(0);
 
@@ -96,6 +99,7 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores }: Dashbo
       /* eslint-disable react-hooks/set-state-in-effect */
       setResumes(localListResumes());
       setJobs(localListJobs());
+      setEvidence(localListAchievementEvidence());
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isGuest]);
@@ -224,6 +228,14 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores }: Dashbo
         jobs={jobs}
         onOpenDetails={setDetailsJobId}
       />
+
+      <section className="mb-16">
+        <AchievementEvidenceBank
+          serverEntries={evidence}
+          compact
+          roleHint={jobs[0]?.role ?? ''}
+        />
+      </section>
 
       {/* Resumes section */}
       <section className="mb-16">

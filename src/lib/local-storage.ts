@@ -1,4 +1,4 @@
-import type { CoverLetter, FitScore, InterviewStory, JobApplication, JobDetailsPatch, OutreachEmail, Resume, SkillsRoadmap,StashEntry, TailorChange, TailoredResume } from '@/lib/types';
+import type { AchievementEvidence, CoverLetter, FitScore, InterviewStory, JobApplication, JobDetailsPatch, OutreachEmail, Resume, SkillsRoadmap,StashEntry, TailorChange, TailoredResume } from '@/lib/types';
 
 const KEYS = {
   resumes: 'rt-resumes',
@@ -10,6 +10,7 @@ const KEYS = {
   interviewStories: 'rt-interview-stories',
   outreachEmails: 'rt-outreach-emails',
   skillsRoadmaps: 'rt-skills-roadmaps',
+  achievementEvidence: 'rt-achievement-evidence',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -79,6 +80,33 @@ export function localUpdateStashEntry(id: string, category: string, label: strin
 
 export function localDeleteStashEntry(id: string): void {
   setItems(KEYS.stash, getItems<StashEntry>(KEYS.stash).filter(e => e.id !== id));
+}
+
+// --- Achievement Evidence ---
+export function localListAchievementEvidence(): AchievementEvidence[] {
+  return getItems<AchievementEvidence>(KEYS.achievementEvidence).sort((a, b) => b.updated_at - a.updated_at);
+}
+
+export function localCreateAchievementEvidence(input: Omit<AchievementEvidence, 'id' | 'created_at' | 'updated_at'>): string {
+  const id = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  const entries = getItems<AchievementEvidence>(KEYS.achievementEvidence);
+  entries.push({ ...input, id, created_at: now, updated_at: now });
+  setItems(KEYS.achievementEvidence, entries);
+  return id;
+}
+
+export function localUpdateAchievementEvidence(id: string, input: Omit<AchievementEvidence, 'id' | 'created_at' | 'updated_at'>): void {
+  const entries = getItems<AchievementEvidence>(KEYS.achievementEvidence);
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx >= 0) {
+    entries[idx] = { ...entries[idx], ...input, updated_at: Math.floor(Date.now() / 1000) };
+    setItems(KEYS.achievementEvidence, entries);
+  }
+}
+
+export function localDeleteAchievementEvidence(id: string): void {
+  setItems(KEYS.achievementEvidence, getItems<AchievementEvidence>(KEYS.achievementEvidence).filter(e => e.id !== id));
 }
 
 // --- Job Applications (guest metadata) ---

@@ -123,6 +123,29 @@ async function migrate() {
     }
   }
 
+  try {
+    await db.execute(
+      `CREATE TABLE IF NOT EXISTS achievement_evidence (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        title TEXT NOT NULL DEFAULT '',
+        situation TEXT NOT NULL DEFAULT '',
+        action TEXT NOT NULL DEFAULT '',
+        result TEXT NOT NULL DEFAULT '',
+        metric TEXT NOT NULL DEFAULT '',
+        scope TEXT NOT NULL DEFAULT '',
+        skills TEXT NOT NULL DEFAULT '[]',
+        role_targets TEXT NOT NULL DEFAULT '[]',
+        impact_type TEXT NOT NULL DEFAULT 'other',
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+      )`,
+    );
+    console.log('Ensured achievement_evidence table');
+  } catch {
+    // Already exists - safe to ignore
+  }
+
   // skills_roadmaps — idempotent; schema file also declares it for fresh installs
   try {
     await db.execute(

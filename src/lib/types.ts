@@ -129,6 +129,23 @@ export interface StashEntry {
   updated_at: number;
 }
 
+export type AchievementImpact = 'revenue' | 'cost' | 'growth' | 'quality' | 'speed' | 'leadership' | 'technical' | 'other';
+
+export interface AchievementEvidence {
+  id: string;
+  title: string;
+  situation: string;
+  action: string;
+  result: string;
+  metric: string;
+  scope: string;
+  skills: string[];
+  role_targets: string[];
+  impact_type: AchievementImpact;
+  created_at: number;
+  updated_at: number;
+}
+
 export type SkillPriority = 'high' | 'medium' | 'low';
 export type SkillResourceType = 'course' | 'doc' | 'project' | 'book';
 
