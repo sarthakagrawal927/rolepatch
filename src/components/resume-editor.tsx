@@ -205,6 +205,8 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       localUpdateResume(resumeId, text);
     } else {
       await updateResume(resumeId, text);
+      // Server now has the authoritative copy — clear the local draft.
+      try { localStorage.removeItem(`resume-draft-${resumeId}`); } catch {}
     }
     setSource(text);
     setSaving(false);
@@ -214,6 +216,36 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   useEffect(() => {
     saveRef.current = save;
   }, [save]);
+
+  // Mirror unsaved edits to localStorage so a tab reload doesn't lose work.
+  // Guests already store their resume in localStorage, so they don't need
+  // a separate draft. Debounced to avoid one write per keystroke.
+  useEffect(() => {
+    if (!ready || isGuest) return;
+    const t = setTimeout(() => {
+      try { localStorage.setItem(`resume-draft-${resumeId}`, source); } catch {}
+    }, 800);
+    return () => clearTimeout(t);
+  }, [source, resumeId, ready, isGuest]);
+
+  // Restore the unsaved draft (if any) once the editor is ready.
+  useEffect(() => {
+    if (isGuest || !ready) return;
+    try {
+      const draft = localStorage.getItem(`resume-draft-${resumeId}`);
+      if (draft !== null && draft !== (initialSource ?? '')) {
+        const view = viewRef.current;
+        if (view) {
+          view.dispatch({
+            changes: { from: 0, to: view.state.doc.length, insert: draft },
+          });
+        } else {
+          setSource(draft);
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once when ready flips true
+  }, [ready]);
 
   useEffect(() => {
     if (!editorContainerRef.current || viewRef.current || !ready) return;
