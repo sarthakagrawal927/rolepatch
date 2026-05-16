@@ -20,19 +20,6 @@ function corsHeaders(req: NextRequest): Record<string, string> {
   };
 }
 
-// Per-user sliding-window rate limit.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 10;
-const rateLimitMap = new Map<string, number[]>();
-function checkRateLimit(key: string): boolean {
-  const now = Date.now();
-  const stamps = (rateLimitMap.get(key) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (stamps.length >= RATE_LIMIT_MAX) return false;
-  stamps.push(now);
-  rateLimitMap.set(key, stamps);
-  return true;
-}
-
 interface ExtensionPayload {
   url?: string;
   title?: string;
@@ -61,13 +48,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { ok: false, error: 'Not authenticated', redirect_url: '/api/auth/signin' },
       { status: 401, headers },
-    );
-  }
-
-  if (!checkRateLimit(userId)) {
-    return NextResponse.json(
-      { ok: false, error: 'Rate limit exceeded — max 10 per minute.' },
-      { status: 429, headers },
     );
   }
 

@@ -13,11 +13,16 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval required by Next.js dev + some libs
+      // unsafe-eval required by Next.js dev + some libs.
+      // static.cloudflareinsights.com is the Cloudflare Web Analytics beacon
+      // that Cloudflare injects automatically on the rolepatch.com zone.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",
-      "connect-src 'self' https:",
+      // https: is broad but already in use for AI/scraping/saas-maker traffic;
+      // explicit cloudflareinsights.com keeps the beacon working if the policy is tightened later.
+      "connect-src 'self' https: https://cloudflareinsights.com",
       "frame-ancestors 'none'",
     ].join('; '),
   },

@@ -105,16 +105,14 @@ describe('POST /api/jobs/search', () => {
     expect(res.status).toBe(502);
   });
 
-  it('rate-limits a single user after 5 calls/min', async () => {
-    mockGetCurrentUserId.mockResolvedValue('user-rate');
+  it('allows repeated job searches for the same user', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-burst');
     globalThis.fetch = okFetch({ jobs: [] });
 
     const { POST } = await import('@/app/api/jobs/search/route');
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       const ok = await POST(makeReq({ query: 'python' }));
       expect(ok.status).toBe(200);
     }
-    const blocked = await POST(makeReq({ query: 'python' }));
-    expect(blocked.status).toBe(429);
   });
 });

@@ -3,31 +3,10 @@ import { NextResponse } from 'next/server';
 
 import { getCurrentUserId } from '@/lib/auth-utils';
 
-// Per-user sliding-window rate limit.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 5;
-const rateLimitMap = new Map<string, number[]>();
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now();
-  const stamps = (rateLimitMap.get(key) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (stamps.length >= RATE_LIMIT_MAX) return false;
-  stamps.push(now);
-  rateLimitMap.set(key, stamps);
-  return true;
-}
-
 export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId();
   if (!userId) {
     return NextResponse.json({ error: 'Sign in to discover jobs' }, { status: 401 });
-  }
-
-  if (!checkRateLimit(userId)) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded — max 5 searches per minute.' },
-      { status: 429 },
-    );
   }
 
   const serviceKey = process.env.JOBSPY_API_KEY;

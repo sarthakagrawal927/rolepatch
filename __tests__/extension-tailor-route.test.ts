@@ -86,22 +86,16 @@ describe('POST /api/extension/tailor', () => {
     expect(mockExecute).toHaveBeenCalledTimes(2); // no insert
   });
 
-  it('rate-limits after 10 calls/min', async () => {
-    mockGetCurrentUserId.mockResolvedValue('user-rate');
-    mockExecute.mockResolvedValue({ rows: [{ id: 'resume-1' }] });
+  it('allows repeated extension tailoring requests for the same user', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-burst');
     const { POST } = await import('@/app/api/extension/tailor/route');
-    // Force the "existing job" branch so we don't need to mock insert each call.
-    mockExecute
-      .mockResolvedValue({ rows: [{ id: 'j' }] });
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       mockExecute
         .mockResolvedValueOnce({ rows: [{ id: 'r' }] })
         .mockResolvedValueOnce({ rows: [{ id: 'j' }] });
       const ok = await POST(makeReq({ url: `https://x/${i}`, jd_text: longJd }));
       expect(ok.status).toBe(200);
     }
-    const blocked = await POST(makeReq({ url: 'https://x/11', jd_text: longJd }));
-    expect(blocked.status).toBe(429);
   });
 
   it('rejects non-http(s) urls', async () => {
