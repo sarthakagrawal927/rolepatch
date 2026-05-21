@@ -1,4 +1,4 @@
-import { devices, expect, test, type Page } from '@playwright/test';
+import { devices, expect, type Page, test } from '@playwright/test';
 
 // Exercise the primary flow entry points at a 390px viewport (iPhone 13).
 // Wave 1 goal: no horizontal scroll, hamburger nav, single-column layouts.
