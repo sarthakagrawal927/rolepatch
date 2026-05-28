@@ -1,6 +1,6 @@
 "use client";
 
-import { initPostHog, track } from "@saas-maker/posthog-client";
+import posthog from "posthog-js";
 
 type AuthFailureStage = "signin" | "signup" | "callback" | "session" | "unknown";
 const PROJECT_SLUG = "resume-tailor";
@@ -25,8 +25,8 @@ export function captureAuthFailure(options: {
   source?: string;
   projectSlug?: string;
 }) {
-  track("foundry_auth_failure", {
-    project_slug: options.projectSlug ?? PROJECT_SLUG,
+  posthog.capture("foundry_auth_failure", {
+    project_id: options.projectSlug ?? PROJECT_SLUG,
     route: route(),
     provider: options.provider,
     stage: options.stage ?? "unknown",
@@ -55,8 +55,8 @@ export function captureError(
   options: { scope?: ErrorBoundaryScope; digest?: string; source?: string } = {},
 ) {
   try {
-    track("error_captured", {
-      project_slug: PROJECT_SLUG,
+    posthog.capture("error_captured", {
+      project_id: PROJECT_SLUG,
       route: route(),
       scope: options.scope ?? "unknown",
       digest: options.digest,
@@ -70,8 +70,8 @@ export function captureError(
 }
 
 export function capturePageCrash(error: unknown, source: "window_error" | "unhandled_rejection") {
-  track("foundry_page_crash", {
-    project_slug: PROJECT_SLUG,
+  posthog.capture("foundry_page_crash", {
+    project_id: PROJECT_SLUG,
     route: route(),
     source,
     message: messageFrom(error),
@@ -81,7 +81,7 @@ export function capturePageCrash(error: unknown, source: "window_error" | "unhan
 
 export function installBrowserMonitoring() {
   if (typeof window === "undefined") return () => {};
-  initPostHog({ apiKey: POSTHOG_KEY, host: POSTHOG_HOST });
+  posthog.init(POSTHOG_KEY, { api_host: POSTHOG_HOST, person_profiles: "always", capture_pageview: false, autocapture: false });
 
   const onError = (event: ErrorEvent) => {
     capturePageCrash(event.error ?? event.message, "window_error");

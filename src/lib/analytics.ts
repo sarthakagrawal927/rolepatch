@@ -5,14 +5,14 @@
  * build one cross-fleet funnel (signup -> activated -> core_action) and a
  * D1/D7 retention insight without any custom dashboard.
  *
- * Every event carries `project: "resume-tailor"`. This wrapper is intentionally
- * thin so it can later be promoted into `@saas-maker/posthog-client`.
+ * Every event carries `project_id: "resume-tailor"`. This wrapper is intentionally
+ * thin so it can later be promoted into `posthog-js`.
  *
- * It is isomorphic: in the browser it routes through `@saas-maker/posthog-client`
+ * It is isomorphic: in the browser it routes through `posthog-js`
  * (`track`); inside a server action it posts to the PostHog capture API so the
  * 4 events still land for server-side triggers (`activated`, `core_action`).
  *
- * NOTE: `@saas-maker/posthog-client` (the browser entry) bundles
+ * NOTE: `posthog-js` (the browser entry) bundles
  * `PostHogProvider`, which calls `React.createContext` at module-evaluation
  * time. A static top-level import would therefore execute `createContext`
  * during SSR / `next build` page-data collection and crash with
@@ -36,13 +36,13 @@ export type CoreAction =
 
 interface AnalyticsEventMap {
   /** First session after an account is created. */
-  signup: { project: typeof PROJECT };
+  signup: { project_id: typeof PROJECT };
   /** The user reaches first real value — their first successful tailor run. */
-  activated: { project: typeof PROJECT };
+  activated: { project_id: typeof PROJECT };
   /** The thing the product exists to do. */
-  core_action: { project: typeof PROJECT; action: CoreAction };
+  core_action: { project_id: typeof PROJECT; action: CoreAction };
   /** A return session by a user with prior activity. */
-  returned: { project: typeof PROJECT };
+  returned: { project_id: typeof PROJECT };
 }
 
 function emitServer(event: string, props: Record<string, unknown>, distinctId?: string) {
@@ -61,22 +61,22 @@ function emitServer(event: string, props: Record<string, unknown>, distinctId?: 
   });
 }
 
-function emit<K extends keyof AnalyticsEventMap>(
-  event: K,
-  props: Omit<AnalyticsEventMap[K], 'project'>,
+export function trackEvent(
+  event: string,
+  properties: Record<string, unknown> = {},
   distinctId?: string,
-) {
-  const payload = { project: PROJECT, ...props };
+): void {
+  const payload = { project_id: PROJECT, ...properties };
   try {
     if (typeof window === 'undefined') {
       emitServer(event, payload, distinctId);
     } else {
       // Browser context. Load the browser client lazily so the
-      // React-dependent `@saas-maker/posthog-client` entry is never evaluated
+      // React-dependent `posthog-js` entry is never evaluated
       // during SSR / `next build`.
-      void import('@saas-maker/posthog-client')
-        .then(({ track }) => {
-          track(event, payload);
+      void import('posthog-js')
+        .then(({ default: posthog }) => {
+          posthog.capture(event, payload);
         })
         .catch(() => {
           // Analytics must never break a user flow. Swallow and move on.
@@ -85,6 +85,14 @@ function emit<K extends keyof AnalyticsEventMap>(
   } catch {
     // Analytics must never break a user flow.
   }
+}
+
+function emit<K extends keyof AnalyticsEventMap>(
+  event: K,
+  props: Omit<AnalyticsEventMap[K], "project_id">,
+  distinctId?: string,
+): void {
+  trackEvent(event, props, distinctId);
 }
 
 /** Fire once, on the first session after an account is created. */
