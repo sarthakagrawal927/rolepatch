@@ -17,6 +17,9 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  // Mono is used in the LaTeX editor, not on the landing LCP path.
+  // Skipping preload keeps the Geist sans (LCP) the only font early.
+  preload: false,
 });
 
 export const metadata: Metadata = {
