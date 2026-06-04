@@ -4,7 +4,7 @@ export default [
   ...config,
   {
     ignores: [
-      ".pages-deploy/**",
+      "landing-astro/**", ".pages-deploy/**",
       ".fallow/**",
       "extension/**",
       "coverage/**",
