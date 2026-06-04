@@ -38,7 +38,6 @@ const howItWorks = [
 
 const builtOn = ["Next.js", "Turso", "Cloudflare"];
 
-export const revalidate = 3600;
 
 export default function LandingPage() {
   return (

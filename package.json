@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "cf:build": "next build --webpack && node scripts/inline-critical-css.mjs && opennextjs-cloudflare build --skipNextBuild",
+    "cf:build": "next build --webpack && node scripts/inline-critical-css.mjs && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare populateCache local",
     "deploy": "pnpm cf:build && wrangler deploy",
     "start": "next start",
     "lint": "eslint",
