@@ -1,4 +1,11 @@
 ---
+// Self-hosted Geist variable font. Astro inlines the @font-face into
+// the page's CSS via Lightning CSS (build.inlineStylesheets: 'always'),
+// so we drop the external fonts.googleapis.com round-trip from the
+// LCP path. Family registers as 'Geist Variable' — mapped onto the
+// existing --font-geist-sans CSS var below so global.css needs no
+// changes. Geist Mono is not used on the landing surface; skipped.
+import '@fontsource-variable/geist';
 import '@/styles/global.css';
 
 interface Props {
@@ -66,41 +73,13 @@ const jsonLd = {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={OG_IMAGE} />
 
-    {/* ── Fonts ────────────────────────────────────────────────────
-       Geist (sans) is the LCP-path face — the hero h1 and the body
-       copy both render in it. Geist Mono is referenced via
-       `--font-geist-mono` but is not used on this landing surface
-       (the LaTeX editor lives on a different route), so we skip its
-       preload to keep the LCP path lean. Async-CSS pattern (preload
-       + media print → all on load) so the stylesheet never blocks
-       first paint; <noscript> covers the no-JS fallback. */}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap"
-      />
-    </noscript>
-
     {/* Mirror the CSS vars Next.js's next/font set up, so `font-sans`
        (which resolves to var(--font-sans) → var(--font-geist-sans))
-       keeps working unchanged. */}
+       keeps working unchanged. Fontsource Variable registers Geist as
+       'Geist Variable'; plain 'Geist' stays in the fallback chain. */}
     <style is:inline>
       :root {
-        --font-geist-sans: 'Geist', system-ui, -apple-system, sans-serif;
+        --font-geist-sans: 'Geist Variable', 'Geist', system-ui, -apple-system, sans-serif;
         --font-geist-mono: 'Geist Mono', ui-monospace, monospace;
       }
       html.dark { color-scheme: dark; }
