@@ -299,6 +299,10 @@ export default function LandingPage() {
           <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-sm text-white/20 font-medium">
               &copy; {new Date().getFullYear()} RolePatch. Built for the modern job seeker.
+              {' · '}
+              <a href="https://sarthakagrawal.dev" className="hover:text-white/50 transition-colors">Sarthak</a>
+              {' · '}
+              <a href="https://sassmaker.com" className="hover:text-white/50 transition-colors">Foundry</a>
             </p>
             <div className="flex gap-6 opacity-20 hover:opacity-100 transition-opacity">
               <Globe className="w-5 h-5 cursor-pointer" />
