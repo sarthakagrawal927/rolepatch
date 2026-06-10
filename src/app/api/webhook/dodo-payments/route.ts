@@ -110,18 +110,29 @@ export async function POST(request: Request) {
       const userId = row.user_id as string;
       const tokensToRevoke = row.tokens_granted as number;
 
-      // Deduct tokens (floor at 0 to avoid negative balance)
-      await db.execute({
-        sql: `UPDATE token_balances
-              SET balance = MAX(0, balance - ?), updated_at = unixepoch()
-              WHERE user_id = ?`,
-        args: [tokensToRevoke, userId],
-      });
+      // Deduct tokens + mark refunded in a single transaction. Without it,
+      // a failure after the deduction leaves status = 'completed', and the
+      // webhook retry would deduct the tokens a second time.
+      const tx = await db.transaction('write');
+      try {
+        // Deduct tokens (floor at 0 to avoid negative balance)
+        await tx.execute({
+          sql: `UPDATE token_balances
+                SET balance = MAX(0, balance - ?), updated_at = unixepoch()
+                WHERE user_id = ?`,
+          args: [tokensToRevoke, userId],
+        });
 
-      await db.execute({
-        sql: `UPDATE payments SET status = 'refunded' WHERE id = ?`,
-        args: [paymentId],
-      });
+        await tx.execute({
+          sql: `UPDATE payments SET status = 'refunded' WHERE id = ?`,
+          args: [paymentId],
+        });
+
+        await tx.commit();
+      } catch (err) {
+        await tx.rollback();
+        throw err;
+      }
     }
   }
 
