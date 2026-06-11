@@ -79,6 +79,21 @@ export async function generateCoverLetter(
     debited = true;
   }
 
+  if (!userId) {
+    throw new Error('Authentication required to generate.');
+  }
+
+  const ownershipCheck = await db.execute({
+    sql: `SELECT 1
+          FROM job_applications ja
+          JOIN resumes r ON r.id = ?
+          WHERE ja.id = ? AND ja.user_id = ? AND r.user_id = ?`,
+    args: [resumeId, jobId, userId, userId],
+  });
+  if (ownershipCheck.rows.length === 0) {
+    throw new Error('Job or resume not found');
+  }
+
   try {
     // Research company
     let companyResearch = '';
