@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCampaignSummary,
-  type CampaignJob,
   type CampaignJobWithActivity,
 } from '@/lib/application-campaign';
 
