@@ -268,9 +268,10 @@ export function localGetInterviewStories(jobId: string): InterviewStory[] {
 
 export function localSaveInterviewStories(stories: InterviewStory[]): void {
   if (stories.length === 0) return;
-  const jobId = stories[0].job_id;
-  const existing = getItems<InterviewStory>(KEYS.interviewStories).filter(s => s.job_id !== jobId);
-  setItems(KEYS.interviewStories, [...existing, ...stories]);
+  const existing = getItems<InterviewStory>(KEYS.interviewStories);
+  const incomingJobIds = new Set(stories.map((story) => story.job_id));
+  const preserved = existing.filter((story) => !incomingJobIds.has(story.job_id));
+  setItems(KEYS.interviewStories, [...preserved, ...stories]);
 }
 
 // --- Outreach Emails ---

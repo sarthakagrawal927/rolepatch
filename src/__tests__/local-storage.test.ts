@@ -107,6 +107,22 @@ describe('localInterviewStories', () => {
     expect(retrieved).toHaveLength(2);
     expect(retrieved[0].theme).toBe('New Theme');
   });
+
+  it('preserves stories for other jobs when saving a mixed batch', () => {
+    localSaveInterviewStories([
+      mockStories[0],
+      { ...mockStories[0], id: 'story-2', job_id: 'job-2', theme: 'Ownership' },
+    ]);
+
+    localSaveInterviewStories([
+      { ...mockStories[0], id: 'story-3', job_id: 'job-1', theme: 'Leadership v2' },
+    ]);
+
+    expect(localGetInterviewStories('job-1')).toHaveLength(1);
+    expect(localGetInterviewStories('job-1')[0].theme).toBe('Leadership v2');
+    expect(localGetInterviewStories('job-2')).toHaveLength(1);
+    expect(localGetInterviewStories('job-2')[0].theme).toBe('Ownership');
+  });
 });
 
 describe('localJobs', () => {
