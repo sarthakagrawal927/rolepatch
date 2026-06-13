@@ -44,12 +44,14 @@ export async function publishScore(tailoredId: string): Promise<{ slug: string }
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidate = generateSlug();
       try {
-        await db.execute({
+        const updateResult = await db.execute({
           sql: `UPDATE tailored_resumes SET share_slug = ? WHERE id = ? AND user_id = ? AND share_slug IS NULL`,
           args: [candidate, tailoredId, userId],
         });
-        slug = candidate;
-        break;
+        if ((updateResult.rowsAffected ?? 0) > 0) {
+          slug = candidate;
+          break;
+        }
       } catch {
         // collision — try again
       }
