@@ -34,7 +34,7 @@ const howItWorks = [
 const builtOn = ['Next.js', 'Turso', 'Cloudflare'];
 
 const features = [
-  { icon: 'target', title: 'Job Fit Score', desc: 'AI evaluates your match across 5 weighted dimensions — role alignment, skills, experience level, keywords, and culture fit. Know before you apply.' },
+  { icon: 'target', title: 'Job Fit Score', desc: 'See your fit score across 5 things recruiters check before you waste an hour applying.' },
   { icon: 'zap', title: 'Contextual Rewriting', desc: "Our AI doesn't just swap words; it re-contextualizes your experience to match the role's needs. See every change in a word-level diff." },
   { icon: 'message-square', title: 'Interview Prep', desc: 'Auto-generates STAR+R stories mapped to the job requirements. Walk into every interview with rehearsed, quantified answers.' },
   { icon: 'search', title: 'Deep JD Analysis', desc: 'Extracts hard skills, soft skills, and cultural nuances from any job posting. Paste a URL and we scrape the rest.' },
@@ -89,13 +89,13 @@ const year = new Date().getFullYear();
             Next-Gen AI Tailoring
           </div>
 
-          <h1 class="text-7xl md:text-[100px] font-bold leading-[0.9] tracking-tight mb-10">
-            The AI that gets you <br />
-            <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400">more interviews.</span>
+          <h1 class="text-6xl md:text-[88px] font-bold leading-[0.95] tracking-tight mb-10">
+            Paste the job link.<br />
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400">Get a resume that matches it in 60 seconds.</span>
           </h1>
 
           <p class="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
-            Don't just apply. Score your fit, tailor your resume, and prep for interviews — all from one AI-powered command center.
+            You send the same resume to 40 jobs and hear nothing. RolePatch rewrites it for each one, then shows you every change before you accept it.
           </p>
 
           <div class="flex flex-col sm:flex-row gap-5 justify-center items-center">
@@ -104,7 +104,7 @@ const year = new Date().getFullYear();
               class="group relative px-10 py-5 bg-white text-black font-black text-lg rounded-2xl hover:scale-105 transition-all duration-300 shadow-[0_20px_50px_rgba(255,255,255,0.1)] overflow-hidden"
             >
               <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <span class="relative group-hover:text-white transition-colors">Start Building Now — It's Free</span>
+              <span class="relative group-hover:text-white transition-colors">Tailor My Resume Free</span>
             </a>
             <a
               href="#features"
@@ -215,6 +215,9 @@ const year = new Date().getFullYear();
               <p class="text-white/50 text-lg leading-relaxed font-medium">
                 &ldquo;Worked with engineering teams to deliver product features and track key metrics.&rdquo;
               </p>
+              <p class="text-white/30 text-sm leading-relaxed font-medium mt-4 italic">
+                This is the bullet everyone writes. It says nothing.
+              </p>
             </div>
 
             {/* After */}
@@ -223,20 +226,28 @@ const year = new Date().getFullYear();
                 After
               </span>
               <p class="text-white text-lg leading-relaxed font-medium">
-                &ldquo;Owned end-to-end roadmap for{' '}
+                &ldquo;Owned the roadmap for{' '}
                 <mark class="bg-emerald-500/20 text-emerald-300 rounded px-0.5 not-italic">3 payment API products</mark>
-                , partnering with{' '}
+                {' '}with{' '}
                 <mark class="bg-emerald-500/20 text-emerald-300 rounded px-0.5 not-italic">12 engineers</mark>
-                {' '}to ship{' '}
-                <mark class="bg-emerald-500/20 text-emerald-300 rounded px-0.5 not-italic">$4.2M ARR feature expansion</mark>
-                {' '}and cut time-to-first-transaction by{' '}
+                , shipped a{' '}
+                <mark class="bg-emerald-500/20 text-emerald-300 rounded px-0.5 not-italic">$4.2M expansion</mark>
+                , cut time to first transaction{' '}
                 <mark class="bg-emerald-500/20 text-emerald-300 rounded px-0.5 not-italic">31%</mark>.&rdquo;
+              </p>
+              <p class="text-white/50 text-sm leading-relaxed font-medium mt-4">
+                Same job. Real numbers. Pulled from one weak line and one job link.
               </p>
             </div>
           </div>
 
           <p class="text-center text-xs text-white/20 font-medium uppercase tracking-widest mb-10">
             Highlighted text = AI-added specificity · every change shown in a word-level diff
+          </p>
+
+          <p class="text-center text-2xl md:text-3xl text-white font-bold tracking-tight max-w-3xl mx-auto mb-10 leading-snug">
+            Stop guessing why you get ghosted.{' '}
+            <span class="text-white/60">See your fit score first, then fix it.</span>
           </p>
 
           <div class="flex justify-center">
@@ -282,9 +293,10 @@ const year = new Date().getFullYear();
         </div>
         <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p class="text-sm text-white/20 font-medium">
-            &copy; {year} RolePatch. Built for the modern job seeker.
-            · <a href="https://sarthakagrawal.dev" class="hover:text-white/50 transition-colors">Sarthak</a>
-            · <a href="https://sassmaker.com" class="hover:text-white/50 transition-colors">Foundry</a>
+            &copy; {year} RolePatch. Stop guessing why you get ghosted.
+            {' · '}<a href="https://sarthakagrawal.dev" class="hover:text-white/50 transition-colors">Sarthak</a>
+            {' · '}<a href="https://sassmaker.com" class="hover:text-white/50 transition-colors">Foundry</a>
+            {' · '}<span class="text-white/15">copy rewritten by <a href="https://jasondoesstuff.com/marc" class="hover:text-white/50 transition-colors">jasondoesstuff.com/marc</a> (built on Marc Lou's 31 tips)</span>
           </p>
           <div class="flex gap-6 opacity-20 hover:opacity-100 transition-opacity">
             <Icon name="globe" class="w-5 h-5 cursor-pointer" />
