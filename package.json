@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "cf:build": "next build --webpack && astro-landing inline-css && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare populateCache local && pnpm --filter ./landing-astro build && astro-landing overlay",
+    "cf:build": "next build --webpack && node scripts/run-inline-critical-css.mjs && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare populateCache local && pnpm --filter ./landing-astro build && node scripts/run-overlay-astro-landing.mjs",
     "deploy": "pnpm cf:build && wrangler deploy",
     "start": "next start",
     "lint": "eslint",
@@ -67,7 +67,7 @@
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "@saas-maker/astro-landing": "file:../saas-maker/packages/tooling/astro-landing",
+    "beasties": "^0.3.5",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "husky": "^9.1.7",

@@ -162,3 +162,40 @@ CREATE TABLE IF NOT EXISTS skills_roadmaps (
   summary TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
+
+CREATE TABLE IF NOT EXISTS saved_job_searches (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  query TEXT NOT NULL,
+  location TEXT NOT NULL DEFAULT '',
+  remote INTEGER NOT NULL DEFAULT 0,
+  paused INTEGER NOT NULL DEFAULT 0,
+  last_run_at INTEGER,
+  last_result_ids TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS saved_job_shortlist (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  external_job_id TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  company TEXT NOT NULL DEFAULT '',
+  job_url TEXT NOT NULL,
+  location TEXT NOT NULL DEFAULT '',
+  saved_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  last_seen_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  UNIQUE(user_id, job_url)
+);
+
+CREATE TABLE IF NOT EXISTS job_discovery_alerts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  alert_type TEXT NOT NULL DEFAULT 'new_match',
+  title TEXT NOT NULL DEFAULT '',
+  detail TEXT NOT NULL DEFAULT '',
+  seen INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);

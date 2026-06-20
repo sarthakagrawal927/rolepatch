@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
-import { formatEvidenceBullet, rankEvidenceForRole, splitEvidenceList } from '@/lib/achievement-evidence';
+import { formatEvidenceBullet, rankEvidenceForRole, scoreEvidenceQuality, splitEvidenceList } from '@/lib/achievement-evidence';
 import {
   type AchievementEvidenceInput,
   createAchievementEvidence,
@@ -188,16 +188,29 @@ export function AchievementEvidenceBank({ serverEntries, compact = false, roleHi
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {visibleEntries.map(entry => (
+          {visibleEntries.map(entry => {
+            const quality = scoreEvidenceQuality(entry);
+            return (
             <article key={entry.id} className="rounded-xl border border-[var(--border)]/70 bg-background/40 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-foreground">{entry.title}</p>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted-foreground)]">{formatEvidenceBullet(entry)}</p>
                 </div>
-                <span className="rounded-full bg-[var(--primary)]/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--primary)]">
-                  {entry.impact_type}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="rounded-full bg-[var(--primary)]/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--primary)]">
+                    {entry.impact_type}
+                  </span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                    quality === 'strong'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : quality === 'usable'
+                        ? 'bg-amber-500/10 text-amber-400'
+                        : 'bg-red-500/10 text-red-400'
+                  }`}>
+                    {quality}
+                  </span>
+                </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1">
                 {[...entry.skills, ...entry.role_targets].slice(0, 5).map(tag => (
@@ -217,7 +230,7 @@ export function AchievementEvidenceBank({ serverEntries, compact = false, roleHi
                 </button>
               </div>
             </article>
-          ))}
+          );})}
         </div>
       )}
 

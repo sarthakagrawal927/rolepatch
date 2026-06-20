@@ -3,6 +3,8 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
+import { formatEvidenceForPrompt, rankEvidenceForJob } from '@/lib/achievement-evidence';
+import { listAchievementEvidence } from '@/lib/actions/achievement-evidence-actions';
 import { listStashEntries } from '@/lib/actions/stash-actions';
 import { creditTokens,debitToken } from '@/lib/actions/token-actions';
 import { getAIModel, toUserFacingAIError } from '@/lib/ai';
@@ -76,6 +78,16 @@ export async function tailorResume(
         .map((e) => `### [${e.category}] ${e.label}\n${e.content}`)
         .join('\n\n');
       stashSection = `\n\n## Additional Content Available (not currently in resume):\nThe following are extra content blocks the user has stashed. You may incorporate any of these into the tailored resume if they are relevant to the job description. Only use them if they genuinely strengthen the resume for this specific role.\n\n${formatted}`;
+    }
+
+    if (!stashContent && userId) {
+      const evidenceEntries = await listAchievementEvidence();
+      const rankedEvidence = rankEvidenceForJob(evidenceEntries, jdText.slice(0, 120), jdText)
+        .filter(entry => entry.quality !== 'weak')
+        .slice(0, 6);
+      if (rankedEvidence.length > 0) {
+        stashSection += `\n\n## Achievement Evidence (verified proof points):\nUse only when relevant and truthful. Prefer strong quantified items.\n\n${formatEvidenceForPrompt(rankedEvidence)}`;
+      }
     }
 
     const { object } = await generateObject({

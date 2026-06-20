@@ -1,3 +1,5 @@
+import type { JobDiscoveryAlert, SavedJobSearch, SavedJobShortlistItem } from '@/lib/job-discovery-alerts';
+import type { DiscoveredJob } from '@/lib/job-discovery-types';
 import type { AchievementEvidence, CoverLetter, FitScore, InterviewStory, JobApplication, JobDetailsPatch, OutreachEmail, Resume, SkillsRoadmap,StashEntry, TailorChange, TailoredResume } from '@/lib/types';
 
 const KEYS = {
@@ -11,6 +13,9 @@ const KEYS = {
   outreachEmails: 'rt-outreach-emails',
   skillsRoadmaps: 'rt-skills-roadmaps',
   achievementEvidence: 'rt-achievement-evidence',
+  savedJobSearches: 'rt-saved-job-searches',
+  savedJobShortlist: 'rt-saved-job-shortlist',
+  jobDiscoveryAlerts: 'rt-job-discovery-alerts',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -107,6 +112,90 @@ export function localUpdateAchievementEvidence(id: string, input: Omit<Achieveme
 
 export function localDeleteAchievementEvidence(id: string): void {
   setItems(KEYS.achievementEvidence, getItems<AchievementEvidence>(KEYS.achievementEvidence).filter(e => e.id !== id));
+}
+
+// --- Job discovery (guest) ---
+export function localListSavedJobSearches(): SavedJobSearch[] {
+  return getItems<SavedJobSearch>(KEYS.savedJobSearches).sort((a, b) => b.updated_at - a.updated_at);
+}
+
+export function localCreateSavedJobSearch(input: Omit<SavedJobSearch, 'id' | 'created_at' | 'updated_at' | 'paused'> & { paused?: boolean }): string {
+  const id = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  const items = getItems<SavedJobSearch>(KEYS.savedJobSearches);
+  items.push({
+    id,
+    name: input.name,
+    query: input.query,
+    location: input.location,
+    remote: input.remote,
+    paused: input.paused ?? false,
+    last_run_at: input.last_run_at,
+    created_at: now,
+    updated_at: now,
+  });
+  setItems(KEYS.savedJobSearches, items);
+  return id;
+}
+
+export function localUpdateSavedJobSearch(id: string, paused: boolean): void {
+  const items = getItems<SavedJobSearch>(KEYS.savedJobSearches);
+  const idx = items.findIndex(item => item.id === id);
+  if (idx >= 0) {
+    items[idx] = { ...items[idx], paused, updated_at: Math.floor(Date.now() / 1000) };
+    setItems(KEYS.savedJobSearches, items);
+  }
+}
+
+export function localDeleteSavedJobSearch(id: string): void {
+  setItems(KEYS.savedJobSearches, getItems<SavedJobSearch>(KEYS.savedJobSearches).filter(item => item.id !== id));
+}
+
+export function localListSavedJobShortlist(): SavedJobShortlistItem[] {
+  return getItems<SavedJobShortlistItem>(KEYS.savedJobShortlist).sort((a, b) => b.saved_at - a.saved_at);
+}
+
+export function localAddSavedJobShortlist(job: DiscoveredJob): void {
+  if (!job.job_url) return;
+  const now = Math.floor(Date.now() / 1000);
+  const items = getItems<SavedJobShortlistItem>(KEYS.savedJobShortlist).filter(item => item.job_url !== job.job_url);
+  items.push({
+    id: crypto.randomUUID(),
+    job_id: job.id,
+    title: job.title ?? 'Untitled role',
+    company: job.company ?? 'Unknown company',
+    job_url: job.job_url,
+    location: job.location ?? undefined,
+    saved_at: now,
+    last_seen_at: now,
+  });
+  setItems(KEYS.savedJobShortlist, items);
+}
+
+export function localRemoveSavedJobShortlist(id: string): void {
+  setItems(KEYS.savedJobShortlist, getItems<SavedJobShortlistItem>(KEYS.savedJobShortlist).filter(item => item.id !== id));
+}
+
+export function localListJobDiscoveryAlerts(): JobDiscoveryAlert[] {
+  return getItems<JobDiscoveryAlert>(KEYS.jobDiscoveryAlerts).sort((a, b) => b.created_at - a.created_at);
+}
+
+export function localAddJobDiscoveryAlert(alert: Omit<JobDiscoveryAlert, 'id' | 'created_at' | 'seen'>): void {
+  const items = getItems<JobDiscoveryAlert>(KEYS.jobDiscoveryAlerts);
+  items.unshift({
+    ...alert,
+    id: crypto.randomUUID(),
+    created_at: Math.floor(Date.now() / 1000),
+    seen: false,
+  });
+  setItems(KEYS.jobDiscoveryAlerts, items.slice(0, 50));
+}
+
+export function localMarkJobDiscoveryAlertsSeen(): void {
+  setItems(
+    KEYS.jobDiscoveryAlerts,
+    getItems<JobDiscoveryAlert>(KEYS.jobDiscoveryAlerts).map(alert => ({ ...alert, seen: true })),
+  );
 }
 
 // --- Job Applications (guest metadata) ---

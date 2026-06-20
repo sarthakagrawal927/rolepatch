@@ -1,5 +1,14 @@
 import type { AchievementEvidence } from '@/lib/types';
 
+export type EvidenceQuality = 'strong' | 'usable' | 'weak';
+
+export interface EvidenceMatchReason {
+  keywordOverlap: string[];
+  skillOverlap: string[];
+  roleOverlap: string[];
+  metricRelevant: boolean;
+}
+
 export function splitEvidenceList(value: string): string[] {
   return value
     .split(',')
@@ -21,6 +30,51 @@ export function formatEvidenceBullet(entry: Pick<AchievementEvidence, 'action' |
 export function rankEvidenceForRole(entries: AchievementEvidence[], role: string): AchievementEvidence[] {
   const roleText = role.toLowerCase();
   return [...entries].sort((a, b) => scoreEvidence(b, roleText) - scoreEvidence(a, roleText));
+}
+
+export function scoreEvidenceQuality(entry: AchievementEvidence): EvidenceQuality {
+  const hasOutcome = Boolean(entry.result.trim());
+  const hasMetric = Boolean(entry.metric.trim());
+  const hasScope = Boolean(entry.scope.trim() || entry.situation.trim());
+  const hasAction = Boolean(entry.action.trim());
+
+  if (hasOutcome && hasMetric && hasAction && hasScope) return 'strong';
+  if (hasOutcome && hasAction) return 'usable';
+  return 'weak';
+}
+
+export function explainEvidenceMatch(entry: AchievementEvidence, role: string, jdText = ''): EvidenceMatchReason {
+  const haystack = `${role} ${jdText}`.toLowerCase();
+  const keywordOverlap = [...entry.skills, ...entry.role_targets].filter(
+    token => token && haystack.includes(token.toLowerCase()),
+  );
+  const skillOverlap = entry.skills.filter(skill => skill && haystack.includes(skill.toLowerCase()));
+  const roleOverlap = entry.role_targets.filter(target => target && haystack.includes(target.toLowerCase()));
+  return {
+    keywordOverlap,
+    skillOverlap,
+    roleOverlap,
+    metricRelevant: Boolean(entry.metric.trim()),
+  };
+}
+
+export function rankEvidenceForJob(
+  entries: AchievementEvidence[],
+  role: string,
+  jdText = '',
+): Array<AchievementEvidence & { quality: EvidenceQuality; match: EvidenceMatchReason }> {
+  return rankEvidenceForRole(entries, `${role} ${jdText}`)
+    .map(entry => ({
+      ...entry,
+      quality: scoreEvidenceQuality(entry),
+      match: explainEvidenceMatch(entry, role, jdText),
+    }));
+}
+
+export function formatEvidenceForPrompt(entries: AchievementEvidence[]): string {
+  return entries
+    .map(entry => `- ${entry.title}: ${formatEvidenceBullet(entry)}`)
+    .join('\n');
 }
 
 function scoreEvidence(entry: AchievementEvidence, roleText: string): number {

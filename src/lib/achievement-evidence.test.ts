@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatEvidenceBullet, rankEvidenceForRole, splitEvidenceList } from '@/lib/achievement-evidence';
+import { formatEvidenceBullet, rankEvidenceForRole, scoreEvidenceQuality, splitEvidenceList } from '@/lib/achievement-evidence';
 import type { AchievementEvidence } from '@/lib/types';
 
 function evidence(overrides: Partial<AchievementEvidence>): AchievementEvidence {
@@ -38,5 +38,11 @@ describe('achievement evidence helpers', () => {
     ];
 
     expect(rankEvidenceForRole(entries, 'Senior Frontend React Engineer')[0]?.id).toBe('frontend');
+  });
+
+  it('flags weak evidence missing metrics or outcomes', () => {
+    expect(scoreEvidenceQuality(evidence({ metric: '', result: '', action: '' }))).toBe('weak');
+    expect(scoreEvidenceQuality(evidence({ metric: '42%', result: 'faster builds', action: 'Led migration', scope: '', situation: '' }))).toBe('usable');
+    expect(scoreEvidenceQuality(evidence({ metric: '42%', result: 'faster builds', action: 'Led migration', scope: '12 repos', situation: 'Legacy CI' }))).toBe('strong');
   });
 });
