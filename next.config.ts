@@ -32,7 +32,6 @@ const nextConfig: NextConfig = {
   // Emit .next/standalone so Beasties' post-build inline-critical-css.mjs
   // can modify the same HTML that OpenNext's --skipNextBuild consumes.
   output: "standalone",
-  transpilePackages: ['@saas-maker/ai'],
   images: { unoptimized: true },
   serverExternalPackages: ['@libsql/client', '@sparticuz/chromium', 'puppeteer-core', '@mozilla/readability', 'mammoth', 'pdf-parse'],
   outputFileTracingExcludes: {

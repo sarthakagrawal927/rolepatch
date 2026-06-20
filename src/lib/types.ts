@@ -86,7 +86,11 @@ export interface OutreachEmail {
   created_at: number;
 }
 
-export type { AIConfig as AIProviderConfig } from '@saas-maker/ai/server';
+export interface AIProviderConfig {
+  endpointUrl: string;
+  apiKey: string;
+  model: string;
+}
 
 export interface FitScoreDimension {
   name: string;

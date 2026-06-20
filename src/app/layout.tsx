@@ -6,7 +6,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { AnalyticsProvider } from "@/components/posthog-provider";
 import { SaaSMakerFeedback } from "@/components/saasmaker-feedback";
-import { SaasMakerAnalytics } from "@/components/SaasMakerAnalytics";
 import { SiteNav } from "@/components/site-nav";
 
 const geistSans = Geist({
@@ -68,7 +67,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AnalyticsProvider>
-          <SaasMakerAnalytics />
           <SaaSMakerFeedback />
           <AuthProvider>
             <SiteNav />

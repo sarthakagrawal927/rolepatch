@@ -1,7 +1,24 @@
-import { createAIModel } from '@saas-maker/ai/server';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModel } from 'ai';
 
 import type { AIProviderConfig } from './types';
+
+/**
+ * Build a LanguageModel from a provider config, talking to any
+ * OpenAI-compatible endpoint (formerly @saas-maker/ai's createAIModel).
+ */
+function createAIModel(
+  config: AIProviderConfig,
+  options?: { headers?: Record<string, string>; name?: string },
+): LanguageModel {
+  const provider = createOpenAICompatible({
+    baseURL: config.endpointUrl.trim().replace(/\/+$/, ''),
+    apiKey: config.apiKey,
+    name: options?.name ?? 'free-ai',
+    headers: options?.headers,
+  });
+  return provider.chatModel(config.model);
+}
 
 /**
  * Default model for resume-tailor flows. Routed through free-ai-gateway,

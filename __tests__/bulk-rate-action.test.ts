@@ -20,10 +20,11 @@ vi.mock('ai', () => ({
   generateObject: (...args: unknown[]) => mockGenerateObject(...args),
 }));
 
-// @saas-maker/ai wraps `createAIModel` used by our `getAIModel` alias.
-// Return a sentinel so generateObject calls can assert on `model`.
-vi.mock('@saas-maker/ai/server', () => ({
-  createAIModel: vi.fn(() => ({ _model: 'mock' })),
+// getAIModel builds its model via @ai-sdk/openai-compatible's
+// createOpenAICompatible. Return a sentinel so generateObject calls can
+// assert on `model`.
+vi.mock('@ai-sdk/openai-compatible', () => ({
+  createOpenAICompatible: vi.fn(() => ({ chatModel: () => ({ _model: 'mock' }) })),
 }));
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));

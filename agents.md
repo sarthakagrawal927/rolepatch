@@ -58,7 +58,7 @@ pnpm lint     # eslint
 - **Guest vs signed-in**: full app works without auth via localStorage (`src/lib/local-storage.ts`). Signed-in users persist to Turso with `user_id` filtering.
 - **AI provider**: single adapter in `src/lib/ai.ts` — supports free gateway, local AI, or BYOK via `baseURL` swap.
 - **Scraping**: Jina Reader is primary; `linkedom` + `@mozilla/readability` as fallback.
-- **SaaS Maker**: feedback widget + analytics integrated. Config in `.saasmaker.json`.
+- **SaaS Maker**: feedback widget + testimonials integrated. Config in `.saasmaker.json`. (SaaS Maker analytics removed — PostHog is the analytics path.)
 - **Data model**: `users`, `resumes`, `job_applications`, `tailored_resumes`, `cover_letters`, `stash_entries`.
 - All env vars documented in `.env.example`.
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { AISettings } from '@saas-maker/ai';
-import { useAIConfig } from '@saas-maker/ai';
+import { AISettings } from '@/components/ai-settings';
+import { useAIConfig } from '@/lib/ai-vendor-hooks';
 
 const STORAGE_KEY = 'ai-settings';
 
