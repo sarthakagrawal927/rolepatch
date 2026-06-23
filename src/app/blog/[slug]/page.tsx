@@ -170,27 +170,39 @@ export default async function BlogPost({ params }: { params: Promise<Params> }) 
     .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-foreground mt-10 mb-4">$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em class="text-foreground">$1</em>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[var(--accent)] hover:text-[var(--accent)]/80 underline underline-offset-2">$1</a>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 text-[var(--muted-foreground)] before:content-[\'•\'] before:mr-2 before:text-[var(--muted-foreground)]">$1</li>')
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" class="text-[var(--accent)] hover:text-[var(--accent)]/80 underline underline-offset-2">$1</a>'
+    )
+    .replace(
+      /^- (.+)$/gm,
+      '<li class="ml-4 text-[var(--muted-foreground)] before:content-[\'•\'] before:mr-2 before:text-[var(--muted-foreground)]">$1</li>'
+    )
     .replace(/\n\n/g, '</p><p class="text-[var(--muted-foreground)] leading-relaxed mb-4">')
     .replace(/^/, '<p class="text-[var(--muted-foreground)] leading-relaxed mb-4">')
     .replace(/$/, '</p>');
 
   return (
     <main className="max-w-3xl mx-auto px-6 py-10">
-      <Link href="/blog" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--accent)] transition-colors mb-6 inline-block">
+      <Link
+        href="/blog"
+        className="text-sm text-[var(--muted-foreground)] hover:text-[var(--accent)] transition-colors mb-6 inline-block"
+      >
         ← Back to blog
       </Link>
       <article>
         <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)] mb-4">
-          <time dateTime={post.date}>{new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+          <time dateTime={post.date}>
+            {new Date(post.date).toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </time>
           <span>{post.readTime} read</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">{post.title}</h1>
-        <div
-          className="prose-custom"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className="prose-custom" dangerouslySetInnerHTML={{ __html: html }} />
       </article>
     </main>
   );

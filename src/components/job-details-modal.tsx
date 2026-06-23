@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { JobDetailsPatch } from '@/lib/types';
 
@@ -52,7 +52,14 @@ function dollarsToCents(value: string): number | null {
   return Math.round(num * 100);
 }
 
-export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onSave }: JobDetailsModalProps) {
+export function JobDetailsModal({
+  open,
+  jobTitle,
+  company,
+  initial,
+  onClose,
+  onSave,
+}: JobDetailsModalProps) {
   const [interviewDate, setInterviewDate] = useState('');
   const [followUpAt, setFollowUpAt] = useState('');
   const [salaryMin, setSalaryMin] = useState('');
@@ -132,13 +139,17 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
       <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 modal-content max-h-[90vh] overflow-y-auto">
         <div className="mb-5">
           <h2 className="text-lg font-semibold text-foreground">{jobTitle || 'Untitled Role'}</h2>
-          <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-70">{company || 'Unknown Company'}</p>
+          <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-70">
+            {company || 'Unknown Company'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Interview</label>
+              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                Interview
+              </label>
               <input
                 type="datetime-local"
                 value={interviewDate}
@@ -147,7 +158,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Follow-up</label>
+              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                Follow-up
+              </label>
               <input
                 type="datetime-local"
                 value={followUpAt}
@@ -159,7 +172,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
 
           <div className="grid grid-cols-[1fr_1fr_90px] gap-3">
             <div>
-              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Salary min</label>
+              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                Salary min
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -171,7 +186,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Salary max</label>
+              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                Salary max
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -183,7 +200,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Cur</label>
+              <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                Cur
+              </label>
               <input
                 type="text"
                 value={salaryCurrency}
@@ -196,7 +215,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Offer amount</label>
+            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+              Offer amount
+            </label>
             <input
               type="number"
               step="0.01"
@@ -209,7 +230,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Notes</label>
+            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+              Notes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -220,7 +243,9 @@ export function JobDetailsModal({ open, jobTitle, company, initial, onClose, onS
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Rejection reason</label>
+            <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+              Rejection reason
+            </label>
             <input
               type="text"
               value={rejectionReason}

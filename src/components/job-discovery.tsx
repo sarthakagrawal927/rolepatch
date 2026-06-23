@@ -1,6 +1,16 @@
 'use client';
 
-import { Bell, Bookmark, Building2, DollarSign, ExternalLink, MapPin, Sparkles, Star, Trash2 } from 'lucide-react';
+import {
+  Bell,
+  Bookmark,
+  Building2,
+  DollarSign,
+  ExternalLink,
+  MapPin,
+  Sparkles,
+  Star,
+  Trash2,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -37,7 +47,11 @@ interface JobDiscoveryProps {
   resumes: { id: string; name: string }[];
 }
 
-function formatSalary(min?: number | null, max?: number | null, currency?: string | null): string | null {
+function formatSalary(
+  min?: number | null,
+  max?: number | null,
+  currency?: string | null
+): string | null {
   if (min == null && max == null) return null;
   const cur = currency ?? 'USD';
   const fmt = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`);
@@ -57,9 +71,15 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   const [results, setResults] = useState<DiscoveredJob[]>([]);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [saveSearchName, setSaveSearchName] = useState('');
-  const [savedSearches, setSavedSearches] = useState<Array<{ id: string; name: string; query: string; paused: boolean | number }>>([]);
-  const [shortlist, setShortlist] = useState<Array<{ id: string; title: string; company: string; job_url: string }>>([]);
-  const [alerts, setAlerts] = useState<Array<{ id: string; title: string; detail: string; seen: boolean | number }>>([]);
+  const [savedSearches, setSavedSearches] = useState<
+    Array<{ id: string; name: string; query: string; paused: boolean | number }>
+  >([]);
+  const [shortlist, setShortlist] = useState<
+    Array<{ id: string; title: string; company: string; job_url: string }>
+  >([]);
+  const [alerts, setAlerts] = useState<
+    Array<{ id: string; title: string; detail: string; seen: boolean | number }>
+  >([]);
 
   useEffect(() => {
     async function hydrate() {
@@ -76,13 +96,13 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
       ]);
       setSavedSearches(searches);
       setShortlist(savedJobs);
-      setAlerts(alertRows.map(row => ({ ...row, seen: row.seen === 1 })));
+      setAlerts(alertRows.map((row) => ({ ...row, seen: row.seen === 1 })));
     }
     void hydrate();
   }, [isGuest]);
 
-  const shortlistUrls = useMemo(() => shortlist.map(item => item.job_url), [shortlist]);
-  const unseenAlerts = alerts.filter(alert => !alert.seen).length;
+  const shortlistUrls = useMemo(() => shortlist.map((item) => item.job_url), [shortlist]);
+  const unseenAlerts = alerts.filter((alert) => !alert.seen).length;
 
   async function runSearch(searchQuery = query, searchLocation = location, searchRemote = remote) {
     if (!searchQuery.trim()) return;
@@ -108,7 +128,9 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
         try {
           const json = JSON.parse(body);
           msg = json.error ?? json.detail ?? msg;
-        } catch { /* keep default */ }
+        } catch {
+          /* keep default */
+        }
         throw new Error(msg);
       }
 
@@ -132,25 +154,44 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   async function handleSaveSearch() {
     if (!saveSearchName.trim() || !query.trim()) return;
     if (isGuest) {
-      localCreateSavedJobSearch({ name: saveSearchName.trim(), query: query.trim(), location, remote });
+      localCreateSavedJobSearch({
+        name: saveSearchName.trim(),
+        query: query.trim(),
+        location,
+        remote,
+      });
       setSavedSearches(localListSavedJobSearches());
     } else {
-      await createSavedJobSearch({ name: saveSearchName.trim(), query: query.trim(), location, remote });
+      await createSavedJobSearch({
+        name: saveSearchName.trim(),
+        query: query.trim(),
+        location,
+        remote,
+      });
       setSavedSearches(await listSavedJobSearches());
     }
     setSaveSearchName('');
   }
 
-  async function handleRunSavedSearch(search: { id: string; query: string; location?: string; remote?: boolean | number }) {
+  async function handleRunSavedSearch(search: {
+    id: string;
+    query: string;
+    location?: string;
+    remote?: boolean | number;
+  }) {
     setQuery(search.query);
     setLocation(typeof search.location === 'string' ? search.location : '');
     setRemote(Boolean(search.remote));
-    const jobs = await runSearch(search.query, typeof search.location === 'string' ? search.location : '', Boolean(search.remote));
+    const jobs = await runSearch(
+      search.query,
+      typeof search.location === 'string' ? search.location : '',
+      Boolean(search.remote)
+    );
     if (!jobs?.length) return;
 
     if (isGuest) {
-      const previous = localListSavedJobSearches().find(item => item.id === search.id);
-      const previousIds = previous?.last_run_at ? jobs.map(job => job.id) : [];
+      const previous = localListSavedJobSearches().find((item) => item.id === search.id);
+      const previousIds = previous?.last_run_at ? jobs.map((job) => job.id) : [];
       const newJobs = diffNewJobs(jobs, previousIds);
       for (const job of newJobs.slice(0, 5)) {
         localAddJobDiscoveryAlert({
@@ -162,7 +203,7 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
       setAlerts(localListJobDiscoveryAlerts());
     } else {
       await recordSavedSearchRun(search.id, jobs);
-      setAlerts((await listJobDiscoveryAlerts()).map(row => ({ ...row, seen: row.seen === 1 })));
+      setAlerts((await listJobDiscoveryAlerts()).map((row) => ({ ...row, seen: row.seen === 1 })));
     }
   }
 
@@ -187,7 +228,7 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
         job.company ?? 'Unknown Company',
         job.title ?? 'Untitled Role',
         job.description ?? job.description_short ?? '',
-        job.description ?? job.description_short ?? '',
+        job.description ?? job.description_short ?? ''
       );
       router.push(`/tailor/${jobId}`);
     } catch (err) {
@@ -224,7 +265,7 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
               onClick={async () => {
                 if (isGuest) localMarkJobDiscoveryAlertsSeen();
                 else await markJobDiscoveryAlertsSeen();
-                setAlerts(prev => prev.map(alert => ({ ...alert, seen: true })));
+                setAlerts((prev) => prev.map((alert) => ({ ...alert, seen: true })));
               }}
               className="text-xs font-medium text-[var(--primary)] hover:underline"
             >
@@ -232,9 +273,10 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
             </button>
           </div>
           <div className="space-y-2">
-            {alerts.slice(0, 5).map(alert => (
+            {alerts.slice(0, 5).map((alert) => (
               <div key={alert.id} className="text-xs text-[var(--muted-foreground)]">
-                <span className="font-semibold text-foreground">{alert.title}</span> · {alert.detail}
+                <span className="font-semibold text-foreground">{alert.title}</span> ·{' '}
+                {alert.detail}
               </div>
             ))}
           </div>
@@ -246,18 +288,41 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
         className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl p-5 grid grid-cols-1 md:grid-cols-[1.4fr_1fr_auto_auto] gap-3 items-end"
       >
         <div>
-          <label className="block text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1.5">What</label>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="python engineer, staff PM, ..." className="input-base" />
+          <label className="block text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1.5">
+            What
+          </label>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="python engineer, staff PM, ..."
+            className="input-base"
+          />
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1.5">Where (optional)</label>
-          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="San Francisco, Remote, ..." className="input-base" />
+          <label className="block text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1.5">
+            Where (optional)
+          </label>
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="San Francisco, Remote, ..."
+            className="input-base"
+          />
         </div>
         <label className="inline-flex items-center gap-2 px-3 py-2 text-sm text-foreground cursor-pointer select-none">
-          <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} className="accent-[var(--primary)]" />
+          <input
+            type="checkbox"
+            checked={remote}
+            onChange={(e) => setRemote(e.target.checked)}
+            className="accent-[var(--primary)]"
+          />
           Remote
         </label>
-        <button type="submit" disabled={loading || !query.trim() || needsResume} className="px-5 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity whitespace-nowrap">
+        <button
+          type="submit"
+          disabled={loading || !query.trim() || needsResume}
+          className="px-5 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity whitespace-nowrap"
+        >
           {loading ? 'Searching…' : 'Discover jobs'}
         </button>
       </form>
@@ -270,7 +335,12 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
             placeholder="Name this search"
             className="input-base max-w-xs"
           />
-          <button type="button" onClick={handleSaveSearch} disabled={!saveSearchName.trim()} className="px-3 py-2 text-xs font-medium rounded-lg border border-[var(--border)] hover:bg-muted">
+          <button
+            type="button"
+            onClick={handleSaveSearch}
+            disabled={!saveSearchName.trim()}
+            className="px-3 py-2 text-xs font-medium rounded-lg border border-[var(--border)] hover:bg-muted"
+          >
             Save search alert
           </button>
         </div>
@@ -278,10 +348,16 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
 
       {savedSearches.length > 0 && (
         <div className="rounded-2xl border border-[var(--border)]/60 p-4 space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">Saved searches</p>
-          {savedSearches.map(search => (
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            Saved searches
+          </p>
+          {savedSearches.map((search) => (
             <div key={search.id} className="flex flex-wrap items-center gap-2 text-sm">
-              <button type="button" onClick={() => handleRunSavedSearch(search)} className="font-medium text-foreground hover:text-[var(--primary)]">
+              <button
+                type="button"
+                onClick={() => handleRunSavedSearch(search)}
+                className="font-medium text-foreground hover:text-[var(--primary)]"
+              >
                 {search.name}
               </button>
               <span className="text-xs text-[var(--muted-foreground)]">{search.query}</span>
@@ -289,10 +365,10 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
                 type="button"
                 onClick={async () => {
                   if (isGuest) {
-                    localUpdateSavedJobSearch(search.id, !Boolean(search.paused));
+                    localUpdateSavedJobSearch(search.id, !search.paused);
                     setSavedSearches(localListSavedJobSearches());
                   } else {
-                    await updateSavedJobSearch(search.id, !Boolean(search.paused));
+                    await updateSavedJobSearch(search.id, !search.paused);
                     setSavedSearches(await listSavedJobSearches());
                   }
                 }}
@@ -323,12 +399,16 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
 
       {shortlist.length > 0 && (
         <div className="rounded-2xl border border-[var(--border)]/60 p-4 space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">Shortlist</p>
-          {shortlist.slice(0, 8).map(item => (
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            Shortlist
+          </p>
+          {shortlist.slice(0, 8).map((item) => (
             <div key={item.id} className="flex items-center gap-2 text-sm">
               <Bookmark className="h-4 w-4 text-[var(--primary)]" />
               <span className="font-medium truncate">{item.title}</span>
-              <span className="text-xs text-[var(--muted-foreground)] truncate">{item.company}</span>
+              <span className="text-xs text-[var(--muted-foreground)] truncate">
+                {item.company}
+              </span>
               <button
                 type="button"
                 onClick={async () => {
@@ -351,11 +431,15 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
       )}
 
       {needsResume && (
-        <p className="text-xs text-[var(--muted-foreground)]">Create a resume first — tailoring needs a base to work from.</p>
+        <p className="text-xs text-[var(--muted-foreground)]">
+          Create a resume first — tailoring needs a base to work from.
+        </p>
       )}
 
       {error && (
-        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">{error}</div>
+        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
+          {error}
+        </div>
       )}
 
       {results.length > 0 && (
@@ -364,17 +448,24 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
             const salary = formatSalary(job.min_amount, job.max_amount, job.currency);
             const saved = job.job_url ? isDuplicateJob(job.job_url, shortlistUrls) : false;
             return (
-              <div key={job.id} className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl p-5 flex flex-col gap-3 hover:border-[var(--primary)]/40 hover:shadow-md transition-all">
+              <div
+                key={job.id}
+                className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl p-5 flex flex-col gap-3 hover:border-[var(--primary)]/40 hover:shadow-md transition-all"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-foreground truncate">{job.title ?? 'Untitled role'}</h3>
+                    <h3 className="font-bold text-foreground truncate">
+                      {job.title ?? 'Untitled role'}
+                    </h3>
                     <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] mt-1">
                       <Building2 className="w-3 h-3" />
                       <span className="truncate">{job.company ?? 'Unknown company'}</span>
                     </div>
                   </div>
                   {job.site && (
-                    <span className="shrink-0 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-muted text-[var(--muted-foreground)]">{job.site}</span>
+                    <span className="shrink-0 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-muted text-[var(--muted-foreground)]">
+                      {job.site}
+                    </span>
                   )}
                 </div>
 
@@ -396,7 +487,9 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
                 </div>
 
                 {job.description_short && (
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 opacity-80">{job.description_short}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 opacity-80">
+                    {job.description_short}
+                  </p>
                 )}
 
                 <div className="flex items-center gap-2 mt-auto pt-2">
@@ -417,7 +510,12 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
                     {saved ? 'Saved' : 'Shortlist'}
                   </button>
                   {job.job_url && (
-                    <a href={job.job_url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-foreground hover:bg-muted transition-colors">
+                    <a
+                      href={job.job_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-foreground hover:bg-muted transition-colors"
+                    >
                       <ExternalLink className="w-3 h-3" />
                       View
                     </a>
@@ -431,7 +529,8 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
 
       {results.length === 0 && !loading && !error && (
         <p className="text-xs text-[var(--muted-foreground)] opacity-70">
-          Search pulls live openings, then save the query to revisit it and surface new matches without manual searching.
+          Search pulls live openings, then save the query to revisit it and surface new matches
+          without manual searching.
         </p>
       )}
     </div>

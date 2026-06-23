@@ -46,7 +46,9 @@ const dynImport = new Function('m', 'return import(m)') as (m: string) => Promis
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
   const mod = (await dynImport('pdf-parse')) as {
-    PDFParse: new (opts: { data: Uint8Array }) => {
+    PDFParse: new (opts: {
+      data: Uint8Array;
+    }) => {
       getText(): Promise<{ text?: string }>;
       destroy(): Promise<void>;
     };
@@ -84,7 +86,7 @@ async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
 
 export async function importResumeFromFile(
   formData: FormData,
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<{ id: string; source: string }> {
   const file = formData.get('file');
   const name = (formData.get('name') as string | null)?.trim() || 'Imported Resume';

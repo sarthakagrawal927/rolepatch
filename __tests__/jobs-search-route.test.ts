@@ -53,7 +53,7 @@ describe('POST /api/jobs/search', () => {
     const json = await res.json();
     expect(json.jobs).toHaveLength(1);
     expect(mockSearchJobs).toHaveBeenCalledWith(
-      expect.objectContaining({ query: 'python engineer', location: 'Remote' }),
+      expect.objectContaining({ query: 'python engineer', location: 'Remote' })
     );
   });
 

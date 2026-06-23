@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -31,9 +31,16 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Emit .next/standalone so Beasties' post-build inline-critical-css.mjs
   // can modify the same HTML that OpenNext's --skipNextBuild consumes.
-  output: "standalone",
+  output: 'standalone',
   images: { unoptimized: true },
-  serverExternalPackages: ['@libsql/client', '@sparticuz/chromium', 'puppeteer-core', '@mozilla/readability', 'mammoth', 'pdf-parse'],
+  serverExternalPackages: [
+    '@libsql/client',
+    '@sparticuz/chromium',
+    'puppeteer-core',
+    '@mozilla/readability',
+    'mammoth',
+    'pdf-parse',
+  ],
   outputFileTracingExcludes: {
     '*': [
       '@sparticuz/chromium/**',

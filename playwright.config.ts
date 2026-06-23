@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 // Plain Playwright config (formerly @saas-maker/test-config/playwright factory, inlined).
-const ci = Boolean(process.env['CI']);
+const ci = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: './e2e',

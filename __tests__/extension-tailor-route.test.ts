@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as ExtensionTailorRoute from '@/app/api/extension/tailor/route';
 
@@ -19,7 +19,7 @@ function makeReq(body: unknown) {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'content-type': 'application/json' },
-  }) as unknown as Parameters<typeof ExtensionTailorRoute['POST']>[0];
+  }) as unknown as Parameters<(typeof ExtensionTailorRoute)['POST']>[0];
 }
 
 const longJd = 'Senior engineer role at '.repeat(20);
@@ -53,15 +53,15 @@ describe('POST /api/extension/tailor', () => {
     mockGetCurrentUserId.mockResolvedValue('user-happy');
     mockExecute
       .mockResolvedValueOnce({ rows: [{ id: 'resume-1' }] }) // resume lookup
-      .mockResolvedValueOnce({ rows: [] })                   // existing job lookup
-      .mockResolvedValueOnce({ rows: [] });                  // insert
+      .mockResolvedValueOnce({ rows: [] }) // existing job lookup
+      .mockResolvedValueOnce({ rows: [] }); // insert
     const { POST } = await import('@/app/api/extension/tailor/route');
     const res = await POST(
       makeReq({
         url: 'https://boards.greenhouse.io/stripe/jobs/12345',
         title: 'Senior Backend',
         jd_text: longJd,
-      }),
+      })
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -77,9 +77,7 @@ describe('POST /api/extension/tailor', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'resume-1' }] })
       .mockResolvedValueOnce({ rows: [{ id: 'job-existing' }] });
     const { POST } = await import('@/app/api/extension/tailor/route');
-    const res = await POST(
-      makeReq({ url: 'https://jobs.lever.co/acme/abc', jd_text: longJd }),
-    );
+    const res = await POST(makeReq({ url: 'https://jobs.lever.co/acme/abc', jd_text: longJd }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.job_id).toBe('job-existing');

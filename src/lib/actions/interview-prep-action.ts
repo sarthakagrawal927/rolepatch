@@ -3,11 +3,11 @@
 import { generateText } from 'ai';
 import { v4 as uuid } from 'uuid';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig,InterviewStory } from '@/lib/types';
+import type { AIProviderConfig, InterviewStory } from '@/lib/types';
 
 const MAX_RESUME_CHARS = 20_000;
 const MAX_JD_CHARS = 15_000;
@@ -16,7 +16,7 @@ export async function generateInterviewStories(
   resumeSource: string,
   jdText: string,
   jobId: string,
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<InterviewStory[]> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
@@ -28,7 +28,7 @@ export async function generateInterviewStories(
       throw new Error(
         result.error === 'insufficient_tokens'
           ? 'No tokens remaining. Purchase more to continue.'
-          : 'Authentication required to generate.',
+          : 'Authentication required to generate.'
       );
     }
     debited = true;
@@ -42,7 +42,7 @@ export async function generateInterviewStories(
     });
 
     const parsed: Record<string, unknown>[] = JSON.parse(
-      text.replace(/```json\n?|\n?```/g, '').trim(),
+      text.replace(/```json\n?|\n?```/g, '').trim()
     );
     const now = Math.floor(Date.now() / 1000);
 
@@ -66,10 +66,17 @@ export async function generateInterviewStories(
           sql: `INSERT INTO interview_stories (id, job_id, user_id, theme, jd_requirement, situation, task, action, result, reflection, best_for)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
-            story.id, jobId, userId,
-            story.theme, story.jd_requirement,
-            story.situation, story.task, story.action, story.result,
-            story.reflection, JSON.stringify(story.best_for),
+            story.id,
+            jobId,
+            userId,
+            story.theme,
+            story.jd_requirement,
+            story.situation,
+            story.task,
+            story.action,
+            story.result,
+            story.reflection,
+            JSON.stringify(story.best_for),
           ],
         });
       }

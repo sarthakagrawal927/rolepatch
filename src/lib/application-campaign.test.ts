@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildCampaignSummary,
-  type CampaignJobWithActivity,
-} from '@/lib/application-campaign';
+import { buildCampaignSummary, type CampaignJobWithActivity } from '@/lib/application-campaign';
 
 const now = 1_775_772_000;
 
@@ -28,7 +25,7 @@ describe('application campaign summary', () => {
         job({ status: 'interview', created_at: now }),
         job({ status: 'rejected', created_at: now }),
       ],
-      { now, weeklyTarget: 6 },
+      { now, weeklyTarget: 6 }
     );
 
     expect(summary.appliedThisWeek).toBe(3);
@@ -42,15 +39,12 @@ describe('application campaign summary', () => {
         job({ id: 'follow-up', status: 'applied', follow_up_at: now - 60 }),
         job({ id: 'stale', status: 'tailored', created_at: now - 9 * 24 * 60 * 60 }),
       ],
-      { now },
+      { now }
     );
 
     expect(summary.followUpsDue).toBe(1);
     expect(summary.staleDrafts).toBe(1);
-    expect(summary.nextActions.map((action) => action.jobId)).toEqual([
-      'follow-up',
-      'stale',
-    ]);
+    expect(summary.nextActions.map((action) => action.jobId)).toEqual(['follow-up', 'stale']);
   });
 
   it('uses the latest activity timestamp for weekly and stale calculations', () => {
@@ -69,7 +63,7 @@ describe('application campaign summary', () => {
           updated_at: now - 2 * 24 * 60 * 60,
         }),
       ],
-      { now },
+      { now }
     );
 
     expect(summary.appliedThisWeek).toBe(1);

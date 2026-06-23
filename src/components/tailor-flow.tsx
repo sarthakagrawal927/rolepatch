@@ -20,7 +20,7 @@ import {
   localListStashEntries,
   localSaveTailoredResume,
 } from '@/lib/local-storage';
-import type { JobApplication, Resume, TailorChange,TailoredResume } from '@/lib/types';
+import type { JobApplication, Resume, TailorChange, TailoredResume } from '@/lib/types';
 import type { FitScore } from '@/lib/types';
 
 interface TailorFlowProps {
@@ -30,7 +30,12 @@ interface TailorFlowProps {
   existingFitScore?: FitScore | null;
 }
 
-export function TailorFlow({ job, serverResume, existingTailored, existingFitScore }: TailorFlowProps) {
+export function TailorFlow({
+  job,
+  serverResume,
+  existingTailored,
+  existingFitScore,
+}: TailorFlowProps) {
   const { isGuest } = useAuth();
   const [resume, setResume] = useState<Resume | null>(serverResume);
   const [tailoredList, setTailoredList] = useState(existingTailored);
@@ -41,7 +46,9 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
   // Fetch token balance on mount for signed-in users
   useEffect(() => {
     if (!isGuest) {
-      getTokenBalance().then(setTokenBalance).catch(() => {});
+      getTokenBalance()
+        .then(setTokenBalance)
+        .catch(() => {});
     }
   }, [isGuest]);
 
@@ -61,7 +68,7 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
 
   const latestTailored = tailoredList[0] ?? null;
   const [tailoredSource, setTailoredSource] = useState<string | null>(
-    latestTailored?.source ?? null,
+    latestTailored?.source ?? null
   );
   const [changes, setChanges] = useState<TailorChange[]>(latestTailored?.changes ?? []);
   const [isPending, startTransition] = useTransition();
@@ -75,17 +82,17 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
       setChanges(latest.changes ?? []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only re-run when tailoredList changes, not when tailoredSource changes
-  }, [tailoredList]);
+  }, [tailoredList, tailoredSource]);
 
   // ATS scores -- recalculate when resume/tailored/JD changes
   const originalATS = useMemo(
-    () => resume ? calculateATSScore(resume.source, job.jd_text) : null,
-    [resume, job.jd_text],
+    () => (resume ? calculateATSScore(resume.source, job.jd_text) : null),
+    [resume, job.jd_text]
   );
 
   const tailoredATS = useMemo(
-    () => tailoredSource ? calculateATSScore(tailoredSource, job.jd_text) : null,
-    [tailoredSource, job.jd_text],
+    () => (tailoredSource ? calculateATSScore(tailoredSource, job.jd_text) : null),
+    [tailoredSource, job.jd_text]
   );
 
   // Cache ATS scores to localStorage so the dashboard can display them
@@ -95,7 +102,9 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
         const cache = JSON.parse(localStorage.getItem('rt-ats-scores') ?? '{}');
         cache[job.id] = { original: originalATS?.score ?? 0, tailored: tailoredATS.score };
         localStorage.setItem('rt-ats-scores', JSON.stringify(cache));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [job.id, originalATS, tailoredATS]);
 
@@ -133,7 +142,9 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
 
         // Refresh token balance after successful generation
         if (!isGuest) {
-          getTokenBalance().then(setTokenBalance).catch(() => {});
+          getTokenBalance()
+            .then(setTokenBalance)
+            .catch(() => {});
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to generate tailored resume';
@@ -183,7 +194,9 @@ export function TailorFlow({ job, serverResume, existingTailored, existingFitSco
       .then((result) => {
         setFitScore(result);
         if (!isGuest) {
-          getTokenBalance().then(setTokenBalance).catch(() => {});
+          getTokenBalance()
+            .then(setTokenBalance)
+            .catch(() => {});
         }
       })
       .catch(() => {})

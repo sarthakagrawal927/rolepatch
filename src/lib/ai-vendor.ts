@@ -41,7 +41,7 @@ export async function fetchModels(endpointUrl: string, apiKey: string): Promise<
   const base = endpointUrl.trim().replace(/\/+$/, '');
   if (!base) return [];
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
   for (const path of ['/models', '/v1/models']) {
     try {
       const res = await fetch(`${base}${path}`, { method: 'GET', headers });

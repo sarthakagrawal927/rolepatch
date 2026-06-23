@@ -25,14 +25,12 @@
 const PROJECT = 'resume-tailor' as const;
 
 // Shared with foundry-monitoring.ts — same PostHog project.
-const POSTHOG_KEY = process.env['NEXT_PUBLIC_POSTHOG_KEY'] ?? 'phc_qgiAarw4Co4pw9fz3Fxj4UJaHmqzFetqs4JrXhGc35Nd';
+const POSTHOG_KEY =
+  process.env.NEXT_PUBLIC_POSTHOG_KEY ?? 'phc_qgiAarw4Co4pw9fz3Fxj4UJaHmqzFetqs4JrXhGc35Nd';
 const POSTHOG_HOST = 'https://us.i.posthog.com';
 
 /** The product-specific action behind a `core_action` event. */
-export type CoreAction =
-  | 'tailor_completed'
-  | 'cover_letter_generated'
-  | 'fit_score_run';
+export type CoreAction = 'tailor_completed' | 'cover_letter_generated' | 'fit_score_run';
 
 interface AnalyticsEventMap {
   /** First session after an account is created. */
@@ -64,7 +62,7 @@ function emitServer(event: string, props: Record<string, unknown>, distinctId?: 
 export function trackEvent(
   event: string,
   properties: Record<string, unknown> = {},
-  distinctId?: string,
+  distinctId?: string
 ): void {
   const payload = { project_id: PROJECT, ...properties };
   try {
@@ -89,8 +87,8 @@ export function trackEvent(
 
 function emit<K extends keyof AnalyticsEventMap>(
   event: K,
-  props: Omit<AnalyticsEventMap[K], "project_id">,
-  distinctId?: string,
+  props: Omit<AnalyticsEventMap[K], 'project_id'>,
+  distinctId?: string
 ): void {
   trackEvent(event, props, distinctId);
 }

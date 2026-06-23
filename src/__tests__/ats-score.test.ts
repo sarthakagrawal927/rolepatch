@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { calculateATSScore } from '@/lib/ats-score';
 
@@ -14,7 +14,8 @@ describe('calculateATSScore', () => {
 
   it('scores high for strong keyword overlap', () => {
     const jd = 'React TypeScript Node.js React TypeScript Node.js';
-    const resume = 'I work with React, TypeScript, and Node.js daily. React TypeScript Node.js are my core stack.';
+    const resume =
+      'I work with React, TypeScript, and Node.js daily. React TypeScript Node.js are my core stack.';
     const result = calculateATSScore(resume, jd);
     // Unigrams match perfectly, bigrams may partially match
     expect(result.score).toBeGreaterThan(40);
@@ -34,7 +35,7 @@ describe('calculateATSScore', () => {
     const resume = 'Experience with machine learning and deep learning pipelines.';
     const result = calculateATSScore(resume, jd);
     expect(result.matchedKeywords).toEqual(
-      expect.arrayContaining([expect.stringContaining('machine learning')]),
+      expect.arrayContaining([expect.stringContaining('machine learning')])
     );
   });
 

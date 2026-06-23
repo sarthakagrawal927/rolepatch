@@ -49,21 +49,16 @@ export function toUserFacingAIError(error: unknown): Error {
   if (looksLike(error, 'rate limit', 'rate_limit', '429', 'too many requests')) {
     return new AIServiceError(
       'The AI service is busy right now. Please wait a moment and try again.',
-      true,
+      true
     );
   }
   if (looksLike(error, 'timeout', 'timed out', 'aborted', 'etimedout')) {
-    return new AIServiceError(
-      'The AI request took too long. Please try again.',
-      true,
-    );
+    return new AIServiceError('The AI request took too long. Please try again.', true);
   }
-  if (
-    looksLike(error, 'api key', 'unauthorized', '401', '403', 'load api key', 'loadapikey')
-  ) {
+  if (looksLike(error, 'api key', 'unauthorized', '401', '403', 'load api key', 'loadapikey')) {
     return new AIServiceError(
       'The AI provider rejected the request. Check your provider settings, then try again.',
-      false,
+      false
     );
   }
   if (
@@ -75,17 +70,14 @@ export function toUserFacingAIError(error: unknown): Error {
       'jsonparse',
       'type validation',
       'typevalidation',
-      'invalid response',
+      'invalid response'
     )
   ) {
     return new AIServiceError(
-      "The AI returned an unexpected response. This usually clears up on a retry.",
-      true,
+      'The AI returned an unexpected response. This usually clears up on a retry.',
+      true
     );
   }
 
-  return new AIServiceError(
-    "Couldn't reach the AI service. Please try again in a moment.",
-    true,
-  );
+  return new AIServiceError("Couldn't reach the AI service. Please try again in a moment.", true);
 }

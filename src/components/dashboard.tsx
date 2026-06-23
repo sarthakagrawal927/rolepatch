@@ -2,7 +2,7 @@
 
 import { AlertCircle, ArrowRight, Calendar, FileText, Globe, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo,useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AchievementEvidenceBank } from '@/components/achievement-evidence-bank';
 import { ApplicationCampaignTracker } from '@/components/application-campaign-tracker';
@@ -15,21 +15,71 @@ import { JobDiscovery } from '@/components/job-discovery';
 import { MigrationBanner } from '@/components/migration-banner';
 import { NewJobButton } from '@/components/new-job-button';
 import { ResumeImportButton } from '@/components/resume-import-button';
-import { updateJobDetails,updateJobStatus } from '@/lib/actions/job-actions';
-import { localListAchievementEvidence, localListJobs, localListResumes, localUpdateJobDetails,localUpdateJobStatus } from '@/lib/local-storage';
-import type { AchievementEvidence, JobApplication, JobDetailsPatch,Resume } from '@/lib/types';
+import { updateJobDetails, updateJobStatus } from '@/lib/actions/job-actions';
+import {
+  localListAchievementEvidence,
+  localListJobs,
+  localListResumes,
+  localUpdateJobDetails,
+  localUpdateJobStatus,
+} from '@/lib/local-storage';
+import type { AchievementEvidence, JobApplication, JobDetailsPatch, Resume } from '@/lib/types';
 
 const STATUS_OPTIONS: JobApplication['status'][] = [
-  'draft', 'tailored', 'applied', 'interview', 'offer', 'rejected',
+  'draft',
+  'tailored',
+  'applied',
+  'interview',
+  'offer',
+  'rejected',
 ];
 
-const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string; border: string }> = {
-  draft: { label: 'Draft', dot: 'bg-muted-foreground', bg: 'bg-muted', text: 'text-[var(--muted-foreground)]', border: 'border-[var(--border)]' },
-  tailored: { label: 'Tailored', dot: 'bg-[var(--primary)]', bg: 'bg-[var(--primary)]/5', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20' },
-  applied: { label: 'Applied', dot: 'bg-accent', bg: 'bg-accent/5', text: 'text-accent', border: 'border-accent/20' },
-  interview: { label: 'Interview', dot: 'bg-accent', bg: 'bg-accent/10', text: 'text-accent', border: 'border-accent/30' },
-  offer: { label: 'Offer', dot: 'bg-accent', bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/40' },
-  rejected: { label: 'Rejected', dot: 'bg-destructive', bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20' },
+const statusConfig: Record<
+  string,
+  { label: string; dot: string; bg: string; text: string; border: string }
+> = {
+  draft: {
+    label: 'Draft',
+    dot: 'bg-muted-foreground',
+    bg: 'bg-muted',
+    text: 'text-[var(--muted-foreground)]',
+    border: 'border-[var(--border)]',
+  },
+  tailored: {
+    label: 'Tailored',
+    dot: 'bg-[var(--primary)]',
+    bg: 'bg-[var(--primary)]/5',
+    text: 'text-[var(--primary)]',
+    border: 'border-[var(--primary)]/20',
+  },
+  applied: {
+    label: 'Applied',
+    dot: 'bg-accent',
+    bg: 'bg-accent/5',
+    text: 'text-accent',
+    border: 'border-accent/20',
+  },
+  interview: {
+    label: 'Interview',
+    dot: 'bg-accent',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    border: 'border-accent/30',
+  },
+  offer: {
+    label: 'Offer',
+    dot: 'bg-accent',
+    bg: 'bg-accent/20',
+    text: 'text-accent',
+    border: 'border-accent/40',
+  },
+  rejected: {
+    label: 'Rejected',
+    dot: 'bg-destructive',
+    bg: 'bg-destructive/10',
+    text: 'text-destructive',
+    border: 'border-destructive/20',
+  },
 };
 
 type DashboardJob = Pick<
@@ -82,14 +132,24 @@ function timeAgo(unixSeconds: number): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(unixSeconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(unixSeconds * 1000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
-export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEvidence = [] }: DashboardProps) {
+export function Dashboard({
+  serverResumes,
+  serverJobs,
+  serverFitScores,
+  serverEvidence = [],
+}: DashboardProps) {
   const { isGuest } = useAuth();
   const [resumes, setResumes] = useState(serverResumes);
   const [jobs, setJobs] = useState<DashboardJob[]>(serverJobs.map(toDashboardJob));
-  const [atsScores, setAtsScores] = useState<Record<string, { original: number; tailored: number }>>({});
+  const [atsScores, setAtsScores] = useState<
+    Record<string, { original: number; tailored: number }>
+  >({});
   const [fitScores] = useState<Record<string, number>>(serverFitScores ?? {});
   const [evidence, setEvidence] = useState(serverEvidence);
   const [detailsJobId, setDetailsJobId] = useState<string | null>(null);
@@ -118,11 +178,17 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
       if (Object.keys(cached).length > 0) {
         setAtsScores(cached); // eslint-disable-line react-hooks/set-state-in-effect -- hydrate from localStorage
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   async function handleStatusChange(jobId: string, newStatus: string) {
-    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: newStatus as JobApplication['status'] } : j));
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === jobId ? { ...j, status: newStatus as JobApplication['status'] } : j
+      )
+    );
     if (isGuest) {
       localUpdateJobStatus(jobId, newStatus as JobApplication['status']);
     } else {
@@ -131,7 +197,7 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
   }
 
   async function handleDetailsSave(jobId: string, patch: JobDetailsPatch): Promise<void> {
-    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, ...patch } : j));
+    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
     if (isGuest) {
       localUpdateJobDetails(jobId, patch);
     } else {
@@ -141,25 +207,30 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
 
   const stats = {
     total: jobs.length,
-    active: jobs.filter(j => ['applied', 'interview'].includes(j.status)).length,
-    offers: jobs.filter(j => j.status === 'offer').length,
+    active: jobs.filter((j) => ['applied', 'interview'].includes(j.status)).length,
+    offers: jobs.filter((j) => j.status === 'offer').length,
   };
 
   const alerts = useMemo(() => {
     if (nowSec === 0) return { interviewsThisWeek: 0, overdueFollowUps: 0 };
     const weekFromNow = nowSec + 7 * 24 * 60 * 60;
     const interviewsThisWeek = jobs.filter(
-      j => j.interview_date != null && j.interview_date >= nowSec && j.interview_date <= weekFromNow,
+      (j) =>
+        j.interview_date != null && j.interview_date >= nowSec && j.interview_date <= weekFromNow
     ).length;
     const overdueFollowUps = jobs.filter(
-      j => j.follow_up_at != null && j.follow_up_at < nowSec && j.status !== 'rejected' && j.status !== 'offer',
+      (j) =>
+        j.follow_up_at != null &&
+        j.follow_up_at < nowSec &&
+        j.status !== 'rejected' &&
+        j.status !== 'offer'
     ).length;
     return { interviewsThisWeek, overdueFollowUps };
   }, [jobs, nowSec]);
 
   const activeDetailsJob = useMemo(
-    () => jobs.find(j => j.id === detailsJobId) ?? null,
-    [jobs, detailsJobId],
+    () => jobs.find((j) => j.id === detailsJobId) ?? null,
+    [jobs, detailsJobId]
   );
   // Stable reference keyed on jobId so the modal only resets when switching
   // jobs, not on every parent re-render.
@@ -185,7 +256,9 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
       <div className="mb-12">
         <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm font-medium text-[var(--muted-foreground)] mt-2 opacity-80">
-          {isGuest ? 'Guest mode — sign in to save to the cloud' : 'Manage your professional assets'}
+          {isGuest
+            ? 'Guest mode — sign in to save to the cloud'
+            : 'Manage your professional assets'}
         </p>
       </div>
 
@@ -195,13 +268,19 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
           {alerts.interviewsThisWeek > 0 && (
             <div className="flex items-center gap-2.5 bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] rounded-xl px-4 py-2.5 text-xs font-bold">
               <Calendar className="w-4 h-4" />
-              <span>{alerts.interviewsThisWeek} interview{alerts.interviewsThisWeek === 1 ? '' : 's'} this week</span>
+              <span>
+                {alerts.interviewsThisWeek} interview{alerts.interviewsThisWeek === 1 ? '' : 's'}{' '}
+                this week
+              </span>
             </div>
           )}
           {alerts.overdueFollowUps > 0 && (
             <div className="flex items-center gap-2.5 bg-[var(--destructive)]/10 border border-[var(--destructive)]/20 text-[var(--destructive)] rounded-xl px-4 py-2.5 text-xs font-bold">
               <AlertCircle className="w-4 h-4" />
-              <span>{alerts.overdueFollowUps} overdue follow-up{alerts.overdueFollowUps === 1 ? '' : 's'}</span>
+              <span>
+                {alerts.overdueFollowUps} overdue follow-up
+                {alerts.overdueFollowUps === 1 ? '' : 's'}
+              </span>
             </div>
           )}
         </div>
@@ -219,24 +298,21 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
               key={stat.label}
               className="bg-[var(--card)] border border-[var(--border)]/50 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow"
             >
-              <p className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">{stat.label}</p>
-              <p className={`text-3xl font-black mt-2 tracking-tight ${stat.accent}`}>{stat.value}</p>
+              <p className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+                {stat.label}
+              </p>
+              <p className={`text-3xl font-black mt-2 tracking-tight ${stat.accent}`}>
+                {stat.value}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      <ApplicationCampaignTracker
-        jobs={jobs}
-        onOpenDetails={setDetailsJobId}
-      />
+      <ApplicationCampaignTracker jobs={jobs} onOpenDetails={setDetailsJobId} />
 
       <section className="mb-16">
-        <AchievementEvidenceBank
-          serverEntries={evidence}
-          compact
-          roleHint={jobs[0]?.role ?? ''}
-        />
+        <AchievementEvidenceBank serverEntries={evidence} compact roleHint={jobs[0]?.role ?? ''} />
       </section>
 
       {/* Resumes section */}
@@ -248,9 +324,13 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold">Resumes</h2>
-              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">Your base documents</p>
+              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
+                Your base documents
+              </p>
             </div>
-            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">{resumes.length}</span>
+            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">
+              {resumes.length}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <ResumeImportButton />
@@ -264,7 +344,9 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
               <FileText className="w-8 h-8 text-[var(--muted-foreground)]/30" />
             </div>
             <p className="text-sm font-bold text-foreground">No resumes curated yet</p>
-            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">Create your primary resume to begin the tailoring process</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">
+              Create your primary resume to begin the tailoring process
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -312,7 +394,7 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
             </p>
           </div>
         </div>
-        <JobDiscovery resumes={resumes.map(r => ({ id: r.id, name: r.name }))} />
+        <JobDiscovery resumes={resumes.map((r) => ({ id: r.id, name: r.name }))} />
       </section>
 
       {/* Job Applications section */}
@@ -324,11 +406,15 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold">Applications</h2>
-              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">Your active job pipeline</p>
+              <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
+                Your active job pipeline
+              </p>
             </div>
-            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">{jobs.length}</span>
+            <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">
+              {jobs.length}
+            </span>
           </div>
-          <NewJobButton resumes={resumes.map(r => ({ id: r.id, name: r.name }))} />
+          <NewJobButton resumes={resumes.map((r) => ({ id: r.id, name: r.name }))} />
         </div>
 
         {jobs.length === 0 ? (
@@ -337,78 +423,94 @@ export function Dashboard({ serverResumes, serverJobs, serverFitScores, serverEv
               <Globe className="w-8 h-8 text-[var(--muted-foreground)]/30" />
             </div>
             <p className="text-sm font-bold text-foreground">No active applications</p>
-            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">Add your target job URL to start the AI tailoring engine</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">
+              Add your target job URL to start the AI tailoring engine
+            </p>
           </div>
         ) : (
           <div className="bg-[var(--card)] border border-[var(--border)]/60 rounded-2xl overflow-hidden shadow-sm">
-           <div className="overflow-x-auto">
-            <div className="min-w-[640px]">
-            {/* Table header */}
-            <div className="grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px_40px] gap-4 px-6 py-4 bg-muted/30 border-b border-[var(--border)] text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">
-              <span>Position</span>
-              <span>Organization</span>
-              <span>Status</span>
-              <span>Fit</span>
-              <span>ATS</span>
-              <span className="text-right">Initiated</span>
-              <span />
-            </div>
-            {/* Table rows */}
-            {jobs.map((job, i) => {
-              const cfg = statusConfig[job.status] ?? statusConfig.draft;
-              const ats = atsScores[job.id];
-              const fit = fitScores[job.id];
-              return (
-                <div
-                  key={job.id}
-                  className={`group grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px_40px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-[var(--border)]/40' : ''}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setDetailsJobId(job.id)}
-                    className="font-bold truncate text-foreground group-hover:text-accent transition-colors text-left"
-                  >
-                    {job.role || 'Untitled Role'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDetailsJobId(job.id)}
-                    className="text-sm font-medium text-[var(--muted-foreground)] truncate opacity-80 text-left"
-                  >
-                    {job.company || 'Unknown Company'}
-                  </button>
-                  <div>
-                    <select
-                      value={job.status}
-                      onChange={(e) => handleStatusChange(job.id, e.target.value)}
-                      className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border appearance-none cursor-pointer focus:outline-none transition-all ${cfg.bg} ${cfg.text} ${cfg.border} hover:scale-105 active:scale-95`}
-                    >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s} value={s}>{statusConfig[s]?.label ?? s}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <span className="font-bold">
-                    {fit != null ? <FitScoreBadge score={fit} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">--</span>}
-                  </span>
-                  <span className="font-bold">
-                    {ats ? <ATSScoreMini score={ats.tailored} /> : <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">--</span>}
-                  </span>
-                  <span className="text-[10px] font-bold text-[var(--muted-foreground)] text-right opacity-60">
-                    {timeAgo(job.created_at)}
-                  </span>
-                  <Link
-                    href={`/tailor/${job.id}`}
-                    className="flex items-center justify-center w-11 h-11 -my-3 text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors justify-self-end"
-                    aria-label="Open tailor"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+            <div className="overflow-x-auto">
+              <div className="min-w-[640px]">
+                {/* Table header */}
+                <div className="grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px_40px] gap-4 px-6 py-4 bg-muted/30 border-b border-[var(--border)] text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">
+                  <span>Position</span>
+                  <span>Organization</span>
+                  <span>Status</span>
+                  <span>Fit</span>
+                  <span>ATS</span>
+                  <span className="text-right">Initiated</span>
+                  <span />
                 </div>
-              );
-            })}
+                {/* Table rows */}
+                {jobs.map((job, i) => {
+                  const cfg = statusConfig[job.status] ?? statusConfig.draft;
+                  const ats = atsScores[job.id];
+                  const fit = fitScores[job.id];
+                  return (
+                    <div
+                      key={job.id}
+                      className={`group grid grid-cols-[1.2fr_1fr_140px_80px_80px_100px_40px] gap-4 px-6 py-5 items-center hover:bg-muted/10 transition-colors ${i < jobs.length - 1 ? 'border-b border-[var(--border)]/40' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setDetailsJobId(job.id)}
+                        className="font-bold truncate text-foreground group-hover:text-accent transition-colors text-left"
+                      >
+                        {job.role || 'Untitled Role'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDetailsJobId(job.id)}
+                        className="text-sm font-medium text-[var(--muted-foreground)] truncate opacity-80 text-left"
+                      >
+                        {job.company || 'Unknown Company'}
+                      </button>
+                      <div>
+                        <select
+                          value={job.status}
+                          onChange={(e) => handleStatusChange(job.id, e.target.value)}
+                          className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border appearance-none cursor-pointer focus:outline-none transition-all ${cfg.bg} ${cfg.text} ${cfg.border} hover:scale-105 active:scale-95`}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {statusConfig[s]?.label ?? s}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <span className="font-bold">
+                        {fit != null ? (
+                          <FitScoreBadge score={fit} />
+                        ) : (
+                          <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">
+                            --
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-bold">
+                        {ats ? (
+                          <ATSScoreMini score={ats.tailored} />
+                        ) : (
+                          <span className="text-[10px] font-black text-[var(--muted-foreground)] opacity-30">
+                            --
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-bold text-[var(--muted-foreground)] text-right opacity-60">
+                        {timeAgo(job.created_at)}
+                      </span>
+                      <Link
+                        href={`/tailor/${job.id}`}
+                        className="flex items-center justify-center w-11 h-11 -my-3 text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors justify-self-end"
+                        aria-label="Open tailor"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-           </div>
           </div>
         )}
       </section>

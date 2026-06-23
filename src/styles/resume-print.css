@@ -4,7 +4,7 @@
 .resume-page {
   --resume-font-size: 10.5pt;
   --resume-line-height: 1.35;
-  --resume-font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
+  --resume-font-family: "Charter", "Georgia", "Times New Roman", serif;
   --resume-margin: 0.5in;
 
   width: 8.5in;
@@ -16,7 +16,9 @@
   font-family: var(--resume-font-family);
   font-size: var(--resume-font-size);
   line-height: var(--resume-line-height);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   border-radius: 2px;
 }
 
@@ -47,7 +49,7 @@
 
 /* ─── Print-only continuous view ─── */
 .resume-preview {
-  font-family: var(--resume-font-family, 'Charter', 'Georgia', 'Times New Roman', serif);
+  font-family: var(--resume-font-family, "Charter", "Georgia", "Times New Roman", serif);
   font-size: var(--resume-font-size, 10.5pt);
   line-height: var(--resume-line-height, 1.35);
   color: #222;
@@ -176,52 +178,113 @@
 .resume-page p > br,
 .resume-preview p > br {
   display: block;
-  content: '';
+  content: "";
   margin-top: 1px;
 }
 
 /* Also style the measurement div with same typography */
-.resume-measure h1 { font-size: 22pt; font-weight: 700; margin: 0 0 2px; text-align: center; color: #111; letter-spacing: 0.01em; }
-.resume-measure h2 { font-size: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 10px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #333; color: #111; }
-.resume-measure h3 { font-size: inherit; font-weight: 700; margin: 6px 0 1px; }
-.resume-measure p { margin: 1px 0; white-space: pre-line; }
-.resume-measure h1 + p { text-align: center; font-size: 9pt; color: #444; margin-bottom: 0; }
-.resume-measure h1 + p + hr, .resume-measure h1 + p + p + hr { display: none; }
-.resume-measure hr { border: none; margin: 2px 0; height: 0; }
-.resume-measure strong { font-weight: 700; }
-.resume-measure em { font-style: italic; }
-.resume-measure ul { margin: 1px 0 4px 0; padding-left: 1.1em; list-style: disc outside; }
-.resume-measure li { margin-bottom: 0; font-size: inherit; line-height: inherit; display: list-item; }
-.resume-measure h2 + p { margin-top: 6px; }
-.resume-measure p + ul { margin-top: 0; }
-.resume-measure p > br { display: block; content: ''; margin-top: 1px; }
+.resume-measure h1 {
+  font-size: 22pt;
+  font-weight: 700;
+  margin: 0 0 2px;
+  text-align: center;
+  color: #111;
+  letter-spacing: 0.01em;
+}
+.resume-measure h2 {
+  font-size: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 10px 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #333;
+  color: #111;
+}
+.resume-measure h3 {
+  font-size: inherit;
+  font-weight: 700;
+  margin: 6px 0 1px;
+}
+.resume-measure p {
+  margin: 1px 0;
+  white-space: pre-line;
+}
+.resume-measure h1 + p {
+  text-align: center;
+  font-size: 9pt;
+  color: #444;
+  margin-bottom: 0;
+}
+.resume-measure h1 + p + hr,
+.resume-measure h1 + p + p + hr {
+  display: none;
+}
+.resume-measure hr {
+  border: none;
+  margin: 2px 0;
+  height: 0;
+}
+.resume-measure strong {
+  font-weight: 700;
+}
+.resume-measure em {
+  font-style: italic;
+}
+.resume-measure ul {
+  margin: 1px 0 4px 0;
+  padding-left: 1.1em;
+  list-style: disc outside;
+}
+.resume-measure li {
+  margin-bottom: 0;
+  font-size: inherit;
+  line-height: inherit;
+  display: list-item;
+}
+.resume-measure h2 + p {
+  margin-top: 6px;
+}
+.resume-measure p + ul {
+  margin-top: 0;
+}
+.resume-measure p > br {
+  display: block;
+  content: "";
+  margin-top: 1px;
+}
 
 /* ─── Print styles ─── */
 @media print {
-  nav, header, .print-hide {
-    display: none !important;
+  nav,
+  header,
+  .print-hide {
+    display: none;
   }
 
   .print-show {
-    display: block !important;
+    display: block;
   }
 
-  body, main, main > div, html {
-    display: block !important;
-    height: auto !important;
-    width: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
+  body,
+  main,
+  main > div,
+  html {
+    display: block;
+    height: auto;
+    width: auto;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+    background: white;
   }
 
   #resume-print-target {
-    display: none !important;
+    display: none;
   }
 
   #resume-print-only {
-    display: block !important;
+    display: block;
   }
 
   .resume-preview {

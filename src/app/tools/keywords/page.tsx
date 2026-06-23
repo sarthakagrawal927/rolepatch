@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { type ATSResult,calculateATSScore } from '@/lib/ats-score';
+import { type ATSResult, calculateATSScore } from '@/lib/ats-score';
 
 function scoreColor(score: number) {
   if (score > 70) return { stroke: 'var(--accent)', text: 'text-[var(--accent)]' };
@@ -36,7 +36,9 @@ function ScoreCircle({ score }: { score: number }) {
       </svg>
       <div className="flex flex-col items-center">
         <span className={`text-4xl font-black ${color.text}`}>{score}</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">ATS Score</span>
+        <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+          ATS Score
+        </span>
       </div>
     </div>
   );
@@ -57,27 +59,40 @@ export default function KeywordsToolPage() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
       <div className="text-center mb-12 space-y-4">
-        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">Free ATS Keyword Checker</h1>
+        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+          Free ATS Keyword Checker
+        </h1>
         <p className="text-[var(--muted-foreground)] text-lg max-w-2xl mx-auto leading-relaxed">
-          Check how well your resume matches a job description. See matched and missing keywords instantly. Free, no sign-up required.
+          Check how well your resume matches a job description. See matched and missing keywords
+          instantly. Free, no sign-up required.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="space-y-2">
-          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">Your Resume</label>
+          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+            Your Resume
+          </label>
           <textarea
             value={resumeText}
-            onChange={(e) => { setResumeText(e.target.value); setResult(null); }}
+            onChange={(e) => {
+              setResumeText(e.target.value);
+              setResult(null);
+            }}
             placeholder="Paste your resume text here..."
             className="input-base min-h-[240px] resize-y font-mono text-sm"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">Job Description</label>
+          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+            Job Description
+          </label>
           <textarea
             value={jdText}
-            onChange={(e) => { setJdText(e.target.value); setResult(null); }}
+            onChange={(e) => {
+              setJdText(e.target.value);
+              setResult(null);
+            }}
             placeholder="Paste the job description here..."
             className="input-base min-h-[240px] resize-y font-mono text-sm"
           />

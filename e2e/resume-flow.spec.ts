@@ -1,4 +1,4 @@
-import { expect,test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Resume flow (guest mode)', () => {
   test('can create a resume and see the editor', async ({ page }) => {

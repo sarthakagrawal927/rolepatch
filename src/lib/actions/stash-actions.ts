@@ -20,7 +20,7 @@ export async function listStashEntries(): Promise<StashEntry[]> {
 export async function createStashEntry(
   category: string,
   label: string,
-  content: string,
+  content: string
 ): Promise<string> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to create stash entries');
@@ -37,7 +37,7 @@ export async function updateStashEntry(
   id: string,
   category: string,
   label: string,
-  content: string,
+  content: string
 ): Promise<void> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to update stash entries');

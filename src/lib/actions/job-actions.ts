@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { JobApplication, JobDetailsPatch, TailorChange,TailoredResume } from '@/lib/types';
+import type { JobApplication, JobDetailsPatch, TailorChange, TailoredResume } from '@/lib/types';
 
 type SqlArg = string | number | null;
 
@@ -26,7 +26,7 @@ export async function createJobApplication(
   company: string,
   role: string,
   jdRaw: string,
-  jdText: string,
+  jdText: string
 ): Promise<string> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to create job applications');
@@ -43,7 +43,10 @@ export async function createJobApplication(
 export async function getJobApplication(id: string): Promise<JobApplication | null> {
   const userId = await getCurrentUserId();
   if (!userId) return null;
-  const result = await db.execute({ sql: 'SELECT * FROM job_applications WHERE id = ? AND user_id = ?', args: [id, userId] });
+  const result = await db.execute({
+    sql: 'SELECT * FROM job_applications WHERE id = ? AND user_id = ?',
+    args: [id, userId],
+  });
   const row = result.rows[0];
   return row ? (JSON.parse(JSON.stringify(row)) as JobApplication) : null;
 }
@@ -59,7 +62,12 @@ export async function listJobApplications(): Promise<JobApplication[]> {
 }
 
 const ALLOWED_JOB_STATUSES = new Set([
-  'draft', 'tailored', 'applied', 'interview', 'offer', 'rejected',
+  'draft',
+  'tailored',
+  'applied',
+  'interview',
+  'offer',
+  'rejected',
 ]);
 
 export async function updateJobStatus(id: string, status: string): Promise<void> {
@@ -105,7 +113,7 @@ export async function saveTailoredResume(
   jobId: string,
   resumeId: string,
   source: string,
-  changes: TailorChange[] = [],
+  changes: TailorChange[] = []
 ): Promise<string> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to save tailored resumes');
@@ -130,14 +138,18 @@ export async function getTailoredResumes(jobId: string): Promise<TailoredResume[
     sql: 'SELECT * FROM tailored_resumes WHERE job_id = ? AND user_id = ? ORDER BY created_at DESC',
     args: [jobId, userId],
   });
-  const rows = JSON.parse(JSON.stringify(result.rows)) as Array<Omit<TailoredResume, 'changes'> & { changes_json?: string }>;
+  const rows = JSON.parse(JSON.stringify(result.rows)) as Array<
+    Omit<TailoredResume, 'changes'> & { changes_json?: string }
+  >;
   return rows.map((row) => {
     let changes: TailorChange[] = [];
     if (row.changes_json) {
       try {
         const parsed = JSON.parse(row.changes_json);
         if (Array.isArray(parsed)) changes = parsed as TailorChange[];
-      } catch { /* ignore malformed json */ }
+      } catch {
+        /* ignore malformed json */
+      }
     }
     const { changes_json: _omit, ...rest } = row;
     void _omit;

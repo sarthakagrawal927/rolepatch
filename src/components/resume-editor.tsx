@@ -8,7 +8,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView, keymap } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import Link from 'next/link';
-import { useCallback, useEffect,useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 
 import { useAuth } from '@/components/auth-provider';
@@ -29,7 +29,7 @@ const FONT_OPTIONS = [
   { label: 'Helvetica', value: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif" },
   { label: 'Arial', value: "'Arial', 'Helvetica', sans-serif" },
   { label: 'Calibri', value: "'Calibri', 'Helvetica', sans-serif" },
-  { label: 'System Sans', value: "system-ui, -apple-system, sans-serif" },
+  { label: 'System Sans', value: 'system-ui, -apple-system, sans-serif' },
 ];
 
 const STORAGE_KEY = 'resume-tailor-config';
@@ -71,7 +71,8 @@ function calculateBreakPoints(el: HTMLElement): number[] {
     const nextH = headings[i + 1] as HTMLElement | undefined;
     const sectionEnd = nextH ? nextH.offsetTop : total;
     // Only keep together if the section is small enough (< half a page)
-    const safeTop = (sectionEnd - top) < PAGE_CONTENT_PX / 2 ? sectionEnd : top + hEl.offsetHeight + 60;
+    const safeTop =
+      sectionEnd - top < PAGE_CONTENT_PX / 2 ? sectionEnd : top + hEl.offsetHeight + 60;
     headingZones.push({ top, safeTop });
   }
 
@@ -113,11 +114,20 @@ function loadConfig() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
-function saveConfig(cfg: { fontSize: number; lineHeight: number; fontFamily: string; margin: number }) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); } catch {}
+function saveConfig(cfg: {
+  fontSize: number;
+  lineHeight: number;
+  fontFamily: string;
+  margin: number;
+}) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+  } catch {}
 }
 
 export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
@@ -206,7 +216,9 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     } else {
       await updateResume(resumeId, text);
       // Server now has the authoritative copy — clear the local draft.
-      try { localStorage.removeItem(`resume-draft-${resumeId}`); } catch {}
+      try {
+        localStorage.removeItem(`resume-draft-${resumeId}`);
+      } catch {}
     }
     setSource(text);
     setSaving(false);
@@ -223,7 +235,9 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   useEffect(() => {
     if (!ready || isGuest) return;
     const t = setTimeout(() => {
-      try { localStorage.setItem(`resume-draft-${resumeId}`, source); } catch {}
+      try {
+        localStorage.setItem(`resume-draft-${resumeId}`, source);
+      } catch {}
     }, 800);
     return () => clearTimeout(t);
   }, [source, resumeId, ready, isGuest]);
@@ -245,7 +259,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once when ready flips true
-  }, [ready]);
+  }, [ready, initialSource, resumeId, isGuest]);
 
   useEffect(() => {
     if (!editorContainerRef.current || viewRef.current || !ready) return;
@@ -292,7 +306,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       viewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only initialize editor once when ready; source is captured at init time
-  }, [ready]);
+  }, [ready, source]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -330,11 +344,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   } as React.CSSProperties;
 
   if (!ready) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
-        Loading...
-      </div>
-    );
+    return <div className="flex-1 flex items-center justify-center text-gray-500">Loading...</div>;
   }
 
   return (
@@ -348,17 +358,23 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
             className="flex items-center justify-center w-9 h-9 -m-1.5 text-gray-400 hover:text-gray-600 transition-colors"
             title="Back to dashboard"
           >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" /></svg>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
+                clipRule="evenodd"
+              />
+            </svg>
           </Link>
           <span className="text-sm font-medium text-gray-700 truncate">{resolvedName}</span>
 
-          <span className={`text-xs tabular-nums ${breakPoints.length > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+          <span
+            className={`text-xs tabular-nums ${breakPoints.length > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}
+          >
             {breakPoints.length === 1 ? '1 page' : `${breakPoints.length} pages`}
           </span>
 
-          <span className="text-xs text-gray-400">
-            {saving ? 'Saving...' : ''}
-          </span>
+          <span className="text-xs text-gray-400">{saving ? 'Saving...' : ''}</span>
 
           <div className="ml-auto flex items-center gap-2">
             <div className="relative" ref={configRef}>
@@ -367,50 +383,72 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
                 className={`flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-1.5 rounded transition-colors ${showConfig ? 'bg-gray-200 text-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
                 title="Format settings"
               >
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </button>
 
               {showConfig && (
                 <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-64">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Font Family</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Font Family
+                      </label>
                       <select
                         value={fontFamily}
                         onChange={(e) => setFontFamily(e.target.value)}
                         className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
                         {FONT_OPTIONS.map((f) => (
-                          <option key={f.label} value={f.value}>{f.label}</option>
+                          <option key={f.label} value={f.value}>
+                            {f.label}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Size (pt)</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Size (pt)
+                        </label>
                         <input
                           type="number"
-                          min={8} max={14} step={0.5}
+                          min={8}
+                          max={14}
+                          step={0.5}
                           value={fontSize}
                           onChange={(e) => setFontSize(Number(e.target.value))}
                           className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Leading</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Leading
+                        </label>
                         <input
                           type="number"
-                          min={1} max={2} step={0.05}
+                          min={1}
+                          max={2}
+                          step={0.05}
                           value={lineHeight}
                           onChange={(e) => setLineHeight(Number(e.target.value))}
                           className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Margin (in)</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Margin (in)
+                        </label>
                         <input
                           type="number"
-                          min={0.25} max={1} step={0.05}
+                          min={0.25}
+                          max={1}
+                          step={0.05}
                           value={margin}
                           onChange={(e) => setMargin(Number(e.target.value))}
                           className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -452,7 +490,10 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       </div>
 
       {/* Preview pane — paginated */}
-      <div className="w-full md:w-1/2 min-h-[60vh] md:min-h-0 overflow-y-auto bg-gray-100 py-8 px-4 sm:px-6 print-hide" id="resume-print-target">
+      <div
+        className="w-full md:w-1/2 min-h-[60vh] md:min-h-0 overflow-y-auto bg-gray-100 py-8 px-4 sm:px-6 print-hide"
+        id="resume-print-target"
+      >
         {/* Hidden measurement div — same styling, unconstrained height */}
         <div ref={measureRef} className="resume-measure" style={cssVars} aria-hidden="true">
           <Markdown>{source}</Markdown>
@@ -461,9 +502,8 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
         {/* Visible page cards */}
         {breakPoints.map((offsetPx, i) => {
           const nextOffset = breakPoints[i + 1];
-          const clipStyle = nextOffset != null
-            ? { height: `${nextOffset - offsetPx}px` }
-            : undefined;
+          const clipStyle =
+            nextOffset != null ? { height: `${nextOffset - offsetPx}px` } : undefined;
           return (
             <div key={i} className="resume-page" style={cssVars}>
               <div className="resume-page-clip" style={clipStyle}>

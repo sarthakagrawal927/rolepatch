@@ -58,25 +58,28 @@ export function PricingCards({ paymentVerified }: { paymentVerified: boolean }) 
   }
 
   function handleGuestSignIn() {
-    authClient.signIn.social({ provider: 'google', callbackURL: '/pricing' }).then((result) => {
-      if (result?.error) {
+    authClient.signIn
+      .social({ provider: 'google', callbackURL: '/pricing' })
+      .then((result) => {
+        if (result?.error) {
+          captureAuthFailure({
+            projectSlug: 'resume-tailor',
+            provider: 'google',
+            stage: 'signin',
+            reason: result.error.message ?? 'Google sign-in failed',
+            source: 'pricing-cards',
+          });
+        }
+      })
+      .catch((error: unknown) => {
         captureAuthFailure({
           projectSlug: 'resume-tailor',
           provider: 'google',
           stage: 'signin',
-          reason: result.error.message ?? 'Google sign-in failed',
+          reason: error instanceof Error ? error.message : 'Google sign-in failed',
           source: 'pricing-cards',
         });
-      }
-    }).catch((error: unknown) => {
-      captureAuthFailure({
-        projectSlug: 'resume-tailor',
-        provider: 'google',
-        stage: 'signin',
-        reason: error instanceof Error ? error.message : 'Google sign-in failed',
-        source: 'pricing-cards',
       });
-    });
   }
 
   return (

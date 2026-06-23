@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   localCreateResume,
@@ -47,8 +47,8 @@ describe('local-storage', () => {
       const id = localCreateResume('Test', 'content');
       const resume = localGetResume(id);
       expect(resume).not.toBeNull();
-      expect(resume!.name).toBe('Test');
-      expect(resume!.source).toBe('content');
+      expect(resume?.name).toBe('Test');
+      expect(resume?.source).toBe('content');
     });
 
     it('returns null for non-existent resume', () => {
@@ -117,7 +117,7 @@ describe('local-storage', () => {
 
       localUpdateStashEntry(id, 'languages', 'TypeScript', 'new content');
       const list = localListStashEntries();
-      const entry = list.find(e => e.id === id)!;
+      const entry = list.find((e) => e.id === id)!;
 
       expect(entry.category).toBe('languages');
       expect(entry.label).toBe('TypeScript');

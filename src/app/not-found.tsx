@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
@@ -9,10 +9,7 @@ export default function NotFound() {
         <p className="text-sm opacity-70 mb-6">
           The page you&apos;re looking for doesn&apos;t exist or may have moved.
         </p>
-        <Link
-          href="/"
-          className="inline-block px-4 py-2 rounded border hover:opacity-80"
-        >
+        <Link href="/" className="inline-block px-4 py-2 rounded border hover:opacity-80">
           Back home
         </Link>
       </div>

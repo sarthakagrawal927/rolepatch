@@ -4,14 +4,72 @@
   "files": {
     "ignoreUnknown": true,
     "includes": [
-      "**", "!**/.next", "!**/.open-next", "!**/.wrangler", "!**/out", "!**/dist", "!**/build",
-      "!**/node_modules", "!**/.astro", "!**/next-env.d.ts", "!**/cloudflare-env.d.ts",
-      "!**/pnpm-lock.yaml", "!**/package-lock.json", "!**/tsconfig.tsbuildinfo",
-      "!**/landing-astro/**", "!**/.pages-deploy/**", "!**/extension/**"
+      "**",
+      "!**/.next",
+      "!**/.open-next",
+      "!**/.wrangler",
+      "!**/out",
+      "!**/dist",
+      "!**/build",
+      "!**/node_modules",
+      "!**/.astro",
+      "!**/next-env.d.ts",
+      "!**/cloudflare-env.d.ts",
+      "!**/pnpm-lock.yaml",
+      "!**/package-lock.json",
+      "!**/tsconfig.tsbuildinfo",
+      "!**/landing-astro",
+      "!**/.pages-deploy",
+      "!**/extension",
+      "!**/*.css",
+      "!**/design.html"
     ]
   },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100, "lineEnding": "lf" },
-  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "es5", "jsxQuoteStyle": "double" } },
-  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5",
+      "jsxQuoteStyle": "double"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "off",
+        "useValidAnchor": "off",
+        "noLabelWithoutControl": "off",
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useSemanticElements": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off",
+        "useIterableCallbackReturn": "off",
+        "noShadowRestrictedNames": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useNodejsImportProtocol": "off"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
+      }
+    }
+  },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } }
 }

@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { calculateATSScore } from '@/lib/ats-score';
 
@@ -20,7 +20,8 @@ describe('calculateATSScore', () => {
   });
 
   it('excludes common stop words', () => {
-    const jd = 'the is are was were have has had do does did will shall should would could may might can need must';
+    const jd =
+      'the is are was were have has had do does did will shall should would could may might can need must';
     const resume = 'completely different content here nothing matches at all';
     const result = calculateATSScore(resume, jd);
     // All JD words are stop words, so no keywords extracted
@@ -29,14 +30,16 @@ describe('calculateATSScore', () => {
   });
 
   it('excludes filler words', () => {
-    const jd = 'experience team work company role position job ability skills requirements qualifications';
+    const jd =
+      'experience team work company role position job ability skills requirements qualifications';
     const resume = 'something completely unrelated';
     const result = calculateATSScore(resume, jd);
     expect(result.totalKeywords).toBe(0);
   });
 
   it('scores partial matches correctly', () => {
-    const jd = 'Looking for Python developer. Python experience required. Must know React and Node.js.';
+    const jd =
+      'Looking for Python developer. Python experience required. Must know React and Node.js.';
     const resume = 'Python developer with 5 years experience.';
     const result = calculateATSScore(resume, jd);
     expect(result.score).toBeGreaterThan(0);
@@ -47,8 +50,10 @@ describe('calculateATSScore', () => {
   });
 
   it('handles bigram extraction', () => {
-    const jd = 'Must have machine learning experience. Machine learning is required. Also need data analysis and project management.';
-    const resume = 'Expert in machine learning, deep learning, and data analysis. Led project management initiatives.';
+    const jd =
+      'Must have machine learning experience. Machine learning is required. Also need data analysis and project management.';
+    const resume =
+      'Expert in machine learning, deep learning, and data analysis. Led project management initiatives.';
     const result = calculateATSScore(resume, jd);
     expect(result.matchedKeywords).toContain('machine learning');
     expect(result.score).toBeGreaterThan(50);
@@ -76,8 +81,10 @@ describe('calculateATSScore', () => {
   });
 
   it('returns matched and missing keyword lists', () => {
-    const jd = 'Need React TypeScript Node.js PostgreSQL Redis experience. React and TypeScript are critical.';
-    const resume = 'Built applications with React and TypeScript. Used PostgreSQL for data storage.';
+    const jd =
+      'Need React TypeScript Node.js PostgreSQL Redis experience. React and TypeScript are critical.';
+    const resume =
+      'Built applications with React and TypeScript. Used PostgreSQL for data storage.';
     const result = calculateATSScore(resume, jd);
 
     expect(result.matchedKeywords).toContain('react');
@@ -85,6 +92,8 @@ describe('calculateATSScore', () => {
     expect(result.matchedKeywords).toContain('postgresql');
     expect(result.missingKeywords).toContain('redis');
     expect(result.totalKeywords).toBeGreaterThan(0);
-    expect(result.matchedKeywords.length + result.missingKeywords.length).toBe(result.totalKeywords);
+    expect(result.matchedKeywords.length + result.missingKeywords.length).toBe(
+      result.totalKeywords
+    );
   });
 });

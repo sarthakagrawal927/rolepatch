@@ -185,12 +185,20 @@ export function AISettings({
           )}
         </div>
         {error && (
-          <p className={cn.error} style={{ fontSize: '0.75rem', marginTop: '0.375rem' }} data-smw-ai-error>
+          <p
+            className={cn.error}
+            style={{ fontSize: '0.75rem', marginTop: '0.375rem' }}
+            data-smw-ai-error
+          >
             {error}
           </p>
         )}
         {models.length > 0 && !error && (
-          <p className={cn.hint} style={{ fontSize: '0.75rem', marginTop: '0.375rem' }} data-smw-ai-hint>
+          <p
+            className={cn.hint}
+            style={{ fontSize: '0.75rem', marginTop: '0.375rem' }}
+            data-smw-ai-hint
+          >
             {models.length} model{models.length !== 1 ? 's' : ''} available
           </p>
         )}

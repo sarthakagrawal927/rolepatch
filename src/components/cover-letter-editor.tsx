@@ -16,7 +16,7 @@ import {
   localSaveCoverLetter,
   localUpdateCoverLetter,
 } from '@/lib/local-storage';
-import type { CoverLetter,JobApplication, Resume } from '@/lib/types';
+import type { CoverLetter, JobApplication, Resume } from '@/lib/types';
 
 interface CoverLetterEditorProps {
   job: JobApplication;
@@ -143,7 +143,7 @@ export function CoverLetterEditor({ job, serverResume, existingLetter }: CoverLe
             length,
             userFeedback: opts.userFeedback,
             previousDraft: opts.previousDraft,
-          },
+          }
         );
         setContent(result);
         if (isGuest) {
@@ -280,9 +280,7 @@ export function CoverLetterEditor({ job, serverResume, existingLetter }: CoverLe
           </button>
         )}
 
-        {saveMessage && (
-          <span className="text-sm text-[var(--accent)]">{saveMessage}</span>
-        )}
+        {saveMessage && <span className="text-sm text-[var(--accent)]">{saveMessage}</span>}
 
         <Link
           href={`/tailor/${job.id}`}
@@ -401,9 +399,7 @@ function SegmentedGroup<T extends string>({
               }}
             >
               {opt.label}
-              {opt.hint && (
-                <span className="ml-1 text-[10px] opacity-70">{opt.hint}</span>
-              )}
+              {opt.hint && <span className="ml-1 text-[10px] opacity-70">{opt.hint}</span>}
             </button>
           );
         })}

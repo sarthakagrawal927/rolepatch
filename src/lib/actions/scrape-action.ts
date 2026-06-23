@@ -37,7 +37,7 @@ async function delay(ms: number): Promise<void> {
 async function fetchWithRetry(
   input: string,
   init: RequestInit,
-  attempts = MAX_SCRAPE_ATTEMPTS,
+  attempts = MAX_SCRAPE_ATTEMPTS
 ): Promise<Response> {
   let lastError: unknown;
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -87,12 +87,12 @@ function validateUrl(raw: string): URL {
   if (ipMatch) {
     const [, a, b] = ipMatch.map(Number);
     if (
-      a === 10 ||                              // 10.0.0.0/8
-      (a === 172 && b >= 16 && b <= 31) ||     // 172.16.0.0/12
-      (a === 192 && b === 168) ||              // 192.168.0.0/16
-      a === 127 ||                              // 127.0.0.0/8
-      (a === 169 && b === 254) ||              // 169.254.0.0/16 (link-local / cloud metadata)
-      a === 0                                   // 0.0.0.0/8
+      a === 10 || // 10.0.0.0/8
+      (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12
+      (a === 192 && b === 168) || // 192.168.0.0/16
+      a === 127 || // 127.0.0.0/8
+      (a === 169 && b === 254) || // 169.254.0.0/16 (link-local / cloud metadata)
+      a === 0 // 0.0.0.0/8
     ) {
       throw new Error('Internal URLs are not allowed');
     }
@@ -142,7 +142,11 @@ export async function scrapeJobUrl(url: string): Promise<ScrapeResult> {
   const html = await response.text();
   const [linkedomMod, readabilityMod] = await Promise.all([
     dynImport('linkedom') as Promise<{ parseHTML: (h: string) => { document: unknown } }>,
-    dynImport('@mozilla/readability') as Promise<{ Readability: new (d: unknown) => { parse(): { title?: string; textContent?: string; content?: string } | null } }>,
+    dynImport('@mozilla/readability') as Promise<{
+      Readability: new (
+        d: unknown
+      ) => { parse(): { title?: string; textContent?: string; content?: string } | null };
+    }>,
   ]);
   const { document } = linkedomMod.parseHTML(html);
   const reader = new readabilityMod.Readability(document);

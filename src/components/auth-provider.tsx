@@ -46,9 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [userId]);
 
   return (
-    <AuthContext.Provider value={{ isGuest: !userId, userId }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ isGuest: !userId, userId }}>{children}</AuthContext.Provider>
   );
 }
 

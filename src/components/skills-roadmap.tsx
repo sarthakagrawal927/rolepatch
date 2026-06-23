@@ -4,19 +4,16 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
-import {
-  generateSkillsRoadmap,
-  getSkillsRoadmap,
-} from '@/lib/actions/skills-roadmap-action';
-import {
-  localGetSkillsRoadmap,
-  localSaveSkillsRoadmap,
-} from '@/lib/local-storage';
+import { generateSkillsRoadmap, getSkillsRoadmap } from '@/lib/actions/skills-roadmap-action';
+import { localGetSkillsRoadmap, localSaveSkillsRoadmap } from '@/lib/local-storage';
 import type { JobApplication, Resume, SkillPriority, SkillsRoadmap } from '@/lib/types';
 
 const PRIORITY_ORDER: SkillPriority[] = ['high', 'medium', 'low'];
 
-const PRIORITY_STYLE: Record<SkillPriority, { text: string; bg: string; border: string; label: string }> = {
+const PRIORITY_STYLE: Record<
+  SkillPriority,
+  { text: string; bg: string; border: string; label: string }
+> = {
   high: {
     text: 'text-red-400',
     bg: 'bg-red-500/10',
@@ -71,9 +68,7 @@ export function SkillsRoadmapPanel({ job, resume }: SkillsRoadmapProps) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const existing = isGuest
-        ? localGetSkillsRoadmap(job.id)
-        : await getSkillsRoadmap(job.id);
+      const existing = isGuest ? localGetSkillsRoadmap(job.id) : await getSkillsRoadmap(job.id);
       if (!cancelled && existing) setRoadmap(existing);
       if (!cancelled) setProgress(loadProgress(job.id));
     })().catch(() => {});
@@ -120,7 +115,7 @@ export function SkillsRoadmapPanel({ job, resume }: SkillsRoadmapProps) {
 
   const completedCount = useMemo(
     () => (roadmap ? roadmap.items.filter((i) => progress[i.skill]).length : 0),
-    [roadmap, progress],
+    [roadmap, progress]
   );
 
   return (
@@ -166,7 +161,10 @@ export function SkillsRoadmapPanel({ job, resume }: SkillsRoadmapProps) {
               </p>
               <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
                 <span>
-                  <span className="font-black text-foreground">{roadmap.total_estimated_hours}</span> hrs
+                  <span className="font-black text-foreground">
+                    {roadmap.total_estimated_hours}
+                  </span>{' '}
+                  hrs
                 </span>
                 <span>
                   <span className="font-black text-foreground">
@@ -279,7 +277,8 @@ export function SkillsRoadmapPanel({ job, resume }: SkillsRoadmapProps) {
         <div className="border border-dashed border-[var(--border)] rounded-2xl py-10 flex flex-col items-center justify-center bg-muted/20">
           <p className="text-sm font-bold text-foreground">No learning plan yet</p>
           <p className="text-xs text-[var(--muted-foreground)] mt-1 px-6 text-center">
-            Generate a prioritized list of skills to learn and resources to use — grounded in this job description.
+            Generate a prioritized list of skills to learn and resources to use — grounded in this
+            job description.
           </p>
         </div>
       ) : null}

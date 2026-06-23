@@ -1,17 +1,23 @@
 'use client';
 
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import { migrateGuestData } from '@/lib/actions/migration-actions';
 import { localListJobs, localListResumes, localListStashEntries } from '@/lib/local-storage';
-import type { CoverLetter, JobApplication, Resume, StashEntry,TailoredResume } from '@/lib/types';
+import type { CoverLetter, JobApplication, Resume, StashEntry, TailoredResume } from '@/lib/types';
 
 const DISMISSED_KEY = 'rt-migration-dismissed';
 // leave localStorage intact as recovery backup
 const MIGRATED_KEY = 'rt-migrated';
 
-type Counts = { resumes: number; jobs: number; tailoredResumes: number; coverLetters: number; stashEntries: number };
+type Counts = {
+  resumes: number;
+  jobs: number;
+  tailoredResumes: number;
+  coverLetters: number;
+  stashEntries: number;
+};
 
 function getLocalItems<T>(key: string): T[] {
   if (typeof window === 'undefined') return [];
@@ -23,15 +29,16 @@ function formatSuccessParts(counts: Counts): string[] {
   const parts: string[] = [];
   if (counts.resumes > 0) parts.push(`${counts.resumes} resume${counts.resumes > 1 ? 's' : ''}`);
   if (counts.jobs > 0) parts.push(`${counts.jobs} job${counts.jobs > 1 ? 's' : ''}`);
-  if (counts.stashEntries > 0) parts.push(`${counts.stashEntries} stash entr${counts.stashEntries > 1 ? 'ies' : 'y'}`);
+  if (counts.stashEntries > 0)
+    parts.push(`${counts.stashEntries} stash entr${counts.stashEntries > 1 ? 'ies' : 'y'}`);
   return parts;
 }
 
 export function MigrationBanner() {
   const { isGuest } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [dismissed, setDismissed] = useState(() =>
-    typeof window !== 'undefined' && localStorage.getItem(DISMISSED_KEY) === '1'
+  const [dismissed, setDismissed] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem(DISMISSED_KEY) === '1'
   );
   const [autoResult, setAutoResult] = useState<{ counts: Counts } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,9 +91,7 @@ export function MigrationBanner() {
     if (parts.length === 0) return null;
     return (
       <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <p className="text-sm text-foreground">
-          {parts.join(', ')} moved to your account.
-        </p>
+        <p className="text-sm text-foreground">{parts.join(', ')} moved to your account.</p>
         <button
           onClick={() => setAutoResult(null)}
           className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border)] text-foreground hover:bg-[var(--muted)] transition-colors shrink-0"

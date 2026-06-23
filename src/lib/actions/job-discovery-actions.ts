@@ -63,7 +63,14 @@ export async function createSavedJobSearch(input: {
   await db.execute({
     sql: `INSERT INTO saved_job_searches (id, user_id, name, query, location, remote)
           VALUES (?, ?, ?, ?, ?, ?)`,
-    args: [id, userId, input.name.trim(), input.query.trim(), input.location?.trim() ?? '', input.remote ? 1 : 0],
+    args: [
+      id,
+      userId,
+      input.name.trim(),
+      input.query.trim(),
+      input.location?.trim() ?? '',
+      input.remote ? 1 : 0,
+    ],
   });
   revalidatePath('/dashboard');
   return id;
@@ -156,7 +163,7 @@ export async function markJobDiscoveryAlertsSeen(): Promise<void> {
 
 export async function recordSavedSearchRun(
   searchId: string,
-  jobs: DiscoveredJob[],
+  jobs: DiscoveredJob[]
 ): Promise<number> {
   const userId = await getCurrentUserId();
   if (!userId) return 0;
@@ -191,7 +198,7 @@ export async function recordSavedSearchRun(
     sql: `UPDATE saved_job_searches
           SET last_result_ids = ?, last_run_at = unixepoch(), updated_at = unixepoch()
           WHERE id = ? AND user_id = ?`,
-    args: [JSON.stringify(jobs.map(job => job.id)), searchId, userId],
+    args: [JSON.stringify(jobs.map((job) => job.id)), searchId, userId],
   });
 
   revalidatePath('/dashboard');

@@ -7,7 +7,7 @@ test.use({ ...devices['iPhone 13'] });
 /** Asserts the document does not scroll horizontally. */
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth
   );
   // Allow 1px for sub-pixel rounding.
   expect(overflow).toBeLessThanOrEqual(1);

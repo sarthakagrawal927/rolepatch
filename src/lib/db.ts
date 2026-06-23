@@ -35,7 +35,10 @@ type Row = Record<string, string | number | null | Uint8Array> & {
 
 function coerceArg(a: SqlArg) {
   if (a === null || a === undefined) return { type: 'null' as const };
-  if (typeof a === 'number') return Number.isInteger(a) ? { type: 'integer' as const, value: String(a) } : { type: 'float' as const, value: String(a) };
+  if (typeof a === 'number')
+    return Number.isInteger(a)
+      ? { type: 'integer' as const, value: String(a) }
+      : { type: 'float' as const, value: String(a) };
   if (typeof a === 'bigint') return { type: 'integer' as const, value: a.toString() };
   if (typeof a === 'boolean') return { type: 'integer' as const, value: a ? '1' : '0' };
   if (a instanceof Uint8Array) {
@@ -84,9 +87,10 @@ function coerceRow(cols: Array<{ name: string }>, row: TursoResultValue[]): Row 
 function httpUrlFromLibsqlUrl(raw: string | undefined): string {
   if (!raw) return '';
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw.replace(/\/$/, '');
-  if (raw.startsWith('libsql://')) return 'https://' + raw.slice('libsql://'.length).replace(/\/$/, '');
-  if (raw.startsWith('wss://')) return 'https://' + raw.slice('wss://'.length).replace(/\/$/, '');
-  if (raw.startsWith('ws://')) return 'http://' + raw.slice('ws://'.length).replace(/\/$/, '');
+  if (raw.startsWith('libsql://'))
+    return `https://${raw.slice('libsql://'.length).replace(/\/$/, '')}`;
+  if (raw.startsWith('wss://')) return `https://${raw.slice('wss://'.length).replace(/\/$/, '')}`;
+  if (raw.startsWith('ws://')) return `http://${raw.slice('ws://'.length).replace(/\/$/, '')}`;
   throw new Error(`Unsupported TURSO_DATABASE_URL scheme: ${raw}`);
 }
 
@@ -104,12 +108,12 @@ async function runPipeline(
   requests: Array<
     | { type: 'execute'; stmt: { sql: string; args: ReturnType<typeof coerceArg>[] } }
     | { type: 'close' }
-  >,
+  >
 ): Promise<{ baton: string | null; results: PipelineResponse['results'] }> {
   if (!base) {
     throw new Error('TURSO_DATABASE_URL is not set');
   }
-  const res = await fetch(base + '/v2/pipeline', {
+  const res = await fetch(`${base}/v2/pipeline`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -143,20 +147,29 @@ function extractExecute(result: PipelineResponse['results'][number]): ExecuteRes
 }
 
 function toExecuteRequest(input: ExecuteArgs | string) {
-  const stmt = typeof input === 'string' ? { sql: input, args: [] as SqlArg[] } : { sql: input.sql, args: [...(input.args ?? [])] };
+  const stmt =
+    typeof input === 'string'
+      ? { sql: input, args: [] as SqlArg[] }
+      : { sql: input.sql, args: [...(input.args ?? [])] };
   return { type: 'execute' as const, stmt: { sql: stmt.sql, args: stmt.args.map(coerceArg) } };
 }
 
 class Transaction {
   private baton: string | null = null;
   private closed = false;
-  constructor(private readonly base: string, private readonly authToken: string | undefined, initialBaton: string | null) {
+  constructor(
+    private readonly base: string,
+    private readonly authToken: string | undefined,
+    initialBaton: string | null
+  ) {
     this.baton = initialBaton;
   }
 
   async execute(input: ExecuteArgs | string): Promise<ExecuteResult> {
     if (this.closed) throw new Error('Transaction is closed');
-    const { baton, results } = await runPipeline(this.base, this.authToken, this.baton, [toExecuteRequest(input)]);
+    const { baton, results } = await runPipeline(this.base, this.authToken, this.baton, [
+      toExecuteRequest(input),
+    ]);
     this.baton = baton;
     return extractExecute(results[0]);
   }
@@ -164,14 +177,20 @@ class Transaction {
   async commit(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
-    await runPipeline(this.base, this.authToken, this.baton, [toExecuteRequest('COMMIT'), { type: 'close' }]);
+    await runPipeline(this.base, this.authToken, this.baton, [
+      toExecuteRequest('COMMIT'),
+      { type: 'close' },
+    ]);
   }
 
   async rollback(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
     try {
-      await runPipeline(this.base, this.authToken, this.baton, [toExecuteRequest('ROLLBACK'), { type: 'close' }]);
+      await runPipeline(this.base, this.authToken, this.baton, [
+        toExecuteRequest('ROLLBACK'),
+        { type: 'close' },
+      ]);
     } catch {
       // best-effort rollback
     }
@@ -179,21 +198,29 @@ class Transaction {
 }
 
 class TursoHttpClient {
-  constructor(private readonly base: string, private readonly authToken?: string) {}
+  constructor(
+    private readonly base: string,
+    private readonly authToken?: string
+  ) {}
 
   async execute(input: ExecuteArgs | string): Promise<ExecuteResult> {
-    const { results } = await runPipeline(this.base, this.authToken, null, [toExecuteRequest(input), { type: 'close' }]);
+    const { results } = await runPipeline(this.base, this.authToken, null, [
+      toExecuteRequest(input),
+      { type: 'close' },
+    ]);
     return extractExecute(results[0]);
   }
 
   async transaction(_mode: 'read' | 'write' | 'deferred' = 'write'): Promise<Transaction> {
     void _mode;
-    const { baton } = await runPipeline(this.base, this.authToken, null, [toExecuteRequest('BEGIN')]);
+    const { baton } = await runPipeline(this.base, this.authToken, null, [
+      toExecuteRequest('BEGIN'),
+    ]);
     return new Transaction(this.base, this.authToken, baton);
   }
 }
 
 export const db = new TursoHttpClient(
   httpUrlFromLibsqlUrl(process.env.TURSO_DATABASE_URL),
-  process.env.TURSO_AUTH_TOKEN,
+  process.env.TURSO_AUTH_TOKEN
 );

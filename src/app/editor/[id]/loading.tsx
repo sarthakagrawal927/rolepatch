@@ -5,9 +5,7 @@ export default function EditorLoading() {
         className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-transparent"
         aria-hidden
       />
-      <p className="text-sm text-[var(--muted-foreground)]">
-        Loading the editor…
-      </p>
+      <p className="text-sm text-[var(--muted-foreground)]">Loading the editor…</p>
     </div>
   );
 }

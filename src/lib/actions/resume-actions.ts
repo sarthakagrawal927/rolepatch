@@ -55,7 +55,10 @@ Relevant coursework or honors
 **Tools:** Git, Docker, AWS
 `;
 
-export async function createResume(name: string, source: string = DEFAULT_MARKDOWN_TEMPLATE): Promise<string> {
+export async function createResume(
+  name: string,
+  source: string = DEFAULT_MARKDOWN_TEMPLATE
+): Promise<string> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to create resumes');
   const id = uuid();

@@ -51,27 +51,40 @@ export default function DiffToolPage() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
       <div className="text-center mb-12 space-y-4">
-        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">Free Resume Diff Tool</h1>
+        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+          Free Resume Diff Tool
+        </h1>
         <p className="text-[var(--muted-foreground)] text-lg max-w-2xl mx-auto leading-relaxed">
-          Compare two versions of your resume side by side. See exactly what changed, word by word. Free, no sign-up required.
+          Compare two versions of your resume side by side. See exactly what changed, word by word.
+          Free, no sign-up required.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="space-y-2">
-          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">Version A</label>
+          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+            Version A
+          </label>
           <textarea
             value={versionA}
-            onChange={(e) => { setVersionA(e.target.value); setCompared(false); }}
+            onChange={(e) => {
+              setVersionA(e.target.value);
+              setCompared(false);
+            }}
             placeholder="Paste your original resume text here..."
             className="input-base min-h-[240px] resize-y font-mono text-sm"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">Version B</label>
+          <label className="text-sm font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+            Version B
+          </label>
           <textarea
             value={versionB}
-            onChange={(e) => { setVersionB(e.target.value); setCompared(false); }}
+            onChange={(e) => {
+              setVersionB(e.target.value);
+              setCompared(false);
+            }}
             placeholder="Paste your updated resume text here..."
             className="input-base min-h-[240px] resize-y font-mono text-sm"
           />
@@ -119,7 +132,9 @@ export default function DiffToolPage() {
 
       <div className="mt-16 text-center">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 max-w-xl mx-auto">
-          <p className="text-[var(--muted-foreground)] mb-4">Want AI to tailor your resume automatically?</p>
+          <p className="text-[var(--muted-foreground)] mb-4">
+            Want AI to tailor your resume automatically?
+          </p>
           <Link
             href="/dashboard"
             className="inline-block bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-bold px-6 py-3 rounded-xl transition-colors"

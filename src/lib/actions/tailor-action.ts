@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { formatEvidenceForPrompt, rankEvidenceForJob } from '@/lib/achievement-evidence';
 import { listAchievementEvidence } from '@/lib/actions/achievement-evidence-actions';
 import { listStashEntries } from '@/lib/actions/stash-actions';
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { trackActivated, trackCoreAction } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/auth-utils';
@@ -21,14 +21,12 @@ const tailorSchema = z.object({
         snippet: z
           .string()
           .describe('A short excerpt from the tailored resume that was added or modified'),
-        reason: z
-          .string()
-          .describe('Why this edit was made — concise, human-readable'),
+        reason: z.string().describe('Why this edit was made — concise, human-readable'),
         jd_match: z
           .string()
           .optional()
           .describe('The JD keyword, skill, or requirement this edit targets'),
-      }),
+      })
     )
     .describe('One entry per meaningful edit, grounded in the job description'),
 });
@@ -46,7 +44,7 @@ export async function tailorResume(
   resumeSource: string,
   jdText: string,
   aiConfig: AIProviderConfig,
-  stashContent?: string,
+  stashContent?: string
 ): Promise<TailorResult> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
@@ -60,7 +58,7 @@ export async function tailorResume(
       throw new Error(
         result.error === 'insufficient_tokens'
           ? 'No tokens remaining. Purchase more to continue.'
-          : 'Authentication required to generate.',
+          : 'Authentication required to generate.'
       );
     }
     debited = true;
@@ -83,7 +81,7 @@ export async function tailorResume(
     if (!stashContent && userId) {
       const evidenceEntries = await listAchievementEvidence();
       const rankedEvidence = rankEvidenceForJob(evidenceEntries, jdText.slice(0, 120), jdText)
-        .filter(entry => entry.quality !== 'weak')
+        .filter((entry) => entry.quality !== 'weak')
         .slice(0, 6);
       if (rankedEvidence.length > 0) {
         stashSection += `\n\n## Achievement Evidence (verified proof points):\nUse only when relevant and truthful. Prefer strong quantified items.\n\n${formatEvidenceForPrompt(rankedEvidence)}`;

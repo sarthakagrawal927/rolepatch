@@ -1,10 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
-import { createStashEntry, deleteStashEntry,updateStashEntry } from '@/lib/actions/stash-actions';
+import { createStashEntry, deleteStashEntry, updateStashEntry } from '@/lib/actions/stash-actions';
 import {
   localCreateStashEntry,
   localDeleteStashEntry,
@@ -71,7 +71,7 @@ export function StashList({ serverEntries }: StashListProps) {
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [modalOpen, loading, close]);
+  }, [modalOpen, close]);
 
   function openNew() {
     setEditing(null);
@@ -156,12 +156,26 @@ export function StashList({ serverEntries }: StashListProps) {
       {entries.length === 0 ? (
         <div className="border border-dashed border-[var(--border)] rounded-xl py-16 flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-[var(--card)] flex items-center justify-center mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[var(--muted-foreground)]">
-              <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-[var(--muted-foreground)]"
+            >
+              <path
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <p className="text-sm font-medium text-foreground">No stash entries yet</p>
-          <p className="text-xs text-[var(--muted-foreground)] mt-1">Save resume snippets to reuse across applications</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">
+            Save resume snippets to reuse across applications
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -169,8 +183,12 @@ export function StashList({ serverEntries }: StashListProps) {
             <section key={cat}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-base">{CATEGORY_ICONS[cat] ?? '📌'}</span>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--muted-foreground)] capitalize">{cat}</h2>
-                <span className="text-xs text-[var(--muted-foreground)] bg-[var(--card)] px-2 py-0.5 rounded-full">{items.length}</span>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--muted-foreground)] capitalize">
+                  {cat}
+                </h2>
+                <span className="text-xs text-[var(--muted-foreground)] bg-[var(--card)] px-2 py-0.5 rounded-full">
+                  {items.length}
+                </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {items.map((entry) => (
@@ -179,7 +197,9 @@ export function StashList({ serverEntries }: StashListProps) {
                     onClick={() => openEdit(entry)}
                     className="group border border-[var(--border)] rounded-xl p-4 hover:border-[var(--accent)]/50 hover:bg-[var(--card)]/50 transition-all cursor-pointer"
                   >
-                    <h3 className="font-medium text-sm text-foreground group-hover:text-[var(--accent)] transition-colors">{entry.label}</h3>
+                    <h3 className="font-medium text-sm text-foreground group-hover:text-[var(--accent)] transition-colors">
+                      {entry.label}
+                    </h3>
                     <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 whitespace-pre-line mt-2 leading-relaxed">
                       {stripMarkdown(entry.content)}
                     </p>
@@ -201,7 +221,9 @@ export function StashList({ serverEntries }: StashListProps) {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Category</label>
+                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                  Category
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -216,7 +238,9 @@ export function StashList({ serverEntries }: StashListProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Label</label>
+                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                  Label
+                </label>
                 <input
                   type="text"
                   value={label}
@@ -227,7 +251,9 @@ export function StashList({ serverEntries }: StashListProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Content</label>
+                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                  Content
+                </label>
                 <textarea
                   rows={6}
                   value={content}

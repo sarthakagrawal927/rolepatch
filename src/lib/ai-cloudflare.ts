@@ -9,7 +9,7 @@ import type { AIProviderConfig } from './types';
  */
 function createAIModel(
   config: AIProviderConfig,
-  options?: { headers?: Record<string, string>; name?: string },
+  options?: { headers?: Record<string, string>; name?: string }
 ): LanguageModel {
   const provider = createOpenAICompatible({
     baseURL: config.endpointUrl.trim().replace(/\/+$/, ''),
@@ -68,6 +68,6 @@ export function getAIModel(aiConfig: AIProviderConfig): LanguageModel {
       headers: {
         'x-gateway-project-id': PROJECT_ID,
       },
-    },
+    }
   );
 }

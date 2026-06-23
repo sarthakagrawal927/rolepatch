@@ -18,21 +18,26 @@ const IMPACT_TYPES = new Set<AchievementImpact>([
   'other',
 ]);
 
-export type AchievementEvidenceInput = Omit<AchievementEvidence, 'id' | 'created_at' | 'updated_at'>;
+export type AchievementEvidenceInput = Omit<
+  AchievementEvidence,
+  'id' | 'created_at' | 'updated_at'
+>;
 
 function parseList(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
   if (typeof value !== 'string' || !value.trim()) return [];
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
   } catch {
     return [];
   }
 }
 
 function serializeList(value: string[]): string {
-  return JSON.stringify(value.map(item => item.trim()).filter(Boolean));
+  return JSON.stringify(value.map((item) => item.trim()).filter(Boolean));
 }
 
 function normalize(input: AchievementEvidenceInput): AchievementEvidenceInput {
@@ -43,8 +48,8 @@ function normalize(input: AchievementEvidenceInput): AchievementEvidenceInput {
     result: input.result.trim(),
     metric: input.metric.trim(),
     scope: input.scope.trim(),
-    skills: input.skills.map(item => item.trim()).filter(Boolean),
-    role_targets: input.role_targets.map(item => item.trim()).filter(Boolean),
+    skills: input.skills.map((item) => item.trim()).filter(Boolean),
+    role_targets: input.role_targets.map((item) => item.trim()).filter(Boolean),
     impact_type: IMPACT_TYPES.has(input.impact_type) ? input.impact_type : 'other',
   };
 }
@@ -60,7 +65,9 @@ function toEvidence(row: Record<string, unknown>): AchievementEvidence {
     scope: String(row.scope ?? ''),
     skills: parseList(row.skills),
     role_targets: parseList(row.role_targets),
-    impact_type: IMPACT_TYPES.has(row.impact_type as AchievementImpact) ? row.impact_type as AchievementImpact : 'other',
+    impact_type: IMPACT_TYPES.has(row.impact_type as AchievementImpact)
+      ? (row.impact_type as AchievementImpact)
+      : 'other',
     created_at: Number(row.created_at ?? 0),
     updated_at: Number(row.updated_at ?? 0),
   };
@@ -73,7 +80,7 @@ export async function listAchievementEvidence(): Promise<AchievementEvidence[]> 
     sql: 'SELECT * FROM achievement_evidence WHERE user_id = ? ORDER BY updated_at DESC',
     args: [userId],
   });
-  return result.rows.map(row => toEvidence(row as Record<string, unknown>));
+  return result.rows.map((row) => toEvidence(row as Record<string, unknown>));
 }
 
 export async function createAchievementEvidence(input: AchievementEvidenceInput): Promise<string> {
@@ -106,7 +113,10 @@ export async function createAchievementEvidence(input: AchievementEvidenceInput)
   return id;
 }
 
-export async function updateAchievementEvidence(id: string, input: AchievementEvidenceInput): Promise<void> {
+export async function updateAchievementEvidence(
+  id: string,
+  input: AchievementEvidenceInput
+): Promise<void> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to update achievement evidence');
   const data = normalize(input);

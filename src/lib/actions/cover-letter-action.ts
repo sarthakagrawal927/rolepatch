@@ -3,12 +3,12 @@
 import { generateText } from 'ai';
 import { v4 as uuid } from 'uuid';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { trackCoreAction } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig,CoverLetter } from '@/lib/types';
+import type { AIProviderConfig, CoverLetter } from '@/lib/types';
 
 import { scrapeJobUrl } from './scrape-action';
 
@@ -23,9 +23,12 @@ export interface CoverLetterOptions {
 }
 
 const TONE_GUIDANCE: Record<CoverLetterTone, string> = {
-  formal: 'Use a formal, polished tone. Professional vocabulary, measured phrasing, no contractions.',
-  conversational: 'Use a warm, conversational tone. Natural phrasing, contractions allowed, approachable but professional.',
-  enthusiastic: 'Use an enthusiastic, high-energy tone. Convey genuine excitement about the role and company without sounding desperate.',
+  formal:
+    'Use a formal, polished tone. Professional vocabulary, measured phrasing, no contractions.',
+  conversational:
+    'Use a warm, conversational tone. Natural phrasing, contractions allowed, approachable but professional.',
+  enthusiastic:
+    'Use an enthusiastic, high-energy tone. Convey genuine excitement about the role and company without sounding desperate.',
 };
 
 const LENGTH_GUIDANCE: Record<CoverLetterLength, { words: number; label: string }> = {
@@ -55,7 +58,7 @@ export async function generateCoverLetter(
   jobId: string,
   resumeId: string,
   aiConfig: AIProviderConfig,
-  options: CoverLetterOptions = {},
+  options: CoverLetterOptions = {}
 ): Promise<string> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
@@ -73,7 +76,7 @@ export async function generateCoverLetter(
       throw new Error(
         result.error === 'insufficient_tokens'
           ? 'No tokens remaining. Purchase more to continue.'
-          : 'Authentication required to generate.',
+          : 'Authentication required to generate.'
       );
     }
     debited = true;
@@ -98,14 +101,11 @@ export async function generateCoverLetter(
     // Research company
     let companyResearch = '';
     const domain = company.toLowerCase().replace(/\s+/g, '');
-    const searchUrls = [
-      `https://www.${domain}.com/about`,
-      `https://www.${domain}.com/careers`,
-    ];
+    const searchUrls = [`https://www.${domain}.com/about`, `https://www.${domain}.com/careers`];
     for (const url of searchUrls) {
       const research = await researchCompany(url);
       if (research) {
-        companyResearch += research + '\n\n';
+        companyResearch += `${research}\n\n`;
       }
     }
 
@@ -133,7 +133,7 @@ Return ONLY the cover letter text, no explanation, no preamble, no sign-off plac
     promptParts.push(
       [
         '## Instructions:',
-        '- Connect candidate\'s experience to the specific role',
+        "- Connect candidate's experience to the specific role",
         '- Reference company values/mission where genuine',
         `- Target approximately ${lengthGuidance.words} words`,
         '- Professional but not generic',
@@ -142,7 +142,7 @@ Return ONLY the cover letter text, no explanation, no preamble, no sign-off plac
           : null,
       ]
         .filter(Boolean)
-        .join('\n'),
+        .join('\n')
     );
 
     const { text } = await generateText({

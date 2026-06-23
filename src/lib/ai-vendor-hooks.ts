@@ -5,12 +5,14 @@
 
 import { useCallback, useState } from 'react';
 
-import { type AIConfig,fetchModels, getAIConfig, saveAIConfig } from './ai-vendor';
+import { type AIConfig, fetchModels, getAIConfig, saveAIConfig } from './ai-vendor';
 
 export function useAIConfig(storageKey = 'ai-config') {
   const [config, setConfigState] = useState<AIConfig>(() => getAIConfig(storageKey));
   const setConfig = useCallback((next: AIConfig | ((prev: AIConfig) => AIConfig)) => {
-    setConfigState((prev) => (typeof next === 'function' ? (next as (p: AIConfig) => AIConfig)(prev) : next));
+    setConfigState((prev) =>
+      typeof next === 'function' ? (next as (p: AIConfig) => AIConfig)(prev) : next
+    );
   }, []);
   const update = useCallback((partial: Partial<AIConfig>) => {
     setConfigState((prev) => ({ ...prev, ...partial }));
@@ -62,7 +64,7 @@ export function useModelDiscovery(options: UseModelDiscoveryOptions = {}) {
         setLoading(false);
       }
     },
-    [modelsApiUrl],
+    [modelsApiUrl]
   );
   return { models, loading, error, discover };
 }

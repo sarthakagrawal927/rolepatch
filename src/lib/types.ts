@@ -133,7 +133,15 @@ export interface StashEntry {
   updated_at: number;
 }
 
-export type AchievementImpact = 'revenue' | 'cost' | 'growth' | 'quality' | 'speed' | 'leadership' | 'technical' | 'other';
+export type AchievementImpact =
+  | 'revenue'
+  | 'cost'
+  | 'growth'
+  | 'quality'
+  | 'speed'
+  | 'leadership'
+  | 'technical'
+  | 'other';
 
 export interface AchievementEvidence {
   id: string;

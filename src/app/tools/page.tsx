@@ -52,7 +52,9 @@ export default function ToolsPage() {
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
       <div className="text-center mb-16">
-        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">Free Resume Tools</h1>
+        <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+          Free Resume Tools
+        </h1>
         <p className="text-[var(--muted-foreground)] text-lg max-w-xl mx-auto mt-4">
           No sign-up required. Use these tools to improve your resume right now.
         </p>

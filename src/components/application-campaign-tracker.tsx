@@ -21,11 +21,15 @@ const funnelLabels: Array<{ key: CampaignJob['status']; label: string }> = [
 
 function actionToneClass(tone: 'urgent' | 'focus' | 'normal'): string {
   if (tone === 'urgent') return 'border-destructive/20 bg-destructive/10 text-destructive';
-  if (tone === 'focus') return 'border-[var(--primary)]/20 bg-[var(--primary)]/10 text-[var(--primary)]';
+  if (tone === 'focus')
+    return 'border-[var(--primary)]/20 bg-[var(--primary)]/10 text-[var(--primary)]';
   return 'border-[var(--border)] bg-muted/40 text-[var(--muted-foreground)]';
 }
 
-export function ApplicationCampaignTracker({ jobs, onOpenDetails }: ApplicationCampaignTrackerProps) {
+export function ApplicationCampaignTracker({
+  jobs,
+  onOpenDetails,
+}: ApplicationCampaignTrackerProps) {
   const summary = useMemo(() => buildCampaignSummary(jobs), [jobs]);
 
   if (jobs.length === 0) return null;
@@ -46,7 +50,9 @@ export function ApplicationCampaignTracker({ jobs, onOpenDetails }: ApplicationC
         <div className="min-w-52">
           <div className="mb-2 flex items-center justify-between text-xs font-bold text-[var(--muted-foreground)]">
             <span>This week</span>
-            <span>{summary.appliedThisWeek}/{summary.weeklyTarget}</span>
+            <span>
+              {summary.appliedThisWeek}/{summary.weeklyTarget}
+            </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-muted">
             <div
@@ -66,7 +72,10 @@ export function ApplicationCampaignTracker({ jobs, onOpenDetails }: ApplicationC
               { icon: AlertCircle, label: 'Follow-ups due', value: summary.followUpsDue },
               { icon: Target, label: 'Stale drafts', value: summary.staleDrafts },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-[var(--border)]/60 bg-muted/20 p-4">
+              <div
+                key={item.label}
+                className="rounded-xl border border-[var(--border)]/60 bg-muted/20 p-4"
+              >
                 <item.icon className="mb-3 h-4 w-4 text-[var(--muted-foreground)]" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)] opacity-70">
                   {item.label}
@@ -105,7 +114,10 @@ export function ApplicationCampaignTracker({ jobs, onOpenDetails }: ApplicationC
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
               Next actions
             </p>
-            <Link href="/cover-letter" className="text-xs font-bold text-[var(--primary)] hover:underline">
+            <Link
+              href="/cover-letter"
+              className="text-xs font-bold text-[var(--primary)] hover:underline"
+            >
               Outreach
             </Link>
           </div>

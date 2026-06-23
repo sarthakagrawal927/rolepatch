@@ -36,8 +36,7 @@ export interface JobSearchParams {
   hours_old?: number;
 }
 
-const LINKEDIN_GUEST_URL =
-  'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search';
+const LINKEDIN_GUEST_URL = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search';
 const PAGE_SIZE = 10;
 const MAX_PAGES = 12;
 const USER_AGENT =
@@ -88,8 +87,7 @@ async function parseCards(html: string): Promise<JobElement[]> {
 
 function toRecord(el: JobElement, remoteRequested: boolean): JobRecord | null {
   const rawUrl =
-    attr(el, 'a.base-card__full-link', 'href') ??
-    attr(el, 'a[href*="/jobs/view/"]', 'href');
+    attr(el, 'a.base-card__full-link', 'href') ?? attr(el, 'a[href*="/jobs/view/"]', 'href');
   const jobUrl = rawUrl ? rawUrl.split('?')[0] : null;
 
   const title = text(el, '.base-search-card__title');
@@ -112,8 +110,7 @@ function toRecord(el: JobElement, remoteRequested: boolean): JobRecord | null {
     job_url: jobUrl,
     description: null,
     description_short: null,
-    company_url:
-      attr(el, '.base-search-card__subtitle a', 'href')?.split('?')[0] ?? null,
+    company_url: attr(el, '.base-search-card__subtitle a', 'href')?.split('?')[0] ?? null,
     emails: null,
   };
 }
@@ -123,9 +120,7 @@ function toRecord(el: JobElement, remoteRequested: boolean): JobRecord | null {
  * `results_wanted` is reached or results run out. Throws if the very first
  * request fails so the caller can surface a 502.
  */
-export async function searchJobs(
-  params: JobSearchParams,
-): Promise<{ jobs: JobRecord[] }> {
+export async function searchJobs(params: JobSearchParams): Promise<{ jobs: JobRecord[] }> {
   const query = params.query.trim();
   if (!query) return { jobs: [] };
 

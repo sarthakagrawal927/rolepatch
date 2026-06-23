@@ -3,12 +3,12 @@
 import { generateText } from 'ai';
 import { v4 as uuid } from 'uuid';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { trackCoreAction } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig,FitScore } from '@/lib/types';
+import type { AIProviderConfig, FitScore } from '@/lib/types';
 
 const MAX_RESUME_CHARS = 20_000;
 const MAX_JD_CHARS = 15_000;
@@ -17,7 +17,7 @@ export async function generateFitScore(
   resumeSource: string,
   jdText: string,
   jobId: string,
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<FitScore> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
@@ -29,7 +29,7 @@ export async function generateFitScore(
       throw new Error(
         result.error === 'insufficient_tokens'
           ? 'No tokens remaining. Purchase more to continue.'
-          : 'Authentication required to generate.',
+          : 'Authentication required to generate.'
       );
     }
     debited = true;
@@ -62,7 +62,9 @@ export async function generateFitScore(
         sql: `INSERT INTO fit_scores (id, job_id, user_id, overall_score, dimensions, strengths, gaps, recommendation)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
-          id, jobId, userId,
+          id,
+          jobId,
+          userId,
           fitScore.overall_score,
           JSON.stringify(fitScore.dimensions),
           JSON.stringify(fitScore.strengths),

@@ -8,10 +8,10 @@
   --card-foreground: oklch(0.93 0.005 0);
   --popover: oklch(0.12 0.005 0);
   --popover-foreground: oklch(0.93 0.005 0);
-  --primary: oklch(0.80 0.01 0);
+  --primary: oklch(0.8 0.01 0);
   --primary-foreground: oklch(0.09 0.005 0);
   --secondary: oklch(0.16 0.005 0);
-  --secondary-foreground: oklch(0.80 0.01 0);
+  --secondary-foreground: oklch(0.8 0.01 0);
   --muted: oklch(0.16 0.005 0);
   --muted-foreground: oklch(0.55 0.01 0);
   --accent: oklch(0.55 0.14 155);
@@ -55,7 +55,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, .font-serif {
+h1,
+h2,
+h3,
+.font-serif {
   font-family: var(--font-serif);
   letter-spacing: -0.02em;
 }
@@ -76,8 +79,14 @@ main {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Modal backdrop animation */
@@ -86,8 +95,12 @@ main {
 }
 
 @keyframes backdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Modal content animation */
@@ -96,8 +109,14 @@ main {
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* Mobile: scale the fixed 8.5in resume page card down so it fits a phone

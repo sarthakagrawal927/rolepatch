@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
 interface Stats {
   characters: number;
@@ -16,7 +16,7 @@ interface Stats {
 
 function analyze(text: string): Stats {
   const characters = text.length;
-  const charactersNoSpace = text.replace(/\s+/g, "").length;
+  const charactersNoSpace = text.replace(/\s+/g, '').length;
   const words = (text.match(/\S+/g) ?? []).length;
   const lines = text.split(/\n/).length;
   const sentences = (text.match(/[^.!?\n]+[.!?]+/g) ?? []).length;
@@ -45,7 +45,7 @@ function formatSeconds(s: number): string {
 }
 
 export default function WordCountPage() {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const stats = useMemo(() => (text.length > 0 ? analyze(text) : null), [text]);
 
   return (
@@ -55,9 +55,8 @@ export default function WordCountPage() {
       </Link>
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Word count</h1>
       <p className="mt-3 text-sm text-stone-600">
-        Paste anything — resume, cover letter, bio — to get word / line /
-        sentence / paragraph counts and an estimated recruiter-skim time.
-        Local only; no network call.
+        Paste anything — resume, cover letter, bio — to get word / line / sentence / paragraph
+        counts and an estimated recruiter-skim time. Local only; no network call.
       </p>
 
       <textarea
@@ -76,26 +75,14 @@ export default function WordCountPage() {
           <Stat label="Sentences" value={stats.sentences.toLocaleString()} />
           <Stat label="Paragraphs" value={stats.paragraphs.toLocaleString()} />
           <Stat label="Bullet rows" value={stats.bullets.toLocaleString()} />
-          <Stat
-            label="Skim time"
-            value={formatSeconds(stats.readingSeconds)}
-            hint="@ 230 wpm"
-          />
+          <Stat label="Skim time" value={formatSeconds(stats.readingSeconds)} hint="@ 230 wpm" />
         </section>
       )}
     </main>
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-md border border-stone-200 bg-white p-3">
       <p className="text-xs uppercase tracking-wide text-stone-500">{label}</p>

@@ -16,10 +16,18 @@ import type { FitScore, InterviewStory } from '@/lib/types';
 const store: Record<string, string> = {};
 const localStorageMock = {
   getItem: (key: string) => store[key] ?? null,
-  setItem: (key: string, value: string) => { store[key] = value; },
-  removeItem: (key: string) => { delete store[key]; },
-  clear: () => { Object.keys(store).forEach(k => delete store[k]); },
-  get length() { return Object.keys(store).length; },
+  setItem: (key: string, value: string) => {
+    store[key] = value;
+  },
+  removeItem: (key: string) => {
+    delete store[key];
+  },
+  clear: () => {
+    Object.keys(store).forEach((k) => delete store[k]);
+  },
+  get length() {
+    return Object.keys(store).length;
+  },
   key: (i: number) => Object.keys(store)[i] ?? null,
 };
 Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
@@ -32,9 +40,7 @@ const mockFitScore: FitScore = {
   id: 'fs-1',
   job_id: 'job-1',
   overall_score: 82,
-  dimensions: [
-    { name: 'Role Alignment', score: 90, weight: 25, detail: 'Great match.' },
-  ],
+  dimensions: [{ name: 'Role Alignment', score: 90, weight: 25, detail: 'Great match.' }],
   strengths: ['Strong backend'],
   gaps: ['No cloud certs'],
   recommendation: 'Apply with confidence.',
@@ -62,7 +68,7 @@ describe('localFitScores', () => {
     localSaveFitScore(mockFitScore);
     const retrieved = localGetFitScore('job-1');
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.overall_score).toBe(82);
+    expect(retrieved?.overall_score).toBe(82);
   });
 
   it('returns null for missing job', () => {
@@ -73,7 +79,7 @@ describe('localFitScores', () => {
     localSaveFitScore(mockFitScore);
     localSaveFitScore({ ...mockFitScore, id: 'fs-2', overall_score: 95 });
     const retrieved = localGetFitScore('job-1');
-    expect(retrieved!.overall_score).toBe(95);
+    expect(retrieved?.overall_score).toBe(95);
   });
 
   it('lists all fit scores as job_id -> score map', () => {

@@ -10,7 +10,9 @@ import { db } from '@/lib/db';
 
 type SqlArg = string | number | boolean | null;
 
-function buildWhere(where: Array<{ field: string; operator?: string; value: unknown; connector?: string }>): { sql: string; args: SqlArg[] } {
+function buildWhere(
+  where: Array<{ field: string; operator?: string; value: unknown; connector?: string }>
+): { sql: string; args: SqlArg[] } {
   if (!where.length) return { sql: '', args: [] };
   const parts: string[] = [];
   const args: SqlArg[] = [];
@@ -20,18 +22,53 @@ function buildWhere(where: Array<{ field: string; operator?: string; value: unkn
     const connector = w.connector === 'OR' ? 'OR' : 'AND';
     if (parts.length) parts.push(connector);
     switch (op) {
-      case 'eq': parts.push(`"${w.field}" = ?`); args.push(val as SqlArg); break;
-      case 'ne': parts.push(`"${w.field}" != ?`); args.push(val as SqlArg); break;
-      case 'lt': parts.push(`"${w.field}" < ?`); args.push(val as SqlArg); break;
-      case 'lte': parts.push(`"${w.field}" <= ?`); args.push(val as SqlArg); break;
-      case 'gt': parts.push(`"${w.field}" > ?`); args.push(val as SqlArg); break;
-      case 'gte': parts.push(`"${w.field}" >= ?`); args.push(val as SqlArg); break;
-      case 'in': parts.push(`"${w.field}" IN (${(val as unknown[]).map(() => '?').join(',')})`); args.push(...(val as SqlArg[])); break;
-      case 'not_in': parts.push(`"${w.field}" NOT IN (${(val as unknown[]).map(() => '?').join(',')})`); args.push(...(val as SqlArg[])); break;
-      case 'contains': parts.push(`"${w.field}" LIKE ?`); args.push(`%${val}%`); break;
-      case 'starts_with': parts.push(`"${w.field}" LIKE ?`); args.push(`${val}%`); break;
-      case 'ends_with': parts.push(`"${w.field}" LIKE ?`); args.push(`%${val}`); break;
-      default: parts.push(`"${w.field}" = ?`); args.push(val as SqlArg);
+      case 'eq':
+        parts.push(`"${w.field}" = ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'ne':
+        parts.push(`"${w.field}" != ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'lt':
+        parts.push(`"${w.field}" < ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'lte':
+        parts.push(`"${w.field}" <= ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'gt':
+        parts.push(`"${w.field}" > ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'gte':
+        parts.push(`"${w.field}" >= ?`);
+        args.push(val as SqlArg);
+        break;
+      case 'in':
+        parts.push(`"${w.field}" IN (${(val as unknown[]).map(() => '?').join(',')})`);
+        args.push(...(val as SqlArg[]));
+        break;
+      case 'not_in':
+        parts.push(`"${w.field}" NOT IN (${(val as unknown[]).map(() => '?').join(',')})`);
+        args.push(...(val as SqlArg[]));
+        break;
+      case 'contains':
+        parts.push(`"${w.field}" LIKE ?`);
+        args.push(`%${val}%`);
+        break;
+      case 'starts_with':
+        parts.push(`"${w.field}" LIKE ?`);
+        args.push(`${val}%`);
+        break;
+      case 'ends_with':
+        parts.push(`"${w.field}" LIKE ?`);
+        args.push(`%${val}`);
+        break;
+      default:
+        parts.push(`"${w.field}" = ?`);
+        args.push(val as SqlArg);
     }
   }
   return { sql: parts.join(' '), args };
@@ -54,11 +91,11 @@ const tursoAdapter = createAdapter({
       const row = { id, ...data };
       const cols = Object.keys(row);
       const placeholders = cols.map(() => '?');
-      const args = Object.values(row).map(v =>
+      const args = Object.values(row).map((v) =>
         v instanceof Date ? v.toISOString() : (v as SqlArg)
       );
       await db.execute({
-        sql: `INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(',')}) VALUES (${placeholders.join(',')})`,
+        sql: `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${placeholders.join(',')})`,
         args,
       });
       const result = await db.execute({
@@ -66,7 +103,7 @@ const tursoAdapter = createAdapter({
         args: [id],
       });
       const out = result.rows[0] ?? {};
-      if (select?.length) return Object.fromEntries(select.map(k => [k, out[k]])) as any;
+      if (select?.length) return Object.fromEntries(select.map((k) => [k, out[k]])) as any;
       return out as any;
     },
 
@@ -79,7 +116,7 @@ const tursoAdapter = createAdapter({
       });
       if (!result.rows.length) return null;
       const out = result.rows[0];
-      if (select?.length) return Object.fromEntries(select.map(k => [k, out[k]])) as any;
+      if (select?.length) return Object.fromEntries(select.map((k) => [k, out[k]])) as any;
       return out as any;
     },
 
@@ -88,7 +125,8 @@ const tursoAdapter = createAdapter({
       const { sql: whereSql, args } = buildWhere((where ?? []) as any[]);
       let sql = `SELECT * FROM "${table}"`;
       if (whereSql) sql += ` WHERE ${whereSql}`;
-      if (sortBy) sql += ` ORDER BY "${(sortBy as any).field}" ${(sortBy as any).direction === 'desc' ? 'DESC' : 'ASC'}`;
+      if (sortBy)
+        sql += ` ORDER BY "${(sortBy as any).field}" ${(sortBy as any).direction === 'desc' ? 'DESC' : 'ASC'}`;
       if (limit) sql += ` LIMIT ${limit}`;
       if (offset) sql += ` OFFSET ${offset}`;
       const result = await db.execute({ sql, args });
@@ -98,8 +136,10 @@ const tursoAdapter = createAdapter({
     async update({ model, where, update }) {
       const table = getDefaultModelName(model);
       if (!Object.keys(update as object).length) return null;
-      const setCols = Object.keys(update as object).map(k => `"${k}" = ?`).join(', ');
-      const setArgs = Object.values(update as object).map(v =>
+      const setCols = Object.keys(update as object)
+        .map((k) => `"${k}" = ?`)
+        .join(', ');
+      const setArgs = Object.values(update as object).map((v) =>
         v instanceof Date ? v.toISOString() : (v as SqlArg)
       );
       const { sql: whereSql, args: whereArgs } = buildWhere(where as any[]);
@@ -117,8 +157,10 @@ const tursoAdapter = createAdapter({
     async updateMany({ model, where, update }) {
       const table = getDefaultModelName(model);
       if (!Object.keys(update as object).length) return 0;
-      const setCols = Object.keys(update as object).map(k => `"${k}" = ?`).join(', ');
-      const setArgs = Object.values(update as object).map(v =>
+      const setCols = Object.keys(update as object)
+        .map((k) => `"${k}" = ?`)
+        .join(', ');
+      const setArgs = Object.values(update as object).map((v) =>
         v instanceof Date ? v.toISOString() : (v as SqlArg)
       );
       const { sql: whereSql, args: whereArgs } = buildWhere(where as any[]);

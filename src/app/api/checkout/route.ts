@@ -1,6 +1,6 @@
 import DodoPayments from 'dodopayments';
 import { headers } from 'next/headers';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
@@ -13,8 +13,7 @@ function getClient() {
     _client = new DodoPayments({
       bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
       environment:
-        (process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode') ??
-        'test_mode',
+        (process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode') ?? 'test_mode',
     });
   }
   return _client;

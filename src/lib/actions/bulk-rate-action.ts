@@ -3,7 +3,7 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import type { AIProviderConfig } from '@/lib/types';
@@ -61,12 +61,14 @@ function formatBatch(jobs: BulkRateJob[]): string {
 // Cast avoids a known ai v6 + zod 3.25 deep-instantiation error during TS
 // build. Runtime validation still runs via ratingSchema.parse below.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const generateObjectLoose = generateObject as unknown as (args: any) => Promise<{ object: unknown }>;
+const generateObjectLoose = generateObject as unknown as (
+  args: any
+) => Promise<{ object: unknown }>;
 
 async function rateBatch(
   resumeSource: string,
   jobs: BulkRateJob[],
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<Array<z.infer<typeof ratingItemSchema>>> {
   const { object } = await generateObjectLoose({
     model: getAIModel(aiConfig),
@@ -91,7 +93,7 @@ const MAX_JOBS = 100;
 export async function rateJobsBulk(
   resumeSource: string,
   jobs: BulkRateJob[],
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<Record<string, BulkRateResult>> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jobs = jobs.slice(0, MAX_JOBS);
@@ -115,7 +117,7 @@ export async function rateJobsBulk(
         throw new Error(
           result.error === 'insufficient_tokens'
             ? 'No tokens remaining. Purchase more to continue.'
-            : 'Authentication required to generate.',
+            : 'Authentication required to generate.'
         );
       }
       tokensDebited += 1;

@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 // Plain Vitest config (formerly @saas-maker/test-config/vitest factory).

@@ -55,16 +55,17 @@ function lastActivityAt(job: CampaignJobWithActivity): number {
 
 export function buildCampaignSummary(
   jobs: CampaignJobWithActivity[],
-  options: { now?: number; weeklyTarget?: number } = {},
+  options: { now?: number; weeklyTarget?: number } = {}
 ): CampaignSummary {
   const now = options.now ?? Math.floor(Date.now() / 1000);
   const weeklyTarget = options.weeklyTarget ?? 15;
   const weekStart = startOfWeek(now);
   const sevenDaysAgo = now - 7 * 24 * 60 * 60;
 
-  const statusCounts = Object.fromEntries(
-    STATUS_ORDER.map((status) => [status, 0]),
-  ) as Record<JobApplication['status'], number>;
+  const statusCounts = Object.fromEntries(STATUS_ORDER.map((status) => [status, 0])) as Record<
+    JobApplication['status'],
+    number
+  >;
 
   for (const job of jobs) {
     statusCounts[job.status] = (statusCounts[job.status] ?? 0) + 1;
@@ -73,28 +74,24 @@ export function buildCampaignSummary(
   const appliedThisWeek = jobs.filter(
     (job) =>
       ['applied', 'interview', 'offer', 'rejected'].includes(job.status) &&
-      lastActivityAt(job) >= weekStart,
+      lastActivityAt(job) >= weekStart
   ).length;
   const activePipeline = jobs.filter((job) =>
-    ['applied', 'interview', 'offer'].includes(job.status),
+    ['applied', 'interview', 'offer'].includes(job.status)
   ).length;
   const followUpsDue = jobs.filter(
     (job) =>
       job.follow_up_at != null &&
       job.follow_up_at <= now &&
-      !['offer', 'rejected'].includes(job.status),
+      !['offer', 'rejected'].includes(job.status)
   ).length;
   const staleDrafts = jobs.filter(
-    (job) =>
-      ['draft', 'tailored'].includes(job.status) &&
-      lastActivityAt(job) < sevenDaysAgo,
+    (job) => ['draft', 'tailored'].includes(job.status) && lastActivityAt(job) < sevenDaysAgo
   ).length;
   const contacted = jobs.filter((job) =>
-    ['applied', 'interview', 'offer', 'rejected'].includes(job.status),
+    ['applied', 'interview', 'offer', 'rejected'].includes(job.status)
   ).length;
-  const responses = jobs.filter((job) =>
-    ['interview', 'offer'].includes(job.status),
-  ).length;
+  const responses = jobs.filter((job) => ['interview', 'offer'].includes(job.status)).length;
 
   return {
     total: jobs.length,

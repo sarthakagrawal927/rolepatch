@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the auth helper — unauthenticated by default
 const mockGetCurrentUserId = vi.fn<() => Promise<string | null>>();
@@ -29,7 +29,7 @@ describe('job-actions auth guards', () => {
     mockGetCurrentUserId.mockResolvedValue(null);
     const { createJobApplication } = await import('@/lib/actions/job-actions');
     await expect(
-      createJobApplication('r', 'https://x.com', 'Co', 'Role', 'raw', 'text'),
+      createJobApplication('r', 'https://x.com', 'Co', 'Role', 'raw', 'text')
     ).rejects.toThrow(/sign in/i);
     expect(mockExecute).not.toHaveBeenCalled();
   });
@@ -108,7 +108,7 @@ describe('scrape-action SSRF guards', () => {
     mockGetCurrentUserId.mockResolvedValue(`user-${Math.random()}`);
     const { scrapeJobUrl } = await import('@/lib/actions/scrape-action');
     await expect(scrapeJobUrl('http://169.254.169.254/latest/meta-data/')).rejects.toThrow(
-      /internal/i,
+      /internal/i
     );
   });
 

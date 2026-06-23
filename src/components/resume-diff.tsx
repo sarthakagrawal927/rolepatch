@@ -110,7 +110,10 @@ export function ResumeDiff({ original, modified, onModifiedChange, changes = [] 
             </button>
             {!editing ? (
               <button
-                onClick={() => { setEditContent(modified); setEditing(true); }}
+                onClick={() => {
+                  setEditContent(modified);
+                  setEditing(true);
+                }}
                 className="text-xs px-3 min-h-[36px] md:min-h-0 md:py-1 rounded border border-[var(--border)] text-[var(--muted-foreground)] hover:text-foreground hover:border-[var(--muted-foreground)] transition-colors"
               >
                 Edit
@@ -175,9 +178,7 @@ export function ResumeDiff({ original, modified, onModifiedChange, changes = [] 
                 <p className="text-foreground font-mono leading-snug border-l-2 border-[var(--accent)] pl-2">
                   {c.snippet}
                 </p>
-                <p className="text-[var(--muted-foreground)] leading-relaxed">
-                  {c.reason}
-                </p>
+                <p className="text-[var(--muted-foreground)] leading-relaxed">{c.reason}</p>
                 {c.jd_match && (
                   <p className="inline-block px-1.5 py-0.5 rounded bg-[var(--accent)]/10 text-[var(--accent)] text-[10px] font-medium">
                     JD: {c.jd_match}

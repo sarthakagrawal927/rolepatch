@@ -57,13 +57,7 @@ export function ResumeImportButton() {
 
   return (
     <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED}
-        onChange={onFile}
-        className="hidden"
-      />
+      <input ref={inputRef} type="file" accept={ACCEPTED} onChange={onFile} className="hidden" />
       <button
         onClick={onClick}
         disabled={isPending}

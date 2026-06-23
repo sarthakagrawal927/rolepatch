@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { authClient } from '@/lib/auth-client';
 import { captureAuthFailure } from '@/lib/foundry-monitoring';
@@ -24,25 +24,28 @@ export function UserMenu() {
 
   if (!session?.user) {
     function handleSignIn() {
-      authClient.signIn.social({ provider: 'google', callbackURL: '/' }).then((result) => {
-        if (result?.error) {
+      authClient.signIn
+        .social({ provider: 'google', callbackURL: '/' })
+        .then((result) => {
+          if (result?.error) {
+            captureAuthFailure({
+              projectSlug: 'resume-tailor',
+              provider: 'google',
+              stage: 'signin',
+              reason: result.error.message ?? 'Google sign-in failed',
+              source: 'user-menu',
+            });
+          }
+        })
+        .catch((error: unknown) => {
           captureAuthFailure({
             projectSlug: 'resume-tailor',
             provider: 'google',
             stage: 'signin',
-            reason: result.error.message ?? 'Google sign-in failed',
+            reason: error instanceof Error ? error.message : 'Google sign-in failed',
             source: 'user-menu',
           });
-        }
-      }).catch((error: unknown) => {
-        captureAuthFailure({
-          projectSlug: 'resume-tailor',
-          provider: 'google',
-          stage: 'signin',
-          reason: error instanceof Error ? error.message : 'Google sign-in failed',
-          source: 'user-menu',
         });
-      });
     }
 
     return (
@@ -59,9 +62,18 @@ export function UserMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
         {image ? (
-          <Image src={image} alt="" width={28} height={28} className="rounded-full ring-2 ring-[var(--border)]" />
+          <Image
+            src={image}
+            alt=""
+            width={28}
+            height={28}
+            className="rounded-full ring-2 ring-[var(--border)]"
+          />
         ) : (
           <div className="w-7 h-7 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-xs font-medium ring-2 ring-[var(--border)]">
             {(name ?? '?')[0]}

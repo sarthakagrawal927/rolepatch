@@ -45,7 +45,7 @@ export function normalizeJobUrl(url: string): string {
 
 export function isDuplicateJob(url: string, existingUrls: string[]): boolean {
   const normalized = normalizeJobUrl(url);
-  return existingUrls.some(item => normalizeJobUrl(item) === normalized);
+  return existingUrls.some((item) => normalizeJobUrl(item) === normalized);
 }
 
 export function rankDiscoveredJobs(jobs: DiscoveredJob[], query: string): DiscoveredJob[] {
@@ -54,23 +54,22 @@ export function rankDiscoveredJobs(jobs: DiscoveredJob[], query: string): Discov
 }
 
 function scoreJob(job: DiscoveredJob, terms: string[]): number {
-  const haystack = `${job.title ?? ''} ${job.company ?? ''} ${job.description_short ?? ''}`.toLowerCase();
+  const haystack =
+    `${job.title ?? ''} ${job.company ?? ''} ${job.description_short ?? ''}`.toLowerCase();
   let score = 0;
   for (const term of terms) {
     if (haystack.includes(term)) score += 10;
   }
   if (job.date_posted) {
     const posted = Date.parse(job.date_posted);
-    if (!Number.isNaN(posted)) score += Math.max(0, 14 - Math.floor((Date.now() - posted) / 86400000));
+    if (!Number.isNaN(posted))
+      score += Math.max(0, 14 - Math.floor((Date.now() - posted) / 86400000));
   }
   if (job.is_remote) score += 2;
   return score;
 }
 
-export function diffNewJobs(
-  current: DiscoveredJob[],
-  previousIds: string[],
-): DiscoveredJob[] {
+export function diffNewJobs(current: DiscoveredJob[], previousIds: string[]): DiscoveredJob[] {
   const known = new Set(previousIds);
-  return current.filter(job => !known.has(job.id));
+  return current.filter((job) => !known.has(job.id));
 }

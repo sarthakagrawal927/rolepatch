@@ -82,17 +82,11 @@ export default async function BadgePage({ params }: Params) {
           </div>
 
           <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--background)]/40">
-            <span
-              className="text-sm font-semibold tabular-nums"
-              style={{ color: originalColor }}
-            >
+            <span className="text-sm font-semibold tabular-nums" style={{ color: originalColor }}>
               {score_original}
             </span>
             <span className="text-[var(--muted-foreground)]">{'→'}</span>
-            <span
-              className="text-sm font-semibold tabular-nums"
-              style={{ color: tailoredColor }}
-            >
+            <span className="text-sm font-semibold tabular-nums" style={{ color: tailoredColor }}>
               {score_tailored}
             </span>
             {delta !== 0 && (

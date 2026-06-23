@@ -9,7 +9,12 @@ import { db } from '@/lib/db';
 // Types
 // ---------------------------------------------------------------------------
 
-export type TokenDebitType = 'tailor' | 'cover_letter' | 'fit_score' | 'interview_prep' | 'outreach_email';
+export type TokenDebitType =
+  | 'tailor'
+  | 'cover_letter'
+  | 'fit_score'
+  | 'interview_prep'
+  | 'outreach_email';
 export type TokenCreditType = 'purchase' | 'refund' | 'signup_bonus';
 type TokenType = TokenDebitType | TokenCreditType;
 
@@ -110,10 +115,7 @@ export async function initializeBalance(userId: string): Promise<void> {
  * Burst abuse should be handled with narrow, evidence-backed controls around
  * token-spending endpoints rather than broad middleware throttling.
  */
-export async function debitToken(
-  type: TokenDebitType,
-  referenceId: string,
-): Promise<DebitResult> {
+export async function debitToken(type: TokenDebitType, referenceId: string): Promise<DebitResult> {
   const userId = await getCurrentUserId();
   if (!userId) return { success: false, error: 'not_authenticated' };
 
@@ -169,7 +171,7 @@ export async function creditTokens(
   userId: string,
   amount: number,
   type: TokenCreditType,
-  referenceId?: string,
+  referenceId?: string
 ): Promise<number> {
   // Input validation
   if (!userId || typeof userId !== 'string') {

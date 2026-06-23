@@ -4,13 +4,9 @@ import { useEffect, useState, useTransition } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import { generateOutreachEmail } from '@/lib/actions/outreach-action';
-import { hiringManagerSearchUrl,linkedinSearchUrl } from '@/lib/linkedin-search';
-import {
-  localGetOutreachEmail,
-  localGetResume,
-  localSaveOutreachEmail,
-} from '@/lib/local-storage';
-import type { JobApplication, OutreachEmail,Resume } from '@/lib/types';
+import { hiringManagerSearchUrl, linkedinSearchUrl } from '@/lib/linkedin-search';
+import { localGetOutreachEmail, localGetResume, localSaveOutreachEmail } from '@/lib/local-storage';
+import type { JobApplication, OutreachEmail, Resume } from '@/lib/types';
 
 interface OutreachPanelProps {
   job: JobApplication;
@@ -69,7 +65,7 @@ export function OutreachPanel({ job, serverResume, existingEmail }: OutreachPane
             role: job.role,
             jd_text: job.jd_text,
           },
-          aiConfig,
+          aiConfig
         );
         setSubject(result.subject);
         setBody(result.body);

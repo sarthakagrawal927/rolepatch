@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { InterviewPrep } from '@/components/interview-prep';
-import type { InterviewStory,JobApplication, Resume } from '@/lib/types';
+import type { InterviewStory, JobApplication, Resume } from '@/lib/types';
 
 // Mock auth provider
 vi.mock('@/components/auth-provider', () => ({

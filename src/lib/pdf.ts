@@ -107,9 +107,11 @@ export async function renderPdf(html: string): Promise<Uint8Array> {
   try {
     const { getCloudflareContext } = await import('@opennextjs/cloudflare');
     const ctx = getCloudflareContext({ async: false });
-    const browserBinding = (ctx?.env as unknown as
-      | { BROWSER?: { fetch: (req: Request) => Promise<Response> } }
-      | undefined)?.BROWSER;
+    const browserBinding = (
+      ctx?.env as unknown as
+        | { BROWSER?: { fetch: (req: Request) => Promise<Response> } }
+        | undefined
+    )?.BROWSER;
 
     if (browserBinding) {
       const puppeteerMod = await import('@cloudflare/puppeteer');
@@ -135,11 +137,10 @@ export async function renderPdf(html: string): Promise<Uint8Array> {
 
   // 2. Node puppeteer-core fallback (Vercel / local dev).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dynImport: (m: string) => Promise<any> = new Function(
-    'm',
-    'return import(m)',
-  ) as (m: string) => Promise<unknown> as (m: string) => Promise<unknown> as (
-    m: string,
+  const dynImport: (m: string) => Promise<any> = new Function('m', 'return import(m)') as (
+    m: string
+  ) => Promise<unknown> as (m: string) => Promise<unknown> as (
+    m: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<any>;
 
@@ -150,8 +151,7 @@ export async function renderPdf(html: string): Promise<Uint8Array> {
 
   const chromium = chromiumMod.default ?? chromiumMod;
   const puppeteer = puppeteerMod.default ?? puppeteerMod;
-  const executablePath =
-    process.env.PUPPETEER_EXECUTABLE_PATH || (await chromium.executablePath());
+  const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || (await chromium.executablePath());
 
   const browser = await puppeteer.launch({
     args: chromium.args,

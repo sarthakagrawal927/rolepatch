@@ -1,6 +1,14 @@
 export const TOKEN_PACKS = [
   { id: 'starter', name: 'Starter', tokens: 10, price: 500, priceLabel: '$5', perToken: '$0.50' },
-  { id: 'pro', name: 'Pro', tokens: 30, price: 1200, priceLabel: '$12', perToken: '$0.40', popular: true },
+  {
+    id: 'pro',
+    name: 'Pro',
+    tokens: 30,
+    price: 1200,
+    priceLabel: '$12',
+    perToken: '$0.40',
+    popular: true,
+  },
   { id: 'bulk', name: 'Bulk', tokens: 100, price: 3000, priceLabel: '$30', perToken: '$0.30' },
 ] as const;
 

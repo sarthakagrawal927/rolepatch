@@ -1,6 +1,6 @@
 'use server';
 
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 
 import { calculateATSScore } from '@/lib/ats-score';
@@ -144,7 +144,7 @@ export async function getPublicScoreBySlug(slug: string): Promise<PublicScore | 
  * publish or unpublish affordance.
  */
 export async function getShareStateForTailored(
-  tailoredId: string,
+  tailoredId: string
 ): Promise<{ isPublic: boolean; slug: string | null }> {
   const userId = await getCurrentUserId();
   if (!userId) return { isPublic: false, slug: null };

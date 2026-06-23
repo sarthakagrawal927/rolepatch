@@ -6,37 +6,46 @@ import { z } from 'zod';
 // Cast avoids a known ai v6 + zod 3.25 deep-instantiation error during TS
 // build. Runtime validation still runs via schema.parse at the call site.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const generateObjectLoose = generateObject as unknown as (args: any) => Promise<{ object: unknown }>;
+const generateObjectLoose = generateObject as unknown as (
+  args: any
+) => Promise<{ object: unknown }>;
 import { v4 as uuid } from 'uuid';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig, SkillRoadmapItem,SkillsRoadmap } from '@/lib/types';
+import type { AIProviderConfig, SkillRoadmapItem, SkillsRoadmap } from '@/lib/types';
 
 const roadmapSchema = z.object({
   items: z
     .array(
       z.object({
-        skill: z.string().describe('Concrete skill or capability name, e.g. "Kubernetes operators"'),
+        skill: z
+          .string()
+          .describe('Concrete skill or capability name, e.g. "Kubernetes operators"'),
         priority: z.enum(['high', 'medium', 'low']),
-        reason: z.string().describe('One sentence — why this matters for the role, grounded in the JD'),
+        reason: z
+          .string()
+          .describe('One sentence — why this matters for the role, grounded in the JD'),
         resources: z
           .array(
             z.object({
               type: z.enum(['course', 'doc', 'project', 'book']),
               title: z.string(),
-              url: z.string().optional().describe('Only include when you are certain the URL is real'),
+              url: z
+                .string()
+                .optional()
+                .describe('Only include when you are certain the URL is real'),
               estimated_hours: z.number().int().positive().optional(),
-            }),
+            })
           )
           .min(1)
           .max(5),
         milestone: z
           .string()
           .describe('A concrete, verifiable deliverable proving the skill is acquired'),
-      }),
+      })
     )
     .min(1)
     .max(10),
@@ -61,7 +70,7 @@ export async function generateSkillsRoadmap(
   resumeSource: string,
   jdText: string,
   jobId: string,
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<SkillsRoadmap> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
@@ -73,7 +82,7 @@ export async function generateSkillsRoadmap(
       throw new Error(
         result.error === 'insufficient_tokens'
           ? 'No tokens remaining. Purchase more to continue.'
-          : 'Authentication required to generate.',
+          : 'Authentication required to generate.'
       );
     }
     debited = true;

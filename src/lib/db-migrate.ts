@@ -1,7 +1,7 @@
 import { createClient } from '@libsql/client';
-import { readFileSync } from 'fs';
-import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,7 +59,14 @@ async function migrate() {
   }
 
   // Add user_id column to all content tables
-  const tablesNeedingUserId = ['resumes', 'job_applications', 'tailored_resumes', 'cover_letters', 'stash_entries', 'outreach_emails'];
+  const tablesNeedingUserId = [
+    'resumes',
+    'job_applications',
+    'tailored_resumes',
+    'cover_letters',
+    'stash_entries',
+    'outreach_emails',
+  ];
   for (const table of tablesNeedingUserId) {
     try {
       await db.execute(`ALTER TABLE ${table} ADD COLUMN user_id TEXT`);
@@ -71,7 +78,9 @@ async function migrate() {
 
   // Add unique index for job_applications URL when user_id is NULL
   try {
-    await db.execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_job_applications_cleaned_url ON job_applications (url) WHERE user_id IS NULL`);
+    await db.execute(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_job_applications_cleaned_url ON job_applications (url) WHERE user_id IS NULL`
+    );
     console.log('Created idx_job_applications_cleaned_url index');
   } catch {
     // Index already exists — safe to ignore
@@ -96,7 +105,7 @@ async function migrate() {
 
   try {
     await db.execute(
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_tailored_resumes_share_slug ON tailored_resumes (share_slug) WHERE share_slug IS NOT NULL`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_tailored_resumes_share_slug ON tailored_resumes (share_slug) WHERE share_slug IS NOT NULL`
     );
     console.log('Created idx_tailored_resumes_share_slug index');
   } catch {
@@ -139,7 +148,7 @@ async function migrate() {
         impact_type TEXT NOT NULL DEFAULT 'other',
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-      )`,
+      )`
     );
     console.log('Ensured achievement_evidence table');
   } catch {
@@ -157,7 +166,7 @@ async function migrate() {
         total_estimated_hours INTEGER NOT NULL DEFAULT 0,
         summary TEXT NOT NULL DEFAULT '',
         created_at INTEGER NOT NULL DEFAULT (unixepoch())
-      )`,
+      )`
     );
     console.log('Ensured skills_roadmaps table');
   } catch {

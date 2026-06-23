@@ -4,11 +4,11 @@ import { generateObject } from 'ai';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 
-import { creditTokens,debitToken } from '@/lib/actions/token-actions';
+import { creditTokens, debitToken } from '@/lib/actions/token-actions';
 import { getAIModel } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig,OutreachEmail } from '@/lib/types';
+import type { AIProviderConfig, OutreachEmail } from '@/lib/types';
 
 export interface OutreachJobInput {
   id: string;
@@ -29,7 +29,7 @@ const MAX_JD_CHARS = 15_000;
 export async function generateOutreachEmail(
   resumeSource: string,
   job: OutreachJobInput,
-  aiConfig: AIProviderConfig,
+  aiConfig: AIProviderConfig
 ): Promise<{ subject: string; body: string }> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   job = { ...job, jd_text: job.jd_text.slice(0, MAX_JD_CHARS) };
@@ -41,7 +41,7 @@ export async function generateOutreachEmail(
     throw new Error(
       debitResult.error === 'insufficient_tokens'
         ? 'No tokens remaining. Purchase more to continue.'
-        : 'Authentication required to generate.',
+        : 'Authentication required to generate.'
     );
   }
 

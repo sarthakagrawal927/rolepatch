@@ -24,7 +24,9 @@ export default async function CoverLetterPage({ params }: { params: Promise<{ jo
     <main className="max-w-4xl mx-auto px-6 py-12">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Cover Letter</h1>
-        <p className="text-[var(--muted-foreground)]">{job.role} at {job.company}</p>
+        <p className="text-[var(--muted-foreground)]">
+          {job.role} at {job.company}
+        </p>
       </header>
       <CoverLetterEditor job={job} serverResume={resume} existingLetter={existing} />
       <div className="mt-10">

@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Auth mock — unauthenticated by default
 const mockGetCurrentUserId = vi.fn<() => Promise<string | null>>();
@@ -130,7 +130,7 @@ describe('rateJobsBulk', () => {
     const { rateJobsBulk } = await import('@/lib/actions/bulk-rate-action');
 
     await expect(rateJobsBulk('RESUME', jobs, {} as unknown as never)).rejects.toThrow(
-      /No tokens remaining/i,
+      /No tokens remaining/i
     );
     // Already-debited token(s) must be refunded
     expect(mockCreditTokens).toHaveBeenCalledWith('user-1', 1, 'refund', 'ai_failure');
@@ -145,7 +145,9 @@ describe('rateJobsBulk', () => {
     const jobs = makeJobs(25); // 2 tokens
     const { rateJobsBulk } = await import('@/lib/actions/bulk-rate-action');
 
-    await expect(rateJobsBulk('RESUME', jobs, {} as unknown as never)).rejects.toThrow(/AI blew up/);
+    await expect(rateJobsBulk('RESUME', jobs, {} as unknown as never)).rejects.toThrow(
+      /AI blew up/
+    );
     expect(mockCreditTokens).toHaveBeenCalledWith('user-1', 2, 'refund', 'ai_failure');
   });
 

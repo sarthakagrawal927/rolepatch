@@ -1,12 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback,useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import { createJobApplication } from '@/lib/actions/job-actions';
 import { scrapeJobUrl } from '@/lib/actions/scrape-action';
-import { localListResumes,localSaveJob } from '@/lib/local-storage';
+import { localListResumes, localSaveJob } from '@/lib/local-storage';
 
 interface NewJobButtonProps {
   resumes: { id: string; name: string }[];
@@ -27,7 +27,7 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
   // For guests, supplement with localStorage resumes
   useEffect(() => {
     if (isGuest) {
-      const localResumes = localListResumes().map(r => ({ id: r.id, name: r.name }));
+      const localResumes = localListResumes().map((r) => ({ id: r.id, name: r.name }));
       setResumes(localResumes);
     }
   }, [isGuest]);
@@ -77,7 +77,7 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
         scraped.company,
         scraped.role,
         scraped.html,
-        scraped.text,
+        scraped.text
       );
       // For guests, also save job metadata in localStorage
       if (isGuest) {
@@ -116,21 +116,27 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
             <form onSubmit={handleSubmit} className="space-y-4">
               {resumes.length > 1 && (
                 <div>
-                  <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Resume</label>
+                  <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                    Resume
+                  </label>
                   <select
                     value={resumeId}
                     onChange={(e) => setResumeId(e.target.value)}
                     className="input-base"
                   >
                     {resumes.map((r) => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
                     ))}
                   </select>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">Job URL</label>
+                <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
+                  Job URL
+                </label>
                 <input
                   ref={inputRef}
                   type="url"
@@ -142,7 +148,9 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
               </div>
 
               {error && (
-                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</div>
+                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  {error}
+                </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-2">

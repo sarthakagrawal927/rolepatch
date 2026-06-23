@@ -12,11 +12,13 @@ export interface EvidenceMatchReason {
 export function splitEvidenceList(value: string): string[] {
   return value
     .split(',')
-    .map(item => item.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 }
 
-export function formatEvidenceBullet(entry: Pick<AchievementEvidence, 'action' | 'result' | 'metric' | 'scope'>): string {
+export function formatEvidenceBullet(
+  entry: Pick<AchievementEvidence, 'action' | 'result' | 'metric' | 'scope'>
+): string {
   const action = entry.action.trim();
   const result = entry.result.trim();
   const metric = entry.metric.trim();
@@ -27,7 +29,10 @@ export function formatEvidenceBullet(entry: Pick<AchievementEvidence, 'action' |
   return suffix ? `${sentence} (${suffix})` : sentence;
 }
 
-export function rankEvidenceForRole(entries: AchievementEvidence[], role: string): AchievementEvidence[] {
+export function rankEvidenceForRole(
+  entries: AchievementEvidence[],
+  role: string
+): AchievementEvidence[] {
   const roleText = role.toLowerCase();
   return [...entries].sort((a, b) => scoreEvidence(b, roleText) - scoreEvidence(a, roleText));
 }
@@ -43,13 +48,21 @@ export function scoreEvidenceQuality(entry: AchievementEvidence): EvidenceQualit
   return 'weak';
 }
 
-export function explainEvidenceMatch(entry: AchievementEvidence, role: string, jdText = ''): EvidenceMatchReason {
+export function explainEvidenceMatch(
+  entry: AchievementEvidence,
+  role: string,
+  jdText = ''
+): EvidenceMatchReason {
   const haystack = `${role} ${jdText}`.toLowerCase();
   const keywordOverlap = [...entry.skills, ...entry.role_targets].filter(
-    token => token && haystack.includes(token.toLowerCase()),
+    (token) => token && haystack.includes(token.toLowerCase())
   );
-  const skillOverlap = entry.skills.filter(skill => skill && haystack.includes(skill.toLowerCase()));
-  const roleOverlap = entry.role_targets.filter(target => target && haystack.includes(target.toLowerCase()));
+  const skillOverlap = entry.skills.filter(
+    (skill) => skill && haystack.includes(skill.toLowerCase())
+  );
+  const roleOverlap = entry.role_targets.filter(
+    (target) => target && haystack.includes(target.toLowerCase())
+  );
   return {
     keywordOverlap,
     skillOverlap,
@@ -61,20 +74,17 @@ export function explainEvidenceMatch(entry: AchievementEvidence, role: string, j
 export function rankEvidenceForJob(
   entries: AchievementEvidence[],
   role: string,
-  jdText = '',
+  jdText = ''
 ): Array<AchievementEvidence & { quality: EvidenceQuality; match: EvidenceMatchReason }> {
-  return rankEvidenceForRole(entries, `${role} ${jdText}`)
-    .map(entry => ({
-      ...entry,
-      quality: scoreEvidenceQuality(entry),
-      match: explainEvidenceMatch(entry, role, jdText),
-    }));
+  return rankEvidenceForRole(entries, `${role} ${jdText}`).map((entry) => ({
+    ...entry,
+    quality: scoreEvidenceQuality(entry),
+    match: explainEvidenceMatch(entry, role, jdText),
+  }));
 }
 
 export function formatEvidenceForPrompt(entries: AchievementEvidence[]): string {
-  return entries
-    .map(entry => `- ${entry.title}: ${formatEvidenceBullet(entry)}`)
-    .join('\n');
+  return entries.map((entry) => `- ${entry.title}: ${formatEvidenceBullet(entry)}`).join('\n');
 }
 
 function scoreEvidence(entry: AchievementEvidence, roleText: string): number {

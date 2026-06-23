@@ -7,7 +7,11 @@ import { getInterviewStories } from '@/lib/actions/interview-prep-action';
 import { getJobApplication } from '@/lib/actions/job-actions';
 import { getResume } from '@/lib/actions/resume-actions';
 
-export default async function InterviewPrepPage({ params }: { params: Promise<{ jobId: string }> }) {
+export default async function InterviewPrepPage({
+  params,
+}: {
+  params: Promise<{ jobId: string }>;
+}) {
   const { jobId } = await params;
   const job = await getJobApplication(jobId);
   if (!job) notFound();
