@@ -3,16 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "https://rolepatch.com",
-  "packageManager": "pnpm@11.0.8",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
     "cf:build": "next build --webpack && node scripts/run-inline-critical-css.mjs && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare populateCache local && pnpm --filter ./landing-astro build && node scripts/run-overlay-astro-landing.mjs",
     "deploy": "pnpm cf:build && wrangler deploy",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "biome check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "prepare": "husky",
@@ -51,7 +52,8 @@
     "react-markdown": "^10.1.0",
     "standardwebhooks": "^1.0.0",
     "uuid": "^13.0.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "web-vitals": "^4.2.4"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
@@ -68,16 +70,13 @@
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "1.0.0",
     "beasties": "^0.3.5",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
     "husky": "^9.1.7",
     "jsdom": "^29.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "wrangler": "^4.85.0",
-    "@biomejs/biome": "2.5.0",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-simple-import-sort": "13.0.0"
+    "@biomejs/biome": "2.5.0"
   }
 }
