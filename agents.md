@@ -16,7 +16,7 @@ LaTeX resume tailoring tool — job scraping + AI diff + cover letter generation
 - Editor: CodeMirror (LaTeX editing) + Monaco (diff view)
 - AI: Vercel AI SDK with OpenAI-compatible adapter (swappable `baseURL`)
 - Scraping: Jina Reader (primary) + linkedom + Readability (fallback)
-- Testing: None configured
+- Testing: Vitest (unit), Playwright (e2e)
 - Deploy: Cloudflare Workers via OpenNext (`wrangler.toml` routes `rolepatch.com`)
 - Package manager: pnpm
 
@@ -50,7 +50,7 @@ src/
 pnpm dev      # next dev
 pnpm build    # next build
 pnpm start    # next start
-pnpm lint     # eslint
+pnpm lint     # biome check .
 ```
 
 ## Architecture notes
