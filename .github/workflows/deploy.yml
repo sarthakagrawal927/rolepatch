@@ -1,18 +1,6 @@
 name: Deploy to Cloudflare Workers
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - 'extension/**'
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - 'extension/**'
-
+  workflow_dispatch:
 jobs:
   deploy-production:
     if: github.event_name == 'push'
