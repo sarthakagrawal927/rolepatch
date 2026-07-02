@@ -14,7 +14,12 @@ import Markdown from 'react-markdown';
 import { useAuth } from '@/components/auth-provider';
 import { renameResume, updateResume } from '@/lib/actions/resume-actions';
 import { localGetResume, localRenameResume, localUpdateResume } from '@/lib/local-storage';
-import { DEFAULT_TEMPLATE, RESUME_TEMPLATES, type TemplateId, parseTemplateId } from '@/lib/resume-templates';
+import {
+  DEFAULT_TEMPLATE,
+  RESUME_TEMPLATES,
+  type TemplateId,
+  parseTemplateId,
+} from '@/lib/resume-templates';
 
 interface Props {
   resumeId: string;
@@ -418,7 +423,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
           </Link>
           {editingName ? (
             <input
-              autoFocus
+              ref={(el) => el?.focus()}
               value={nameDraft}
               onChange={(e) => setNameDraft(e.target.value)}
               onBlur={async () => {
@@ -582,32 +587,54 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
                   className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 transition-colors"
                 >
                   {downloading ? 'Generating...' : 'Export'}
-                  <svg className="ml-1" width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  <svg
+                    className="ml-1"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
                 {showExport && (
                   <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-1 w-32">
                     <button
-                      onClick={() => { handleDownload('pdf'); setShowExport(false); }}
+                      onClick={() => {
+                        handleDownload('pdf');
+                        setShowExport(false);
+                      }}
                       className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     >
                       PDF
                     </button>
                     <button
-                      onClick={() => { handleDownload('docx'); setShowExport(false); }}
+                      onClick={() => {
+                        handleDownload('docx');
+                        setShowExport(false);
+                      }}
                       className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     >
                       Word (.doc)
                     </button>
                     <button
-                      onClick={() => { handleDownload('html'); setShowExport(false); }}
+                      onClick={() => {
+                        handleDownload('html');
+                        setShowExport(false);
+                      }}
                       className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     >
                       HTML
                     </button>
                     <button
-                      onClick={() => { handleDownload('txt'); setShowExport(false); }}
+                      onClick={() => {
+                        handleDownload('txt');
+                        setShowExport(false);
+                      }}
                       className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     >
                       Plain Text
@@ -634,7 +661,13 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
         id="resume-print-target"
       >
         {/* Hidden measurement div — same styling, unconstrained height */}
-        <div ref={measureRef} className="resume-measure" style={cssVars} data-template={template} aria-hidden="true">
+        <div
+          ref={measureRef}
+          className="resume-measure"
+          style={cssVars}
+          data-template={template}
+          aria-hidden="true"
+        >
           <Markdown>{source}</Markdown>
         </div>
 

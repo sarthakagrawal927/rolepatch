@@ -44,7 +44,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let row: Row | null = null;
   let fileName = 'resume.pdf';
-  const baseName = type === 'tailored' ? `tailored-resume-${id.slice(0, 8)}` : 'resume';
 
   if (type === 'tailored') {
     const res = await db.execute({
@@ -99,7 +98,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // DOCX export — simple Word-compatible HTML with .doc extension
   if (format === 'docx') {
     const html = markdownToHtml(row.source, name, renderConfig);
-    const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">${html.replace('<!DOCTYPE html>', '').replace(/<html lang="en">/, '').replace('</html>', '')}</html>`;
+    const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">${html
+      .replace('<!DOCTYPE html>', '')
+      .replace(/<html lang="en">/, '')
+      .replace('</html>', '')}</html>`;
     return new NextResponse(docHtml, {
       status: 200,
       headers: {
