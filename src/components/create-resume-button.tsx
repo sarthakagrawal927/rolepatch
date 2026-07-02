@@ -105,7 +105,7 @@ export function CreateResumeButton() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Software Engineer Resume"
+                  placeholder="e.g. AI Profile, Frontend Profile, Backend Profile"
                   className="input-base"
                 />
               </div>

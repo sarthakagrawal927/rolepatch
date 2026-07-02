@@ -12,6 +12,7 @@ import { CreateResumeButton } from '@/components/create-resume-button';
 import { FitScoreBadge } from '@/components/fit-score-card';
 import { JobDetailsModal, type JobDetailsModalInitialValues } from '@/components/job-details-modal';
 import { JobDiscovery } from '@/components/job-discovery';
+import { JobSearchTips } from '@/components/job-search-tips';
 import { MigrationBanner } from '@/components/migration-banner';
 import { NewJobButton } from '@/components/new-job-button';
 import { ResumeImportButton } from '@/components/resume-import-button';
@@ -325,7 +326,7 @@ export function Dashboard({
             <div>
               <h2 className="font-serif text-2xl font-bold">Resumes</h2>
               <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
-                Your base documents
+                Profile bases for AI, frontend, backend, and other tracks
               </p>
             </div>
             <span className="text-[10px] font-bold text-[var(--muted-foreground)] bg-muted px-2.5 py-1 rounded-full">
@@ -345,7 +346,7 @@ export function Dashboard({
             </div>
             <p className="text-sm font-bold text-foreground">No resumes curated yet</p>
             <p className="text-xs font-medium text-[var(--muted-foreground)] mt-2">
-              Create your primary resume to begin the tailoring process
+              Create a base profile to begin the tailoring process
             </p>
           </div>
         ) : (
@@ -390,11 +391,14 @@ export function Dashboard({
           <div>
             <h2 className="font-serif text-2xl font-bold">Discover jobs</h2>
             <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
-              Live search across Indeed, LinkedIn, Google, Glassdoor, and ZipRecruiter
+              Search LinkedIn or paste any ATS job URL — Ashby, Greenhouse, Lever, and more
             </p>
           </div>
         </div>
         <JobDiscovery resumes={resumes.map((r) => ({ id: r.id, name: r.name }))} />
+        <div className="mt-4">
+          <JobSearchTips />
+        </div>
       </section>
 
       {/* Job Applications section */}

@@ -70,6 +70,7 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   const [error, setError] = useState('');
   const [results, setResults] = useState<DiscoveredJob[]>([]);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
+  const [selectedResumeId, setSelectedResumeId] = useState(resumes[0]?.id ?? '');
   const [saveSearchName, setSaveSearchName] = useState('');
   const [savedSearches, setSavedSearches] = useState<
     Array<{ id: string; name: string; query: string; paused: boolean | number }>
@@ -100,6 +101,10 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
     }
     void hydrate();
   }, [isGuest]);
+
+  useEffect(() => {
+    if (!selectedResumeId && resumes[0]) setSelectedResumeId(resumes[0].id);
+  }, [resumes, selectedResumeId]);
 
   const shortlistUrls = useMemo(() => shortlist.map((item) => item.job_url), [shortlist]);
   const unseenAlerts = alerts.filter((alert) => !alert.seen).length;
@@ -219,11 +224,11 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   }
 
   async function handleTailor(job: DiscoveredJob) {
-    if (!job.job_url || !resumes.length) return;
+    if (!job.job_url || !selectedResumeId) return;
     setTailoringId(job.id);
     try {
       const jobId = await createJobApplication(
-        resumes[0].id,
+        selectedResumeId,
         job.job_url,
         job.company ?? 'Unknown Company',
         job.title ?? 'Untitled Role',
@@ -243,7 +248,7 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
         <Sparkles className="w-6 h-6 mx-auto text-[var(--muted-foreground)]/40 mb-3" />
         <p className="text-sm font-bold text-foreground">Sign in to discover jobs</p>
         <p className="text-xs font-medium text-[var(--muted-foreground)] mt-1">
-          Pulls live openings from Indeed, LinkedIn, Google, Glassdoor, and ZipRecruiter.
+          Search LinkedIn live, or paste any ATS job URL with Add Job.
         </p>
       </div>
     );
@@ -326,6 +331,25 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
           {loading ? 'Searching…' : 'Discover jobs'}
         </button>
       </form>
+
+      {resumes.length > 1 && (
+        <label className="block max-w-sm">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+            Base Profile
+          </span>
+          <select
+            value={selectedResumeId}
+            onChange={(event) => setSelectedResumeId(event.target.value)}
+            className="input-base"
+          >
+            {resumes.map((resume) => (
+              <option key={resume.id} value={resume.id}>
+                {resume.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {query.trim() && (
         <div className="flex flex-wrap items-center gap-2">

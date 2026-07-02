@@ -79,6 +79,18 @@ export async function updateResume(id: string, source: string): Promise<void> {
   });
 }
 
+export async function renameResume(id: string, name: string): Promise<void> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('Resume name cannot be empty');
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error('Sign in to rename resumes');
+  await db.execute({
+    sql: 'UPDATE resumes SET name = ?, updated_at = unixepoch() WHERE id = ? AND user_id = ?',
+    args: [trimmed, id, userId],
+  });
+  revalidatePath('/');
+}
+
 export async function deleteResume(id: string): Promise<void> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('Sign in to delete resumes');

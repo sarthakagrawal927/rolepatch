@@ -73,6 +73,18 @@ export function localUpdateResume(id: string, source: string): void {
   }
 }
 
+export function localRenameResume(id: string, name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const resumes = getItems<Resume>(KEYS.resumes);
+  const idx = resumes.findIndex((r) => r.id === id);
+  if (idx >= 0) {
+    resumes[idx].name = trimmed;
+    resumes[idx].updated_at = Math.floor(Date.now() / 1000);
+    setItems(KEYS.resumes, resumes);
+  }
+}
+
 export function localDeleteResume(id: string): void {
   setItems(
     KEYS.resumes,
@@ -263,9 +275,12 @@ export function localMarkJobDiscoveryAlertsSeen(): void {
 // --- Job Applications (guest metadata) ---
 interface LocalJob {
   id: string;
+  resume_id: string;
+  url?: string;
   company: string;
   role: string;
-  resume_id: string;
+  jd_raw?: string;
+  jd_text?: string;
   status: JobApplication['status'];
   created_at: number;
   updated_at?: number;
@@ -297,6 +312,29 @@ export type LocalJobSummary = Pick<
   | 'rejection_reason'
 >;
 
+function toJobApplication(j: LocalJob): JobApplication {
+  return {
+    id: j.id,
+    resume_id: j.resume_id,
+    url: j.url ?? '',
+    company: j.company,
+    role: j.role,
+    jd_raw: j.jd_raw ?? j.jd_text ?? '',
+    jd_text: j.jd_text ?? j.jd_raw ?? '',
+    status: j.status,
+    interview_date: j.interview_date ?? null,
+    follow_up_at: j.follow_up_at ?? null,
+    salary_min: j.salary_min ?? null,
+    salary_max: j.salary_max ?? null,
+    salary_currency: j.salary_currency ?? null,
+    offer_amount: j.offer_amount ?? null,
+    notes: j.notes ?? null,
+    rejection_reason: j.rejection_reason ?? null,
+    created_at: j.created_at,
+    updated_at: j.updated_at ?? j.created_at,
+  };
+}
+
 function toSummary(j: LocalJob): LocalJobSummary {
   return {
     id: j.id,
@@ -316,13 +354,26 @@ function toSummary(j: LocalJob): LocalJobSummary {
   };
 }
 
+export function localGetJob(id: string): JobApplication | null {
+  const job = getItems<LocalJob>(KEYS.jobs).find((j) => j.id === id);
+  return job ? toJobApplication(job) : null;
+}
+
 export function localListJobs(): LocalJobSummary[] {
   return getItems<LocalJob>(KEYS.jobs)
     .sort((a, b) => b.created_at - a.created_at)
     .map(toSummary);
 }
 
-export function localSaveJob(id: string, company: string, role: string, resumeId: string): void {
+export function localSaveJob(
+  id: string,
+  company: string,
+  role: string,
+  resumeId: string,
+  url = '',
+  jdRaw = '',
+  jdText = ''
+): void {
   const now = Math.floor(Date.now() / 1000);
   const jobs = getItems<LocalJob>(KEYS.jobs);
   jobs.push({
@@ -330,6 +381,9 @@ export function localSaveJob(id: string, company: string, role: string, resumeId
     company,
     role,
     resume_id: resumeId,
+    url,
+    jd_raw: jdRaw,
+    jd_text: jdText,
     status: 'draft',
     created_at: now,
     updated_at: now,

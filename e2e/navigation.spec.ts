@@ -8,7 +8,7 @@ test.describe('public pages load', () => {
 
   test('dashboard is reachable in guest mode', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.getByRole('link', { name: /create|new resume/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /create|new resume/i })).toBeVisible();
   });
 
   test('pricing page renders', async ({ page }) => {

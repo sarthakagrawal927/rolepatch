@@ -1,5 +1,7 @@
 'use server';
 
+import { detectAtsBoard, slugToCompanyName } from '@/lib/ats-boards';
+
 const dynImport = new Function('m', 'return import(m)') as (m: string) => Promise<unknown>;
 
 interface ScrapeResult {
@@ -204,12 +206,13 @@ export async function scrapeJobUrlSafe(url: string): Promise<ScrapeOutcome> {
 }
 
 function extractCompany(url: string, title: string): string {
-  const greenhouse = url.match(/boards\.greenhouse\.io\/(\w+)/);
-  if (greenhouse) return greenhouse[1];
+  // Try ATS board detection first — covers all 10 supported boards.
+  const atsInfo = detectAtsBoard(url);
+  if (atsInfo?.company) {
+    return slugToCompanyName(atsInfo.company) ?? atsInfo.company;
+  }
 
-  const lever = url.match(/jobs\.lever\.co\/([^/]+)/);
-  if (lever) return lever[1];
-
+  // Fallback: parse "Role at Company" from the page title.
   const match = title.match(/(?:at|@)\s+(.+?)(?:\s*[-|]|$)/i);
   return match?.[1]?.trim() ?? '';
 }

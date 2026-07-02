@@ -71,17 +71,27 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
     setError('');
     try {
       const scraped = await scrapeJobUrl(trimmedUrl);
-      const jobId = await createJobApplication(
-        resumeId,
-        trimmedUrl,
-        scraped.company,
-        scraped.role,
-        scraped.html,
-        scraped.text
-      );
-      // For guests, also save job metadata in localStorage
+      let jobId: string;
       if (isGuest) {
-        localSaveJob(jobId, scraped.company, scraped.role, resumeId);
+        jobId = crypto.randomUUID();
+        localSaveJob(
+          jobId,
+          scraped.company,
+          scraped.role,
+          resumeId,
+          trimmedUrl,
+          scraped.html,
+          scraped.text
+        );
+      } else {
+        jobId = await createJobApplication(
+          resumeId,
+          trimmedUrl,
+          scraped.company,
+          scraped.role,
+          scraped.html,
+          scraped.text
+        );
       }
       close();
       router.push(`/tailor/${jobId}`);
@@ -114,15 +124,16 @@ export function NewJobButton({ resumes: serverResumes }: NewJobButtonProps) {
             <h2 className="text-lg font-semibold mb-5">Add Job Application</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {resumes.length > 1 && (
+              {resumes.length > 0 && (
                 <div>
                   <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 uppercase tracking-wider">
-                    Resume
+                    Base Profile
                   </label>
                   <select
                     value={resumeId}
                     onChange={(e) => setResumeId(e.target.value)}
                     className="input-base"
+                    disabled={resumes.length === 1}
                   >
                     {resumes.map((r) => (
                       <option key={r.id} value={r.id}>

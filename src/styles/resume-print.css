@@ -315,3 +315,81 @@
     break-inside: avoid;
   }
 }
+
+/* ─── Template overrides for screen preview ─── */
+
+/* Modern template — sans-serif, left-aligned name, accent color headers */
+.resume-page[data-template="modern"] h1,
+.resume-preview[data-template="modern"] h1,
+.resume-measure[data-template="modern"] h1 {
+  font-size: 24pt;
+  font-weight: 800;
+  text-align: left;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+}
+.resume-page[data-template="modern"] h1 + p,
+.resume-preview[data-template="modern"] h1 + p,
+.resume-measure[data-template="modern"] h1 + p {
+  text-align: left;
+  color: #555;
+}
+.resume-page[data-template="modern"] h2,
+.resume-preview[data-template="modern"] h2,
+.resume-measure[data-template="modern"] h2 {
+  border-bottom: 2px solid #2563eb;
+  color: #2563eb;
+  letter-spacing: 0.08em;
+}
+.resume-page[data-template="modern"] a,
+.resume-preview[data-template="modern"] a,
+.resume-measure[data-template="modern"] a {
+  color: #2563eb;
+}
+.resume-page[data-template="modern"] li::marker,
+.resume-preview[data-template="modern"] li::marker,
+.resume-measure[data-template="modern"] li::marker {
+  color: #2563eb;
+}
+
+/* Minimal template — clean, no borders, generous whitespace */
+.resume-page[data-template="minimal"] h1,
+.resume-preview[data-template="minimal"] h1,
+.resume-measure[data-template="minimal"] h1 {
+  font-size: 21pt;
+  font-weight: 600;
+  text-align: left;
+  letter-spacing: 0;
+}
+.resume-page[data-template="minimal"] h1 + p,
+.resume-preview[data-template="minimal"] h1 + p,
+.resume-measure[data-template="minimal"] h1 + p {
+  text-align: left;
+  color: #666;
+}
+.resume-page[data-template="minimal"] h2,
+.resume-preview[data-template="minimal"] h2,
+.resume-measure[data-template="minimal"] h2 {
+  border-bottom: none;
+  color: #333;
+  letter-spacing: 0.12em;
+  margin-top: 14px;
+}
+.resume-page[data-template="minimal"] h3,
+.resume-preview[data-template="minimal"] h3,
+.resume-measure[data-template="minimal"] h3 {
+  font-weight: 600;
+  margin-top: 8px;
+}
+.resume-page[data-template="minimal"] ul,
+.resume-preview[data-template="minimal"] ul,
+.resume-measure[data-template="minimal"] ul {
+  list-style: none;
+  padding-left: 0.8em;
+}
+.resume-page[data-template="minimal"] li::marker,
+.resume-preview[data-template="minimal"] li::marker,
+.resume-measure[data-template="minimal"] li::marker {
+  content: '·  ';
+  color: #999;
+}

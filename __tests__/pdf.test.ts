@@ -55,15 +55,47 @@ jane@example.com | (555) 555-5555
     expect(html).toContain('<em>Acme Corp</em>');
   });
 
-  it('includes print-ready @page letter size and 1in margins', () => {
-    const html = markdownToHtml(sample);
+  it('includes print-ready @page letter size with configurable margins', () => {
+    const html = markdownToHtml(sample, 'Test', { margin: 1 });
     expect(html).toMatch(/@page\s*{\s*size:\s*letter/);
     expect(html).toMatch(/margin:\s*1in/);
   });
 
-  it('uses a serif body font at 10.5pt', () => {
+  it('uses default 0.5in margins when no config provided', () => {
     const html = markdownToHtml(sample);
-    expect(html).toContain('Georgia');
+    expect(html).toMatch(/@page\s*{\s*size:\s*letter/);
+    expect(html).toMatch(/margin:\s*0\.5in/);
+  });
+
+  it('uses a serif body font at 10.5pt by default', () => {
+    const html = markdownToHtml(sample);
+    expect(html).toContain('Charter');
     expect(html).toContain('10.5pt');
+  });
+
+  it('applies the classic template by default', () => {
+    const html = markdownToHtml(sample);
+    expect(html).toContain('text-align: center');
+    expect(html).toContain('border-bottom: 1px solid #333');
+  });
+
+  it('applies the modern template with accent color', () => {
+    const html = markdownToHtml(sample, 'Test', { template: 'modern' });
+    expect(html).toContain('#2563eb');
+    expect(html).toContain('text-align: left');
+  });
+
+  it('applies the minimal template with no borders', () => {
+    const html = markdownToHtml(sample, 'Test', { template: 'minimal' });
+    expect(html).toContain('border-bottom: none');
+  });
+
+  it('respects custom font family and size', () => {
+    const html = markdownToHtml(sample, 'Test', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 12,
+    });
+    expect(html).toContain('Arial');
+    expect(html).toContain('12pt');
   });
 });

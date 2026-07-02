@@ -1,77 +1,36 @@
 import { marked } from 'marked';
 
+import {
+  DEFAULT_RENDER_CONFIG,
+  type ResumeRenderConfig,
+  parseTemplateId,
+  templateCSS,
+} from '@/lib/resume-templates';
+
 /**
  * Render a Markdown resume string to a full standalone HTML document
- * suitable for PDF conversion via Puppeteer. One template only — clean
- * single-column, serif body, 10.5pt, 1in margins, bold headers, tight bullets.
+ * suitable for PDF conversion. Uses the selected template + config for
+ * fonts, sizes, margins, and visual style.
  */
-export function markdownToHtml(markdown: string, title = 'Resume'): string {
+export function markdownToHtml(
+  markdown: string,
+  title = 'Resume',
+  config?: Partial<ResumeRenderConfig>
+): string {
+  const cfg: ResumeRenderConfig = {
+    ...DEFAULT_RENDER_CONFIG,
+    ...config,
+    template: parseTemplateId(config?.template),
+  };
   const body = marked.parse(markdown, { async: false, gfm: true }) as string;
+  const css = templateCSS(cfg);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>${escapeHtml(title)}</title>
 <style>
-  @page { size: letter; margin: 1in; }
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #fff;
-    color: #111;
-    font-family: 'Georgia', 'Times New Roman', Times, serif;
-    font-size: 10.5pt;
-    line-height: 1.35;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .resume { max-width: 100%; }
-  h1 {
-    font-size: 22pt;
-    font-weight: 700;
-    margin: 0 0 2px;
-    text-align: center;
-    letter-spacing: 0.01em;
-  }
-  h1 + p {
-    text-align: center;
-    font-size: 9pt;
-    color: #444;
-    margin: 0 0 6px;
-  }
-  h2 {
-    font-size: 11pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin: 10px 0 4px;
-    padding-bottom: 2px;
-    border-bottom: 1px solid #333;
-    break-after: avoid;
-  }
-  h3 {
-    font-size: 10.5pt;
-    font-weight: 700;
-    margin: 6px 0 1px;
-    break-after: avoid;
-  }
-  p { margin: 1px 0; }
-  hr { display: none; }
-  a { color: #1a5276; text-decoration: none; }
-  strong { font-weight: 700; }
-  em { font-style: italic; }
-  ul {
-    margin: 1px 0 4px;
-    padding-left: 1.1em;
-    list-style: disc outside;
-  }
-  li {
-    margin-bottom: 0;
-    break-inside: avoid;
-  }
-  li::marker { color: #444; }
-  h2 + p { margin-top: 6px; }
-  p + ul { margin-top: 0; }
+${css}
 </style>
 </head>
 <body>

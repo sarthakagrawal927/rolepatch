@@ -12,8 +12,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 
 import { useAuth } from '@/components/auth-provider';
-import { updateResume } from '@/lib/actions/resume-actions';
-import { localGetResume, localUpdateResume } from '@/lib/local-storage';
+import { renameResume, updateResume } from '@/lib/actions/resume-actions';
+import { localGetResume, localRenameResume, localUpdateResume } from '@/lib/local-storage';
+import { DEFAULT_TEMPLATE, RESUME_TEMPLATES, type TemplateId, parseTemplateId } from '@/lib/resume-templates';
 
 interface Props {
   resumeId: string;
@@ -124,6 +125,7 @@ function saveConfig(cfg: {
   lineHeight: number;
   fontFamily: string;
   margin: number;
+  template: TemplateId;
 }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
@@ -137,18 +139,23 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [resolvedName, setResolvedName] = useState(resumeName ?? '');
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
 
   // For guests, initialSource may be null — resolve from localStorage
   const [source, setSource] = useState(initialSource ?? '');
   const [ready, setReady] = useState(initialSource !== null);
   const [showConfig, setShowConfig] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [breakPoints, setBreakPoints] = useState<number[]>([0]);
   const configRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const [fontSize, setFontSize] = useState(10.5);
   const [lineHeight, setLineHeight] = useState(1.35);
   const [fontFamily, setFontFamily] = useState(FONT_OPTIONS[0].value);
   const [margin, setMargin] = useState(0.5);
+  const [template, setTemplate] = useState<TemplateId>(DEFAULT_TEMPLATE);
   const configLoaded = useRef(false);
 
   // Guest: load resume from localStorage if server returned null
@@ -171,6 +178,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
       if (stored.lineHeight != null) setLineHeight(stored.lineHeight);
       if (stored.fontFamily != null) setFontFamily(stored.fontFamily);
       if (stored.margin != null) setMargin(stored.margin);
+      if (stored.template != null) setTemplate(parseTemplateId(stored.template));
     }
     configLoaded.current = true;
   }, []);
@@ -178,8 +186,8 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   // Persist config changes (skip initial load)
   useEffect(() => {
     if (!configLoaded.current) return;
-    saveConfig({ fontSize, lineHeight, fontFamily, margin });
-  }, [fontSize, lineHeight, fontFamily, margin]);
+    saveConfig({ fontSize, lineHeight, fontFamily, margin, template });
+  }, [fontSize, lineHeight, fontFamily, margin, template]);
 
   // Track page breaks via ResizeObserver on the measurement div
   useEffect(() => {
@@ -206,6 +214,17 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showConfig]);
+
+  useEffect(() => {
+    if (!showExport) return;
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExport(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showExport]);
 
   const save = useCallback(async () => {
     if (!viewRef.current) return;
@@ -313,28 +332,59 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
   }, []);
 
   const [downloading, setDownloading] = useState(false);
-  const handleDownloadPdf = useCallback(async () => {
-    setDownloading(true);
-    try {
-      const res = await fetch(`/api/render/${resumeId}`);
-      if (!res.ok) throw new Error('Failed to render PDF');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${(resolvedName || 'resume').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      // Fallback to browser print if server PDF fails
-      window.print();
-    } finally {
-      setDownloading(false);
-    }
-  }, [resumeId, resolvedName]);
+
+  const buildRenderUrl = useCallback(
+    (format: 'pdf' | 'html' | 'txt' | 'docx') => {
+      const params = new URLSearchParams({
+        format,
+        template,
+        fontFamily,
+        fontSize: String(fontSize),
+        lineHeight: String(lineHeight),
+        margin: String(margin),
+      });
+      return `/api/render/${resumeId}?${params.toString()}`;
+    },
+    [resumeId, template, fontFamily, fontSize, lineHeight, margin]
+  );
+
+  const handleDownload = useCallback(
+    async (format: 'pdf' | 'html' | 'txt' | 'docx') => {
+      if (format !== 'pdf') {
+        // Non-PDF formats: direct download link
+        const a = document.createElement('a');
+        a.href = buildRenderUrl(format);
+        a.download = `${(resolvedName || 'resume').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.${format === 'docx' ? 'doc' : format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+
+      // PDF: fetch as blob (needs server-side rendering)
+      setDownloading(true);
+      try {
+        const res = await fetch(buildRenderUrl('pdf'));
+        if (!res.ok) throw new Error('Failed to render PDF');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(resolvedName || 'resume').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error(err);
+        // Fallback to browser print if server PDF fails
+        window.print();
+      } finally {
+        setDownloading(false);
+      }
+    },
+    [buildRenderUrl, resolvedName]
+  );
 
   const cssVars = {
     '--resume-font-size': `${fontSize}pt`,
@@ -366,7 +416,44 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
               />
             </svg>
           </Link>
-          <span className="text-sm font-medium text-gray-700 truncate">{resolvedName}</span>
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={async () => {
+                const trimmed = nameDraft.trim();
+                if (trimmed && trimmed !== resolvedName) {
+                  setResolvedName(trimmed);
+                  if (isGuest) {
+                    localRenameResume(resumeId, trimmed);
+                  } else {
+                    await renameResume(resumeId, trimmed);
+                  }
+                }
+                setEditingName(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                } else if (e.key === 'Escape') {
+                  setEditingName(false);
+                }
+              }}
+              className="text-sm font-medium text-gray-700 px-1 py-0 border border-gray-300 rounded outline-none focus:border-blue-400 w-48"
+            />
+          ) : (
+            <button
+              onClick={() => {
+                setNameDraft(resolvedName);
+                setEditingName(true);
+              }}
+              className="text-sm font-medium text-gray-700 truncate hover:text-blue-600 transition-colors"
+              title="Click to rename"
+            >
+              {resolvedName}
+            </button>
+          )}
 
           <span
             className={`text-xs tabular-nums ${breakPoints.length > 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}
@@ -395,6 +482,25 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
               {showConfig && (
                 <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-64">
                   <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Template
+                      </label>
+                      <select
+                        value={template}
+                        onChange={(e) => setTemplate(e.target.value as TemplateId)}
+                        className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        {RESUME_TEMPLATES.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {RESUME_TEMPLATES.find((t) => t.id === template)?.description}
+                      </p>
+                    </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">
                         Font Family
@@ -469,13 +575,46 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
                 Print
               </button>
             ) : (
-              <button
-                onClick={handleDownloadPdf}
-                disabled={downloading}
-                className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 transition-colors"
-              >
-                {downloading ? 'Generating...' : 'Download PDF'}
-              </button>
+              <div className="relative" ref={exportRef}>
+                <button
+                  onClick={() => setShowExport((v) => !v)}
+                  disabled={downloading}
+                  className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                >
+                  {downloading ? 'Generating...' : 'Export'}
+                  <svg className="ml-1" width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                {showExport && (
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-1 w-32">
+                    <button
+                      onClick={() => { handleDownload('pdf'); setShowExport(false); }}
+                      className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => { handleDownload('docx'); setShowExport(false); }}
+                      className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      Word (.doc)
+                    </button>
+                    <button
+                      onClick={() => { handleDownload('html'); setShowExport(false); }}
+                      className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      HTML
+                    </button>
+                    <button
+                      onClick={() => { handleDownload('txt'); setShowExport(false); }}
+                      className="w-full text-left px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      Plain Text
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             <button
               onClick={save}
@@ -495,7 +634,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
         id="resume-print-target"
       >
         {/* Hidden measurement div — same styling, unconstrained height */}
-        <div ref={measureRef} className="resume-measure" style={cssVars} aria-hidden="true">
+        <div ref={measureRef} className="resume-measure" style={cssVars} data-template={template} aria-hidden="true">
           <Markdown>{source}</Markdown>
         </div>
 
@@ -505,7 +644,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
           const clipStyle =
             nextOffset != null ? { height: `${nextOffset - offsetPx}px` } : undefined;
           return (
-            <div key={i} className="resume-page" style={cssVars}>
+            <div key={i} className="resume-page" style={cssVars} data-template={template}>
               <div className="resume-page-clip" style={clipStyle}>
                 <div style={offsetPx > 0 ? { marginTop: `-${offsetPx}px` } : undefined}>
                   <Markdown>{source}</Markdown>
@@ -518,7 +657,7 @@ export function ResumeEditor({ resumeId, initialSource, resumeName }: Props) {
 
       {/* Hidden print target — continuous flow for browser pagination */}
       <div className="hidden print-show" id="resume-print-only">
-        <div className="resume-preview" style={cssVars}>
+        <div className="resume-preview" style={cssVars} data-template={template}>
           <Markdown>{source}</Markdown>
         </div>
       </div>

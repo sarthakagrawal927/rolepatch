@@ -5,7 +5,7 @@
 Also read and follow the shared fleet-level agent standard at `../AGENTS.md`. Treat this repository as owned product code: protect production stability, keep changes scoped, verify work, and record durable follow-up tasks when something remains incomplete or blocked.
 
 ## Purpose
-LaTeX resume tailoring tool — job scraping + AI diff + cover letter generation. Users paste a job URL, AI rewrites their resume to match, with a Monaco diff view for review.
+Markdown resume tailoring tool — job scraping + AI diff + cover letter generation. Users paste a job URL, AI rewrites their resume to match, with a react-diff-viewer diff view for review.
 
 ## Stack
 - Framework: Next.js 16 (App Router), React 19
@@ -13,7 +13,7 @@ LaTeX resume tailoring tool — job scraping + AI diff + cover letter generation
 - Styling: Tailwind CSS v4
 - DB: Turso (libSQL)
 - Auth: better-auth (Google OAuth)
-- Editor: CodeMirror (LaTeX editing) + Monaco (diff view)
+- Editor: CodeMirror (Markdown editing) + react-diff-viewer (diff view)
 - AI: Vercel AI SDK with OpenAI-compatible adapter (swappable `baseURL`)
 - Scraping: Jina Reader (primary) + linkedom + Readability (fallback)
 - Testing: Vitest (unit), Playwright (e2e)
@@ -26,12 +26,17 @@ src/
   app/
     landing/           # Public landing page (/)
     dashboard/         # Main app — resumes + jobs list
-    editor/[id]/       # LaTeX editor with preview (CodeMirror)
-    tailor/[jobId]/    # Scrape JD → AI tailor → diff view (Monaco)
+    editor/[id]/       # Markdown editor with live preview (CodeMirror)
+    tailor/[jobId]/    # Scrape JD → AI tailor → diff view (react-diff-viewer)
     cover-letter/      # Cover letter generation
+    evidence/          # Achievement evidence bank
+    interview-prep/    # STAR+R story generation
+    tools/             # Free tools: ATS check, keywords, bullet check, diff, snippets, word count
     stash/             # Extra content pool for AI
     settings/          # AI provider config
     api/auth/          # better-auth route ([...all] handler)
+    api/jobs/          # Job search API route
+    api/render/        # PDF export route
   components/          # React components (client-side)
   lib/
     actions/           # Server actions — all data mutations + AI calls
@@ -59,7 +64,7 @@ pnpm lint     # biome check .
 - **AI provider**: single adapter in `src/lib/ai.ts` — supports free gateway, local AI, or BYOK via `baseURL` swap.
 - **Scraping**: Jina Reader is primary; `linkedom` + `@mozilla/readability` as fallback.
 - **SaaS Maker**: feedback widget + testimonials integrated. Config in `.saasmaker.json`. (SaaS Maker analytics removed — PostHog is the analytics path.)
-- **Data model**: `users`, `resumes`, `job_applications`, `tailored_resumes`, `cover_letters`, `stash_entries`.
+- **Data model**: `users`, `resumes`, `job_applications`, `tailored_resumes`, `cover_letters`, `stash_entries`, `achievement_evidence`, `fit_scores`, `interview_stories`, `skills_roadmaps`, `outreach_emails`, `saved_job_searches`, `saved_job_shortlist`, `job_discovery_alerts`.
 - All env vars documented in `.env.example`.
 
 <!-- FLEET-GUIDANCE:START -->

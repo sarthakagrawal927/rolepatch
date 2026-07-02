@@ -48,7 +48,7 @@ export async function tailorResume(
 ): Promise<TailorResult> {
   resumeSource = resumeSource.slice(0, MAX_RESUME_CHARS);
   jdText = jdText.slice(0, MAX_JD_CHARS);
-  if (stashContent) stashContent = stashContent.slice(0, MAX_STASH_CHARS);
+  if (stashContent !== undefined) stashContent = stashContent.slice(0, MAX_STASH_CHARS);
   // Debit token before AI call
   const userId = await getCurrentUserId();
   let debited = false;
@@ -66,11 +66,12 @@ export async function tailorResume(
 
   try {
     let stashSection = '';
-    if (stashContent) {
+    const hasExplicitStashContent = stashContent !== undefined;
+    if (stashContent?.trim()) {
       stashSection = `\n\n## Additional Content Available (not currently in resume):\nThe following are extra content blocks the user has stashed. You may incorporate any of these into the tailored resume if they are relevant to the job description. Only use them if they genuinely strengthen the resume for this specific role.\n\n${stashContent}`;
     }
 
-    const stashEntries = stashContent ? [] : await listStashEntries();
+    const stashEntries = hasExplicitStashContent ? [] : await listStashEntries();
     if (stashEntries.length > 0) {
       const formatted = stashEntries
         .map((e) => `### [${e.category}] ${e.label}\n${e.content}`)
@@ -78,7 +79,7 @@ export async function tailorResume(
       stashSection = `\n\n## Additional Content Available (not currently in resume):\nThe following are extra content blocks the user has stashed. You may incorporate any of these into the tailored resume if they are relevant to the job description. Only use them if they genuinely strengthen the resume for this specific role.\n\n${formatted}`;
     }
 
-    if (!stashContent && userId) {
+    if (!hasExplicitStashContent && userId) {
       const evidenceEntries = await listAchievementEvidence();
       const rankedEvidence = rankEvidenceForJob(evidenceEntries, jdText.slice(0, 120), jdText)
         .filter((entry) => entry.quality !== 'weak')

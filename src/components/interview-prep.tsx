@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import { generateInterviewStories } from '@/lib/actions/interview-prep-action';
+import { localGetInterviewStories, localSaveInterviewStories } from '@/lib/local-storage';
 import type { InterviewStory, JobApplication, Resume } from '@/lib/types';
 
 interface InterviewPrepProps {
@@ -100,6 +101,14 @@ export function InterviewPrep({ job, resume, existingStories }: InterviewPrepPro
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Guest: hydrate from localStorage on mount
+  useEffect(() => {
+    if (isGuest) {
+      const local = localGetInterviewStories(job.id);
+      if (local.length > 0) setStories(local);
+    }
+  }, [isGuest, job.id]);
+
   function handleGenerate() {
     if (!resume) return;
     setError(null);
@@ -113,6 +122,7 @@ export function InterviewPrep({ job, resume, existingStories }: InterviewPrepPro
         };
         const result = await generateInterviewStories(resume.source, job.jd_text, job.id, aiConfig);
         setStories(result);
+        if (isGuest) localSaveInterviewStories(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to generate stories';
         setError(message);
