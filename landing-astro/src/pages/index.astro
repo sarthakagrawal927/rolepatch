@@ -45,6 +45,52 @@ const features = [
 // Build-time year — the React version called `new Date().getFullYear()`
 // at render. Baking it in keeps the deliverable pure-static.
 const year = new Date().getFullYear();
+
+// FAQ — 35-60 word answers optimized for Generative Engine Optimization
+// (AI search engines lift concise, self-contained passages from pages).
+const faqs = [
+  {
+    q: 'What is RolePatch?',
+    a: 'RolePatch is an AI-powered resume tailoring tool. Paste a job URL and RolePatch rewrites your resume to match the role, generates cover letters with company research, scores your job fit, and produces STAR interview stories — all reviewed through a word-level diff view before you accept any change.',
+  },
+  {
+    q: 'Is RolePatch free?',
+    a: 'RolePatch offers a guest mode that works without sign-up, plus free tools including ATS check, keyword match, and bullet check. Sign in with Google to save resumes and tailoring history to the cloud. No credit card is required to start tailoring resumes or generating cover letters.',
+  },
+  {
+    q: 'How does RolePatch tailor my resume?',
+    a: 'Paste a job URL and RolePatch scrapes the job description, then AI rewrites your bullets to match the role\u2019s requirements, hard skills, and keywords. You review every change in a side-by-side diff view before saving, so you stay in control of what stays and what gets rewritten.',
+  },
+  {
+    q: 'Does RolePatch write cover letters?',
+    a: 'Yes. RolePatch generates cover letters with company research, a fit score, and STAR interview stories baked in. Each cover letter is tailored to the specific job and company, mapping your proof points directly to the role\u2019s requirements so every paragraph speaks to that employer.',
+  },
+  {
+    q: 'What free tools does RolePatch offer?',
+    a: 'RolePatch includes an ATS check for parse-friendly resume structure, a keyword match tool for job-description keyword overlap, a bullet check for action-verb and impact lint, a word count tool, a diff viewer, and a snippets library — all usable without signing in.',
+  },
+  {
+    q: 'Can I use RolePatch without signing in?',
+    a: 'Yes. Guest mode works without an account and stores your data locally in the browser. Sign in with Google to save resumes and tailoring history to the cloud and sync across devices. Nothing is lost in guest mode as long as you stay on the same browser.',
+  },
+  {
+    q: 'Does RolePatch support LaTeX resumes?',
+    a: 'Yes. RolePatch includes a CodeMirror-based markdown editor with live preview for editing resumes. The editor supports markdown with LaTeX-style formatting, so you can write and refine structured resume content with syntax highlighting and instant rendering as you type.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: f.a,
+    },
+  })),
+};
 ---
 
 <Layout title={TITLE} description={DESCRIPTION}>
@@ -295,6 +341,35 @@ const year = new Date().getFullYear();
         </div>
       </section>
     </main>
+
+    {/* ── FAQ (GEO) ── */}
+    <section id="faq" class="py-32 px-6 border-t border-[var(--border)]">
+      <div class="max-w-3xl mx-auto">
+        <div class="max-w-2xl mb-16">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--muted)] border border-[var(--border)] text-[10px] font-bold tracking-widest uppercase text-[var(--accent)] mb-6">
+            <Icon name="help-circle" class="w-3 h-3" />
+            FAQ
+          </div>
+          <h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[var(--foreground)]">
+            Frequently asked<br /> questions.
+          </h2>
+          <p class="text-xl text-[var(--muted-foreground)] leading-relaxed font-medium">
+            Everything you need to know about how RolePatch tailors your resume.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          {faqs.map((f) => (
+            <div class="p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
+              <h3 class="text-lg font-bold mb-3 text-[var(--foreground)]">{f.q}</h3>
+              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} is:inline />
 
     <footer class="py-20 border-t border-white/5 bg-black">
       <div class="max-w-7xl mx-auto px-6">
