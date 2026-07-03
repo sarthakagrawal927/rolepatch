@@ -1,6 +1,6 @@
 import './globals.css';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import { AuthProvider } from '@/components/auth-provider';
@@ -21,6 +21,11 @@ const geistMono = Geist_Mono({
   // Skipping preload keeps the Geist sans (LCP) the only font early.
   preload: false,
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -64,6 +69,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@sarthakcodes',
+    creator: '@sarthakcodes',
     title: 'RolePatch — AI Resume Tailoring with Diff View',
     description: 'Tailor your resume to any job description with AI. See exactly what changed.',
     images: ['/og-image.svg'],
@@ -91,6 +98,29 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'RolePatch',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web',
+              url: 'https://rolepatch.com',
+              description:
+                'AI-powered resume tailoring with job fit scoring, interview prep, and transparent diff view. See exactly what changed, word by word.',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                description: '3 free tokens to start. No credit card required.',
+              },
+            }),
+          }}
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AnalyticsProvider>
           <SaaSMakerFeedback />

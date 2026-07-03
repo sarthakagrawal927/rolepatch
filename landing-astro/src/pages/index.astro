@@ -261,6 +261,39 @@ const year = new Date().getFullYear();
           </div>
         </div>
       </section>
+
+      {/* ── Resources / Blog ── */}
+      <section id="resources" class="py-32 px-6 border-t border-[var(--border)]">
+        <div class="max-w-7xl mx-auto">
+          <div class="max-w-2xl mb-20">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--muted)] border border-[var(--border)] text-[10px] font-bold tracking-widest uppercase text-[var(--accent)] mb-6">
+              <Icon name="file-text" class="w-3 h-3" />
+              Resources
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[var(--foreground)]">
+              Guides &amp; explainers.
+            </h2>
+            <p class="text-xl text-[var(--muted-foreground)] leading-relaxed font-medium">
+              Practical reads on tailoring, ATS scores, and keywords — before you apply.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <a href="/blog/why-tailoring-resume-matters" class="group p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
+              <h3 class="text-xl font-bold mb-3 text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">Why tailoring your resume matters</h3>
+              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">Why a generic resume gets filtered out — and what targeted tailoring actually fixes.</p>
+            </a>
+            <a href="/blog/ats-score-explained" class="group p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
+              <h3 class="text-xl font-bold mb-3 text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">ATS score explained</h3>
+              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">What an ATS score measures, how it's calculated, and how to read yours.</p>
+            </a>
+            <a href="/blog/resume-keywords-guide" class="group p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
+              <h3 class="text-xl font-bold mb-3 text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">Resume keywords guide</h3>
+              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">How to find the right keywords from a job posting and weave them in naturally.</p>
+            </a>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="py-20 border-t border-white/5 bg-black">
