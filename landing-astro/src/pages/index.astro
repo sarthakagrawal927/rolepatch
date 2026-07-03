@@ -17,12 +17,12 @@ const howItWorks = [
   {
     step: '01',
     title: 'Paste the job',
-    desc: 'Drop in any job posting URL. RolePatch scrapes and analyzes the requirements, hard skills, and keywords the role is screening for.',
+    desc: 'Drop in any job posting URL. RolePatch scrapes the requirements and keywords the role is screening for.',
   },
   {
     step: '02',
     title: 'Tailor & review',
-    desc: 'AI rewrites your resume to match — shown as a word-level diff, so you see and control every single change before you accept it.',
+    desc: 'AI rewrites your resume to match, shown as a word-level diff. You see and control every change before you accept it.',
   },
   {
     step: '03',
@@ -35,11 +35,11 @@ const builtOn = ['Next.js', 'Turso', 'Cloudflare'];
 
 const features = [
   { icon: 'target', title: 'Job Fit Score', desc: 'See your fit score across 5 things recruiters check before you waste an hour applying.' },
-  { icon: 'zap', title: 'Contextual Rewriting', desc: "Our AI doesn't just swap words; it re-contextualizes your experience to match the role's needs. See every change in a word-level diff." },
+  { icon: 'zap', title: 'Contextual Rewriting', desc: "Our AI rewrites your experience to match the role, not just swap words. See every change in a word-level diff." },
   { icon: 'message-square', title: 'Interview Prep', desc: 'Auto-generates STAR+R stories mapped to the job requirements. Walk into every interview with rehearsed, quantified answers.' },
-  { icon: 'search', title: 'Deep JD Analysis', desc: 'Extracts hard skills, soft skills, and cultural nuances from any job posting. Paste a URL and we scrape the rest.' },
-  { icon: 'bar-chart-3', title: 'ATS Optimization', desc: "Real-time keyword scoring shows exactly which terms you're hitting and missing. Close the gap before you submit." },
-  { icon: 'file-text', title: 'Cover Letters', desc: 'AI-generated cover letters with company research baked in. Maps your proof points directly to their requirements.' },
+  { icon: 'search', title: 'Deep JD Analysis', desc: 'Pulls hard skills and keywords out of any job posting. Paste a URL and we scrape the rest.' },
+  { icon: 'bar-chart-3', title: 'ATS Optimization', desc: "Keyword scoring shows which terms you're hitting and which you're missing. Close the gap before you submit." },
+  { icon: 'file-text', title: 'Cover Letters', desc: 'AI cover letters with company research baked in. Maps your proof points to their requirements.' },
 ] as const;
 
 // Build-time year — the React version called `new Date().getFullYear()`
@@ -86,7 +86,7 @@ const year = new Date().getFullYear();
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            Next-Gen AI Tailoring
+            AI Resume Tailoring
           </div>
 
           <h1 class="text-6xl md:text-[88px] font-bold leading-[0.95] tracking-tight mb-10">
@@ -121,7 +121,7 @@ const year = new Date().getFullYear();
         <div class="max-w-7xl mx-auto">
           <div class="max-w-2xl mb-20">
             <h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-6">Built for speed, <br/> tuned for precision.</h2>
-            <p class="text-xl text-white/50 leading-relaxed font-medium">AI that understands what recruiters are actually looking for.</p>
+            <p class="text-xl text-white/50 leading-relaxed font-medium">AI that knows what recruiters look for.</p>
           </div>
 
           <div class="grid md:grid-cols-3 gap-8">
@@ -150,7 +150,7 @@ const year = new Date().getFullYear();
               From job post to<br /> tailored resume.
             </h2>
             <p class="text-xl text-[var(--muted-foreground)] leading-relaxed font-medium">
-              Three steps from a link to an application that speaks the role's language.
+              Three steps from a link to a resume that fits the role.
             </p>
           </div>
 
@@ -274,14 +274,14 @@ const year = new Date().getFullYear();
               Guides &amp; explainers.
             </h2>
             <p class="text-xl text-[var(--muted-foreground)] leading-relaxed font-medium">
-              Practical reads on tailoring, ATS scores, and keywords — before you apply.
+              Practical reads on tailoring, ATS scores, and keywords before you apply.
             </p>
           </div>
 
           <div class="grid md:grid-cols-3 gap-8">
             <a href="/blog/why-tailoring-resume-matters" class="group p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
               <h3 class="text-xl font-bold mb-3 text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">Why tailoring your resume matters</h3>
-              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">Why a generic resume gets filtered out — and what targeted tailoring actually fixes.</p>
+              <p class="text-[var(--muted-foreground)] leading-relaxed font-medium">Why a generic resume gets filtered out, and what targeted tailoring fixes.</p>
             </a>
             <a href="/blog/ats-score-explained" class="group p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--accent)]/40 transition-colors duration-500">
               <h3 class="text-xl font-bold mb-3 text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">ATS score explained</h3>
@@ -305,7 +305,7 @@ const year = new Date().getFullYear();
               <span class="font-bold text-lg tracking-tight">RolePatch</span>
             </div>
             <p class="text-white/40 max-w-sm leading-relaxed font-medium">
-              AI-powered resume tailoring. Score your fit, tailor your resume, prep for interviews.
+              AI resume tailoring. Score your fit, tailor your resume, prep for interviews.
             </p>
           </div>
           <div class="space-y-5">
