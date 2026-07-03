@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
+import { canonicalJobUrl, jobUrlVariants, sqlPlaceholders } from '@/lib/job-url';
 
 // CORS: the extension origin is chrome-extension://<id>/ — unknown ahead of time.
 // Reflect the Origin when it's a chrome-extension scheme.
@@ -71,6 +72,8 @@ export async function POST(req: NextRequest) {
   if (jdText.length < 100) {
     return NextResponse.json({ ok: false, error: 'jd_text too short' }, { status: 400, headers });
   }
+  const storedUrl = canonicalJobUrl(url) ?? url;
+  const urlVariants = jobUrlVariants(url);
 
   // Pick the user's most recent resume + check idempotency in parallel.
   // Both are independent, read-only, owner-scoped SELECTs; the early-return
@@ -81,8 +84,8 @@ export async function POST(req: NextRequest) {
       args: [userId],
     }),
     db.execute({
-      sql: 'SELECT id FROM job_applications WHERE url = ? AND user_id = ? LIMIT 1',
-      args: [url, userId],
+      sql: `SELECT id FROM job_applications WHERE url IN (${sqlPlaceholders(urlVariants)}) AND user_id = ? LIMIT 1`,
+      args: [...urlVariants, userId],
     }),
   ]);
 
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
   await db.execute({
     sql: `INSERT INTO job_applications (id, resume_id, url, company, role, jd_raw, jd_text, user_id)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [jobId, resumeId, url, company, role, jdText, jdText, userId],
+    args: [jobId, resumeId, storedUrl, company, role, jdText, jdText, userId],
   });
 
   return NextResponse.json(

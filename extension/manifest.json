@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "RolePatch",
   "version": "0.1.0",
-  "description": "Scrape job descriptions from any job page and tailor your resume with RolePatch.",
+  "description": "Tailor jobs, fill reviewed ATS fields, and capture application receipts with RolePatch.",
   "action": {
     "default_title": "Tailor this job with RolePatch",
     "default_popup": "popup.html",
@@ -27,6 +27,7 @@
     "https://*.lever.co/*",
     "https://jobs.lever.co/*",
     "https://*.linkedin.com/*",
+    "https://*.ashbyhq.com/*",
     "https://*.workday.com/*",
     "https://*.myworkdayjobs.com/*",
     "http://localhost:3000/*",

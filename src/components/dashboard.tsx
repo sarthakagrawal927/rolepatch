@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AchievementEvidenceBank } from '@/components/achievement-evidence-bank';
+import { ApplyAgentCommandCenter } from '@/components/apply-agent-command-center';
 import { ApplicationCampaignTracker } from '@/components/application-campaign-tracker';
 import { ATSScoreMini } from '@/components/ats-score-badge';
 import { useAuth } from '@/components/auth-provider';
@@ -15,16 +16,65 @@ import { JobDiscovery } from '@/components/job-discovery';
 import { JobSearchTips } from '@/components/job-search-tips';
 import { MigrationBanner } from '@/components/migration-banner';
 import { NewJobButton } from '@/components/new-job-button';
+import { RecruiterReplyRoutingCard } from '@/components/recruiter-reply-routing-card';
 import { ResumeImportButton } from '@/components/resume-import-button';
-import { updateJobDetails, updateJobStatus } from '@/lib/actions/job-actions';
 import {
+  bulkUpdateApplicationQueueStatus,
+  listApplicationPackets,
+  listApplicationQueue,
+  listApplicationReceipts,
+  queueApplication,
+  recordManualApplicationReceipt,
+  refreshApplicationQueueReadiness,
+  retryApplicationQueueEntry,
+  runGuardedBrowserSubmit,
+  runGuardedBrowserSubmitBatch,
+  runReviewedBrowserCheckBatch,
+  runReviewedBrowserCheck,
+  updateApplicationQueueStatus,
+} from '@/lib/actions/apply-agent-actions';
+import { createJobApplication, updateJobDetails, updateJobStatus } from '@/lib/actions/job-actions';
+import {
+  deleteProfileAnswer,
+  listProfileAnswers,
+  saveProfileAnswer,
+} from '@/lib/actions/profile-answer-actions';
+import {
+  localBulkUpdateApplicationQueueStatus,
+  localDeleteProfileAnswer,
+  localListApplicationPackets,
+  localListApplicationQueue,
+  localListApplicationReceipts,
   localListAchievementEvidence,
+  localListJobDiscoveryAlerts,
   localListJobs,
+  localListProfileAnswers,
   localListResumes,
+  localQueueApplication,
+  localRecordManualApplicationReceipt,
+  localRefreshApplicationQueueReadiness,
+  localSaveJob,
+  localRetryApplicationQueueEntry,
+  localSaveProfileAnswer,
+  localUpdateApplicationQueueStatus,
   localUpdateJobDetails,
   localUpdateJobStatus,
 } from '@/lib/local-storage';
-import type { AchievementEvidence, JobApplication, JobDetailsPatch, Resume } from '@/lib/types';
+import { normalizeJobUrl } from '@/lib/job-discovery-alerts';
+import type {
+  AchievementEvidence,
+  ApplicationPacket,
+  ApplicationQueueEntry,
+  ApplicationQueueStatus,
+  ApplicationReceipt,
+  ApplyAgentDiscoveryAlert,
+  JobApplication,
+  JobDetailsPatch,
+  ProfileAnswer,
+  ProfileAnswerCategory,
+  RecruiterReplyEvent,
+  Resume,
+} from '@/lib/types';
 
 const STATUS_OPTIONS: JobApplication['status'][] = [
   'draft',
@@ -86,6 +136,8 @@ const statusConfig: Record<
 type DashboardJob = Pick<
   JobApplication,
   | 'id'
+  | 'resume_id'
+  | 'url'
   | 'company'
   | 'role'
   | 'status'
@@ -106,11 +158,20 @@ interface DashboardProps {
   serverJobs: JobApplication[];
   serverFitScores?: Record<string, number>;
   serverEvidence?: AchievementEvidence[];
+  serverApplicationQueue?: ApplicationQueueEntry[];
+  serverApplicationReceipts?: ApplicationReceipt[];
+  serverApplicationPackets?: ApplicationPacket[];
+  serverProfileAnswers?: ProfileAnswer[];
+  serverJobDiscoveryAlerts?: ApplyAgentDiscoveryAlert[];
+  serverReplyRoutingAddress?: string | null;
+  serverRecruiterReplyEvents?: RecruiterReplyEvent[];
 }
 
 function toDashboardJob(j: JobApplication): DashboardJob {
   return {
     id: j.id,
+    resume_id: j.resume_id,
+    url: j.url,
     company: j.company,
     role: j.role,
     status: j.status,
@@ -144,6 +205,13 @@ export function Dashboard({
   serverJobs,
   serverFitScores,
   serverEvidence = [],
+  serverApplicationQueue = [],
+  serverApplicationReceipts = [],
+  serverApplicationPackets = [],
+  serverProfileAnswers = [],
+  serverJobDiscoveryAlerts = [],
+  serverReplyRoutingAddress = null,
+  serverRecruiterReplyEvents = [],
 }: DashboardProps) {
   const { isGuest } = useAuth();
   const [resumes, setResumes] = useState(serverResumes);
@@ -153,6 +221,11 @@ export function Dashboard({
   >({});
   const [fitScores] = useState<Record<string, number>>(serverFitScores ?? {});
   const [evidence, setEvidence] = useState(serverEvidence);
+  const [applicationQueue, setApplicationQueue] = useState(serverApplicationQueue);
+  const [applicationReceipts, setApplicationReceipts] = useState(serverApplicationReceipts);
+  const [applicationPackets, setApplicationPackets] = useState(serverApplicationPackets);
+  const [profileAnswers, setProfileAnswers] = useState(serverProfileAnswers);
+  const [jobDiscoveryAlerts, setJobDiscoveryAlerts] = useState(serverJobDiscoveryAlerts);
   const [detailsJobId, setDetailsJobId] = useState<string | null>(null);
   const [nowSec, setNowSec] = useState<number>(0);
 
@@ -163,6 +236,11 @@ export function Dashboard({
       setResumes(localListResumes());
       setJobs(localListJobs());
       setEvidence(localListAchievementEvidence());
+      setApplicationQueue(localListApplicationQueue());
+      setApplicationReceipts(localListApplicationReceipts());
+      setApplicationPackets(localListApplicationPackets());
+      setProfileAnswers(localListProfileAnswers());
+      setJobDiscoveryAlerts(localListJobDiscoveryAlerts());
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isGuest]);
@@ -204,6 +282,224 @@ export function Dashboard({
     } else {
       await updateJobDetails(jobId, patch);
     }
+  }
+
+  async function refreshApplyAgentState(): Promise<void> {
+    if (isGuest) {
+      setApplicationQueue(localListApplicationQueue());
+      setApplicationReceipts(localListApplicationReceipts());
+      setApplicationPackets(localListApplicationPackets());
+      setProfileAnswers(localListProfileAnswers());
+      return;
+    }
+
+    const [queue, receipts, packets, answers] = await Promise.all([
+      listApplicationQueue(),
+      listApplicationReceipts(),
+      listApplicationPackets(),
+      listProfileAnswers(),
+    ]);
+    setApplicationQueue(queue);
+    setApplicationReceipts(receipts);
+    setApplicationPackets(packets);
+    setProfileAnswers(answers);
+  }
+
+  async function handleQueueApplication(jobId: string): Promise<void> {
+    if (isGuest) {
+      localQueueApplication(jobId);
+      await refreshApplyAgentState();
+      return;
+    }
+    await queueApplication(jobId);
+    await refreshApplyAgentState();
+  }
+
+  async function handleQueueDiscoveryAlert(alert: ApplyAgentDiscoveryAlert): Promise<void> {
+    if (!alert.job_url) throw new Error('This discovery alert does not include a job URL');
+    const resume = resumes[0];
+    if (!resume) throw new Error('Create a base resume before queueing discovery alerts');
+    const normalizedAlertUrl = normalizeJobUrl(alert.job_url);
+    const existing = jobs.find((job) => job.url && normalizeJobUrl(job.url) === normalizedAlertUrl);
+    if (existing) {
+      await handleQueueApplication(existing.id);
+      return;
+    }
+
+    const company = alert.company || alert.detail.split('·')[0]?.trim() || 'Unknown Company';
+    const role = alert.title || 'Untitled Role';
+    const jdText = alert.detail || `${company} discovery alert`;
+
+    if (isGuest) {
+      const jobId = crypto.randomUUID();
+      localSaveJob(jobId, company, role, resume.id, alert.job_url, jdText, jdText);
+      localQueueApplication(jobId);
+      setJobs(localListJobs());
+      await refreshApplyAgentState();
+      return;
+    }
+
+    const jobId = await createJobApplication(
+      resume.id,
+      alert.job_url,
+      company,
+      role,
+      jdText,
+      jdText
+    );
+    await queueApplication(jobId);
+    const now = Math.floor(Date.now() / 1000);
+    setJobs((prev) => [
+      {
+        id: jobId,
+        resume_id: resume.id,
+        url: alert.job_url ?? '',
+        company,
+        role,
+        status: 'draft',
+        created_at: now,
+        updated_at: now,
+        interview_date: null,
+        follow_up_at: null,
+        salary_min: null,
+        salary_max: null,
+        salary_currency: null,
+        offer_amount: null,
+        notes: null,
+        rejection_reason: null,
+      },
+      ...prev,
+    ]);
+    await refreshApplyAgentState();
+  }
+
+  async function handleQueueReadyApplications(): Promise<void> {
+    const queued = new Set(applicationQueue.map((entry) => entry.job_id));
+    const readyJobs = jobs.filter((job) => job.status === 'tailored' && !queued.has(job.id));
+    if (isGuest) {
+      for (const job of readyJobs) localQueueApplication(job.id);
+      await refreshApplyAgentState();
+      return;
+    }
+    await Promise.all(readyJobs.map((job) => queueApplication(job.id)));
+    await refreshApplyAgentState();
+  }
+
+  async function handleRefreshReadiness(): Promise<void> {
+    if (isGuest) {
+      setApplicationQueue(localRefreshApplicationQueueReadiness());
+      setApplicationPackets(localListApplicationPackets());
+      return;
+    }
+    setApplicationQueue(await refreshApplicationQueueReadiness());
+    setApplicationPackets(await listApplicationPackets());
+  }
+
+  async function handleUpdateQueueStatus(
+    queueId: string,
+    status: ApplicationQueueStatus
+  ): Promise<void> {
+    if (isGuest) {
+      localUpdateApplicationQueueStatus(queueId, status);
+      setApplicationQueue(localListApplicationQueue());
+      return;
+    }
+    await updateApplicationQueueStatus(queueId, status);
+    setApplicationQueue(await listApplicationQueue());
+  }
+
+  async function handleBulkUpdateQueueStatus(
+    queueIds: string[],
+    status: Exclude<ApplicationQueueStatus, 'submitted'>
+  ): Promise<void> {
+    if (queueIds.length === 0) return;
+    if (isGuest) {
+      localBulkUpdateApplicationQueueStatus(queueIds, status);
+      setApplicationQueue(localListApplicationQueue());
+      return;
+    }
+    await bulkUpdateApplicationQueueStatus(queueIds, status);
+    setApplicationQueue(await listApplicationQueue());
+  }
+
+  async function handleRetryQueueEntry(queueId: string): Promise<void> {
+    if (isGuest) {
+      localRetryApplicationQueueEntry(queueId);
+      await refreshApplyAgentState();
+      return;
+    }
+    await retryApplicationQueueEntry(queueId);
+    await refreshApplyAgentState();
+  }
+
+  async function handleRecordManualReceipt(queueId: string): Promise<void> {
+    const entry = applicationQueue.find((item) => item.id === queueId);
+    if (isGuest) {
+      localRecordManualApplicationReceipt(queueId);
+      setJobs(localListJobs());
+      await refreshApplyAgentState();
+      return;
+    }
+    await recordManualApplicationReceipt({ queueId });
+    if (entry) {
+      setJobs((prev) =>
+        prev.map((job) => (job.id === entry.job_id ? { ...job, status: 'applied' } : job))
+      );
+    }
+    await refreshApplyAgentState();
+  }
+
+  async function handleRunBrowserCheck(queueId: string): Promise<void> {
+    if (isGuest) throw new Error('Sign in to run reviewed browser checks');
+    await runReviewedBrowserCheck(queueId);
+    await refreshApplyAgentState();
+  }
+
+  async function handleRunBrowserCheckBatch(queueIds: string[]): Promise<void> {
+    if (isGuest) throw new Error('Sign in to run reviewed browser checks');
+    await runReviewedBrowserCheckBatch(queueIds);
+    await refreshApplyAgentState();
+  }
+
+  async function handleRunGuardedSubmit(queueId: string): Promise<void> {
+    if (isGuest) throw new Error('Sign in to run guarded submit');
+    await runGuardedBrowserSubmit(queueId);
+    await refreshApplyAgentState();
+  }
+
+  async function handleRunGuardedSubmitBatch(queueIds: string[]): Promise<void> {
+    if (isGuest) throw new Error('Sign in to run guarded submit');
+    await runGuardedBrowserSubmitBatch(queueIds);
+    await refreshApplyAgentState();
+  }
+
+  async function handleSaveProfileAnswer(input: {
+    category: ProfileAnswerCategory;
+    label: string;
+    answer: string;
+    sensitive: boolean;
+  }): Promise<void> {
+    if (isGuest) {
+      localSaveProfileAnswer(input);
+      setApplicationQueue(localRefreshApplicationQueueReadiness());
+      await refreshApplyAgentState();
+      return;
+    }
+    await saveProfileAnswer(input);
+    setApplicationQueue(await refreshApplicationQueueReadiness());
+    await refreshApplyAgentState();
+  }
+
+  async function handleDeleteProfileAnswer(id: string): Promise<void> {
+    if (isGuest) {
+      localDeleteProfileAnswer(id);
+      setApplicationQueue(localRefreshApplicationQueueReadiness());
+      await refreshApplyAgentState();
+      return;
+    }
+    await deleteProfileAnswer(id);
+    setApplicationQueue(await refreshApplicationQueueReadiness());
+    await refreshApplyAgentState();
   }
 
   const stats = {
@@ -311,6 +607,38 @@ export function Dashboard({
       )}
 
       <ApplicationCampaignTracker jobs={jobs} onOpenDetails={setDetailsJobId} />
+
+      {!isGuest && (
+        <RecruiterReplyRoutingCard
+          address={serverReplyRoutingAddress}
+          events={serverRecruiterReplyEvents}
+        />
+      )}
+
+      <ApplyAgentCommandCenter
+        jobs={jobs}
+        resumeCount={resumes.length}
+        fitScores={fitScores}
+        queue={applicationQueue}
+        receipts={applicationReceipts}
+        packets={applicationPackets}
+        profileAnswers={profileAnswers}
+        discoveryAlerts={jobDiscoveryAlerts}
+        onQueueApplication={handleQueueApplication}
+        onQueueDiscoveryAlert={handleQueueDiscoveryAlert}
+        onQueueReadyApplications={handleQueueReadyApplications}
+        onRefreshReadiness={handleRefreshReadiness}
+        onUpdateQueueStatus={handleUpdateQueueStatus}
+        onBulkUpdateQueueStatus={handleBulkUpdateQueueStatus}
+        onRetryQueueEntry={handleRetryQueueEntry}
+        onRecordManualReceipt={handleRecordManualReceipt}
+        onRunBrowserCheck={handleRunBrowserCheck}
+        onRunBrowserCheckBatch={handleRunBrowserCheckBatch}
+        onRunGuardedSubmit={handleRunGuardedSubmit}
+        onRunGuardedSubmitBatch={handleRunGuardedSubmitBatch}
+        onSaveProfileAnswer={handleSaveProfileAnswer}
+        onDeleteProfileAnswer={handleDeleteProfileAnswer}
+      />
 
       <section className="mb-16">
         <AchievementEvidenceBank serverEntries={evidence} compact roleHint={jobs[0]?.role ?? ''} />

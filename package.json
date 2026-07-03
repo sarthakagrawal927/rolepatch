@@ -19,7 +19,9 @@
     "prepare": "husky",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome check ."
+    "check": "biome check .",
+    "apply-agent": "node scripts/apply-agent-cli.mjs",
+    "apply-agent:mcp": "node scripts/apply-agent-mcp.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.41",

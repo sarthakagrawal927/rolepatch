@@ -25,9 +25,14 @@ export interface SavedJobShortlistItem {
 
 export interface JobDiscoveryAlert {
   id: string;
-  type: 'new_match' | 'follow_up';
+  type: 'new_match' | 'company_watch' | 'follow_up';
   title: string;
   detail: string;
+  external_job_id?: string | null;
+  company?: string | null;
+  job_url?: string | null;
+  location?: string | null;
+  source?: string | null;
   created_at: number;
   seen: boolean;
 }

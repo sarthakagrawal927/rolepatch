@@ -173,6 +173,9 @@ CREATE TABLE IF NOT EXISTS saved_job_searches (
   paused INTEGER NOT NULL DEFAULT 0,
   last_run_at INTEGER,
   last_result_ids TEXT NOT NULL DEFAULT '[]',
+  last_source TEXT,
+  last_found_count INTEGER,
+  last_error TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -196,6 +199,86 @@ CREATE TABLE IF NOT EXISTS job_discovery_alerts (
   alert_type TEXT NOT NULL DEFAULT 'new_match',
   title TEXT NOT NULL DEFAULT '',
   detail TEXT NOT NULL DEFAULT '',
+  external_job_id TEXT,
+  company TEXT,
+  job_url TEXT,
+  location TEXT,
+  source TEXT,
   seen INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS company_watches (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  company TEXT NOT NULL DEFAULT '',
+  career_url TEXT,
+  role_query TEXT NOT NULL DEFAULT '',
+  location TEXT NOT NULL DEFAULT '',
+  remote INTEGER NOT NULL DEFAULT 0,
+  paused INTEGER NOT NULL DEFAULT 0,
+  last_run_at INTEGER,
+  last_result_ids TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS application_queue (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES job_applications(id),
+  user_id TEXT,
+  status TEXT NOT NULL DEFAULT 'queued',
+  readiness_json TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  UNIQUE(user_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS application_receipts (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES job_applications(id),
+  queue_id TEXT REFERENCES application_queue(id),
+  user_id TEXT,
+  provider TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'submitted',
+  fields_json TEXT NOT NULL DEFAULT '[]',
+  resume_id TEXT,
+  cover_letter_id TEXT,
+  confirmation_text TEXT,
+  confirmation_url TEXT,
+  failure_reason TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS profile_answers (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  category TEXT NOT NULL DEFAULT 'other',
+  label TEXT NOT NULL DEFAULT '',
+  answer TEXT NOT NULL DEFAULT '',
+  sensitive INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS recruiter_reply_events (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  job_id TEXT,
+  from_email TEXT NOT NULL DEFAULT '',
+  to_email TEXT NOT NULL DEFAULT '',
+  subject TEXT NOT NULL DEFAULT '',
+  classification TEXT NOT NULL DEFAULT 'other',
+  applied_status TEXT,
+  summary TEXT NOT NULL DEFAULT '',
+  message_id TEXT,
+  in_reply_to TEXT,
+  thread_key TEXT NOT NULL DEFAULT '',
+  suggested_reply_subject TEXT NOT NULL DEFAULT '',
+  suggested_reply_body TEXT NOT NULL DEFAULT '',
+  reply_sent_at INTEGER,
+  reply_sent_subject TEXT NOT NULL DEFAULT '',
+  reply_sent_body TEXT NOT NULL DEFAULT '',
+  reply_send_error TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );

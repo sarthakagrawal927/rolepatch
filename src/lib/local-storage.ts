@@ -4,14 +4,22 @@ import type {
   SavedJobShortlistItem,
 } from '@/lib/job-discovery-alerts';
 import type { DiscoveredJob } from '@/lib/job-discovery-types';
+import { buildApplyAgentReadiness, inferAtsProvider } from '@/lib/apply-agent';
 import type {
   AchievementEvidence,
+  ApplicationPacket,
+  ApplicationQueueEntry,
+  ApplicationQueueStatus,
+  ApplicationReceipt,
+  ApplicationReceiptField,
   CoverLetter,
   FitScore,
   InterviewStory,
   JobApplication,
   JobDetailsPatch,
   OutreachEmail,
+  ProfileAnswer,
+  ProfileAnswerCategory,
   Resume,
   SkillsRoadmap,
   StashEntry,
@@ -33,6 +41,9 @@ const KEYS = {
   savedJobSearches: 'rt-saved-job-searches',
   savedJobShortlist: 'rt-saved-job-shortlist',
   jobDiscoveryAlerts: 'rt-job-discovery-alerts',
+  applicationQueue: 'rt-application-queue',
+  applicationReceipts: 'rt-application-receipts',
+  profileAnswers: 'rt-profile-answers',
 } as const;
 
 function getItems<T>(key: string): T[] {
@@ -297,6 +308,8 @@ interface LocalJob {
 export type LocalJobSummary = Pick<
   JobApplication,
   | 'id'
+  | 'resume_id'
+  | 'url'
   | 'company'
   | 'role'
   | 'status'
@@ -338,6 +351,8 @@ function toJobApplication(j: LocalJob): JobApplication {
 function toSummary(j: LocalJob): LocalJobSummary {
   return {
     id: j.id,
+    resume_id: j.resume_id,
+    url: j.url ?? '',
     company: j.company,
     role: j.role,
     status: j.status,
@@ -475,6 +490,229 @@ export function localUpdateCoverLetter(id: string, content: string): void {
     items[idx].updated_at = Math.floor(Date.now() / 1000);
     setItems(KEYS.coverLetters, items);
   }
+}
+
+function excerpt(value: string | null | undefined, max = 220): string | null {
+  const cleaned = value?.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return null;
+  return cleaned.length > max ? `${cleaned.slice(0, max).trim()}...` : cleaned;
+}
+
+function latestByCreated<T extends { created_at: number }>(items: T[]): T | null {
+  return items.slice().sort((a, b) => b.created_at - a.created_at)[0] ?? null;
+}
+
+function localBuildReadiness(job: LocalJob) {
+  return buildApplyAgentReadiness({
+    jobStatus: job.status,
+    hasResume: Boolean(job.resume_id),
+    hasTailoredResume: job.status === 'tailored' || localGetTailoredResumes(job.id).length > 0,
+    hasCoverLetter: Boolean(localGetCoverLetter(job.id)),
+    hasProfileAnswers: localListProfileAnswers().length > 0,
+    hasReceipt: localListApplicationReceipts([job.id]).length > 0,
+  });
+}
+
+export function localListApplicationQueue(): ApplicationQueueEntry[] {
+  return getItems<ApplicationQueueEntry>(KEYS.applicationQueue).sort(
+    (a, b) => b.updated_at - a.updated_at
+  );
+}
+
+export function localQueueApplication(jobId: string): ApplicationQueueEntry {
+  const job = getItems<LocalJob>(KEYS.jobs).find((item) => item.id === jobId);
+  if (!job) throw new Error('Job not found');
+  const now = Math.floor(Date.now() / 1000);
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue);
+  const existingIdx = queue.findIndex((entry) => entry.job_id === jobId);
+  const entry: ApplicationQueueEntry = {
+    id: existingIdx >= 0 ? queue[existingIdx].id : crypto.randomUUID(),
+    job_id: jobId,
+    status: existingIdx >= 0 ? queue[existingIdx].status : 'queued',
+    readiness: localBuildReadiness(job),
+    created_at: existingIdx >= 0 ? queue[existingIdx].created_at : now,
+    updated_at: now,
+  };
+  if (existingIdx >= 0) queue[existingIdx] = entry;
+  else queue.push(entry);
+  setItems(KEYS.applicationQueue, queue);
+  return entry;
+}
+
+export function localRefreshApplicationQueueReadiness(): ApplicationQueueEntry[] {
+  const jobs = getItems<LocalJob>(KEYS.jobs);
+  const now = Math.floor(Date.now() / 1000);
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue).map((entry) => {
+    const job = jobs.find((item) => item.id === entry.job_id);
+    return job ? { ...entry, readiness: localBuildReadiness(job), updated_at: now } : entry;
+  });
+  setItems(KEYS.applicationQueue, queue);
+  return localListApplicationQueue();
+}
+
+export function localUpdateApplicationQueueStatus(
+  queueId: string,
+  status: ApplicationQueueStatus
+): void {
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue);
+  const idx = queue.findIndex((entry) => entry.id === queueId);
+  if (idx >= 0) {
+    queue[idx] = { ...queue[idx], status, updated_at: Math.floor(Date.now() / 1000) };
+    setItems(KEYS.applicationQueue, queue);
+  }
+}
+
+export function localBulkUpdateApplicationQueueStatus(
+  queueIds: string[],
+  status: ApplicationQueueStatus
+): ApplicationQueueEntry[] {
+  const allowed = new Set(queueIds);
+  const now = Math.floor(Date.now() / 1000);
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue).map((entry) =>
+    allowed.has(entry.id) ? { ...entry, status, updated_at: now } : entry
+  );
+  setItems(KEYS.applicationQueue, queue);
+  return localListApplicationQueue().filter((entry) => allowed.has(entry.id));
+}
+
+export function localRetryApplicationQueueEntry(queueId: string): ApplicationQueueEntry {
+  const jobs = getItems<LocalJob>(KEYS.jobs);
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue);
+  const idx = queue.findIndex((entry) => entry.id === queueId);
+  if (idx < 0) throw new Error('Queued application not found');
+  if (queue[idx].status === 'submitted')
+    throw new Error('Submitted applications cannot be retried');
+  const job = jobs.find((item) => item.id === queue[idx].job_id);
+  if (!job) throw new Error('Job not found');
+  const readiness = localBuildReadiness(job);
+  if (readiness.status === 'submitted') throw new Error('Submitted applications cannot be retried');
+  const status: ApplicationQueueStatus =
+    readiness.status === 'ready_for_review' ? 'ready_to_submit' : 'needs_user';
+  const entry = {
+    ...queue[idx],
+    status,
+    readiness,
+    updated_at: Math.floor(Date.now() / 1000),
+  };
+  queue[idx] = entry;
+  setItems(KEYS.applicationQueue, queue);
+  return entry;
+}
+
+export function localListApplicationReceipts(jobIds?: string[]): ApplicationReceipt[] {
+  const allowed = jobIds && jobIds.length > 0 ? new Set(jobIds) : null;
+  return getItems<ApplicationReceipt>(KEYS.applicationReceipts)
+    .filter((receipt) => !allowed || allowed.has(receipt.job_id))
+    .sort((a, b) => b.created_at - a.created_at);
+}
+
+export function localRecordManualApplicationReceipt(queueId: string): ApplicationReceipt | null {
+  const queue = getItems<ApplicationQueueEntry>(KEYS.applicationQueue);
+  const queueIdx = queue.findIndex((entry) => entry.id === queueId);
+  if (queueIdx < 0) return null;
+  const entry = queue[queueIdx];
+  const jobs = getItems<LocalJob>(KEYS.jobs);
+  const jobIdx = jobs.findIndex((job) => job.id === entry.job_id);
+  if (jobIdx < 0) return null;
+  const job = jobs[jobIdx];
+  const coverLetter = localGetCoverLetter(job.id);
+  const now = Math.floor(Date.now() / 1000);
+  const fields: ApplicationReceiptField[] = [
+    { label: 'Submission mode', value: 'Manual confirmation', source: 'user' },
+    { label: 'Readiness at submission', value: entry.readiness.summary, source: 'system' },
+    ...localListProfileAnswers().map<ApplicationReceiptField>((answer) => ({
+      label: answer.label,
+      value: answer.answer,
+      source: 'profile',
+    })),
+  ];
+  const receipt: ApplicationReceipt = {
+    id: crypto.randomUUID(),
+    job_id: job.id,
+    queue_id: entry.id,
+    provider: inferAtsProvider(job.url ?? ''),
+    status: 'submitted',
+    fields,
+    resume_id: job.resume_id,
+    cover_letter_id: coverLetter?.id ?? null,
+    confirmation_text: 'Marked submitted manually in RolePatch.',
+    confirmation_url: null,
+    failure_reason: null,
+    created_at: now,
+  };
+  const receipts = getItems<ApplicationReceipt>(KEYS.applicationReceipts);
+  receipts.push(receipt);
+  setItems(KEYS.applicationReceipts, receipts);
+
+  jobs[jobIdx] = { ...job, status: 'applied', updated_at: now };
+  setItems(KEYS.jobs, jobs);
+  queue[queueIdx] = {
+    ...entry,
+    status: 'submitted',
+    readiness: localBuildReadiness(jobs[jobIdx]),
+    updated_at: now,
+  };
+  setItems(KEYS.applicationQueue, queue);
+  return receipt;
+}
+
+export function localListProfileAnswers(): ProfileAnswer[] {
+  return getItems<ProfileAnswer>(KEYS.profileAnswers).sort((a, b) => b.updated_at - a.updated_at);
+}
+
+export function localSaveProfileAnswer(input: {
+  category: ProfileAnswerCategory;
+  label: string;
+  answer: string;
+  sensitive: boolean;
+}): ProfileAnswer {
+  const now = Math.floor(Date.now() / 1000);
+  const answer: ProfileAnswer = {
+    id: crypto.randomUUID(),
+    category: input.category,
+    label: input.label.trim(),
+    answer: input.answer.trim(),
+    sensitive: input.sensitive,
+    created_at: now,
+    updated_at: now,
+  };
+  const items = getItems<ProfileAnswer>(KEYS.profileAnswers);
+  items.push(answer);
+  setItems(KEYS.profileAnswers, items);
+  return answer;
+}
+
+export function localDeleteProfileAnswer(id: string): void {
+  setItems(
+    KEYS.profileAnswers,
+    getItems<ProfileAnswer>(KEYS.profileAnswers).filter((answer) => answer.id !== id)
+  );
+}
+
+export function localListApplicationPackets(jobIds?: string[]): ApplicationPacket[] {
+  const allowed = jobIds && jobIds.length > 0 ? new Set(jobIds) : null;
+  const receipts = localListApplicationReceipts();
+  const profileAnswers = localListProfileAnswers();
+  return getItems<LocalJob>(KEYS.jobs)
+    .filter((job) => !allowed || allowed.has(job.id))
+    .map((job) => {
+      const resume = localGetResume(job.resume_id);
+      const tailored = latestByCreated(localGetTailoredResumes(job.id));
+      const coverLetter = localGetCoverLetter(job.id);
+      return {
+        job_id: job.id,
+        ats_url: job.url ?? '',
+        ats_provider: inferAtsProvider(job.url ?? ''),
+        resume_id: job.resume_id,
+        resume_name: resume?.name ?? null,
+        tailored_resume_id: tailored?.id ?? null,
+        tailored_excerpt: excerpt(tailored?.source),
+        cover_letter_id: coverLetter?.id ?? null,
+        cover_letter_excerpt: excerpt(coverLetter?.content),
+        profile_answers: profileAnswers,
+        receipt: receipts.find((receipt) => receipt.job_id === job.id) ?? null,
+      };
+    });
 }
 
 // --- Fit Scores ---

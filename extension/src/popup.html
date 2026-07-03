@@ -51,6 +51,15 @@
       button:hover {
         background: #4338ca;
       }
+      button.secondary {
+        margin-top: 8px;
+        background: transparent;
+        border: 1px solid #d1d5db;
+        color: inherit;
+      }
+      button.secondary:hover {
+        background: rgba(107, 114, 128, 0.12);
+      }
       button:disabled {
         background: #9ca3af;
         cursor: not-allowed;
@@ -87,12 +96,41 @@
         color: inherit;
         box-sizing: border-box;
       }
+      .uploads {
+        margin: 10px 0 4px;
+        display: grid;
+        gap: 8px;
+      }
+      .uploads label {
+        display: block;
+        font-size: 11px;
+        color: #6b7280;
+      }
+      .uploads input {
+        margin-top: 4px;
+        width: 100%;
+        font-size: 11px;
+      }
     </style>
   </head>
   <body>
-    <h1>Tailor this job</h1>
+    <h1>RolePatch job tools</h1>
     <p class="url" id="current-url">—</p>
+    <button id="save-btn" class="secondary">Save to RolePatch queue</button>
     <button id="tailor-btn">Tailor with RolePatch</button>
+    <div class="uploads">
+      <label for="resume-file">
+        Resume/CV file
+        <input id="resume-file" type="file" accept=".pdf,.doc,.docx" />
+      </label>
+      <label for="cover-letter-file">
+        Cover letter file
+        <input id="cover-letter-file" type="file" accept=".pdf,.doc,.docx,.txt" />
+      </label>
+    </div>
+    <button id="fill-btn" class="secondary">Fill application fields</button>
+    <button id="submit-btn" class="secondary">Reviewed submit</button>
+    <button id="capture-submit-btn" class="secondary">Capture submitted receipt</button>
     <div class="status" id="status"></div>
 
     <div class="settings">

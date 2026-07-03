@@ -91,6 +91,37 @@ const faqJsonLd = {
     },
   })),
 };
+
+const softwareAppJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'RolePatch',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web Browser',
+  url: 'https://rolepatch.com',
+  description:
+    'AI-powered resume tailoring. Paste a job URL and get a resume rewritten to match. Generate cover letters with company research, fit scores, and STAR interview stories.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  creator: {
+    '@type': 'Person',
+    name: 'Sarthak Agrawal',
+    url: 'https://sarthakagrawal.dev',
+  },
+};
+
+const fleetLinks = [
+  { name: 'Foundry', url: 'https://sassmaker.com', desc: 'SaaS factory floor' },
+  { name: 'Aliveville', url: 'https://aliveville.com', desc: 'AI world simulator' },
+  { name: 'CodeVetter', url: 'https://codevetter.com', desc: 'AI code review' },
+  { name: 'High Signal', url: 'https://highsignal.app', desc: 'Daily tech/startup brief' },
+  { name: 'Karte', url: 'https://karte.cc', desc: 'AI link-in-bio' },
+  { name: 'Significant Hobbies', url: 'https://significanthobbies.com', desc: 'Hobby journey mapper' },
+  { name: 'Materia', url: 'https://materia.io', desc: 'Evidence-graded remedies' },
+];
 ---
 
 <Layout title={TITLE} description={DESCRIPTION}>
@@ -370,6 +401,7 @@ const faqJsonLd = {
     </section>
 
     <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} is:inline />
+    <script type="application/ld+json" set:html={JSON.stringify(softwareAppJsonLd)} is:inline />
 
     <footer class="py-20 border-t border-white/5 bg-black">
       <div class="max-w-7xl mx-auto px-6">
@@ -399,6 +431,26 @@ const faqJsonLd = {
             </nav>
           </div>
         </div>
+
+        {/* ── Fleet cross-links ── */}
+        <div class="mt-16 pt-10 border-t border-white/5">
+          <p class="text-[10px] font-black uppercase tracking-widest text-white/20 mb-5 text-center">
+            More from the fleet
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {fleetLinks.map((link) => (
+              <a
+                href={link.url}
+                class="group inline-flex items-baseline gap-1.5 text-sm text-white/40 font-medium hover:text-white/80 transition-colors"
+                rel="noopener"
+              >
+                <span class="font-semibold">{link.name}</span>
+                <span class="text-white/20 group-hover:text-white/40 transition-colors">— {link.desc}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
         <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p class="text-sm text-white/20 font-medium">
             &copy; {year} RolePatch. Stop guessing why you get ghosted.

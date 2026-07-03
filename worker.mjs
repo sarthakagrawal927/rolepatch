@@ -24,6 +24,22 @@ export {
 
 const CACHE_PATH = '/';
 const CACHE_CONTROL = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
+const INTERNAL_PATH_PREFIX = '/api/internal/';
+const INTERNAL_HEADER = 'x-rolepatch-internal';
+const INTERNAL_HEADER_VALUE = 'worker';
+const INTERNAL_BASE_URL = 'https://rolepatch.com';
+const SCHEDULED_TASKS = [
+  {
+    name: 'company-watchlist',
+    cron: '0 13 * * *',
+    path: '/api/internal/cron/company-watchlist',
+  },
+  {
+    name: 'weekly-digest',
+    cron: '0 14 * * 1',
+    path: '/api/internal/cron/weekly-digest',
+  },
+];
 
 // Skip cache when ANY of these cookies are present — covers the better-auth
 // session in both prod (__Secure-) and dev variants so signed-in users
@@ -36,13 +52,80 @@ function hasAuthCookie(request) {
   return AUTH_COOKIE_FRAGMENTS.some((c) => cookie.includes(c));
 }
 
+function isInternalWorkerRequest(request) {
+  return request.headers.get(INTERNAL_HEADER) === INTERNAL_HEADER_VALUE;
+}
+
+function internalUrl(env, path) {
+  const base = env.BETTER_AUTH_URL || INTERNAL_BASE_URL;
+  return new URL(path, base).toString();
+}
+
+async function runInternalPost(path, env, ctx, body) {
+  const headers = new Headers({ [INTERNAL_HEADER]: INTERNAL_HEADER_VALUE });
+  let requestBody;
+  if (body !== undefined) {
+    headers.set('content-type', 'application/json');
+    requestBody = JSON.stringify(body);
+  }
+  const response = await openNext.fetch(
+    new Request(internalUrl(env, path), {
+      method: 'POST',
+      headers,
+      body: requestBody,
+    }),
+    env,
+    ctx
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    console.error(`[internal] POST ${path} failed ${response.status}: ${text.slice(0, 500)}`);
+  }
+  return response;
+}
+
 export default {
+  async scheduled(event, env, ctx) {
+    const tasks = SCHEDULED_TASKS.filter((task) => task.cron === event.cron);
+    if (tasks.length === 0) {
+      console.log(`[scheduled] no RolePatch task registered for cron=${event.cron}`);
+      return;
+    }
+    for (const task of tasks) {
+      console.log(`[scheduled] running ${task.name}`);
+      await runInternalPost(task.path, env, ctx);
+    }
+  },
+
+  async email(message, env, ctx) {
+    try {
+      const rawText = await new Response(message.raw).text();
+      const response = await runInternalPost('/api/internal/email/recruiter-reply', env, ctx, {
+        from: message.headers.get('from') || message.from,
+        to: message.to,
+        subject: message.headers.get('subject') || '(no subject)',
+        raw_text: rawText,
+        message_id: message.headers.get('message-id'),
+        in_reply_to: message.headers.get('in-reply-to'),
+      });
+      if (!response.ok) {
+        message.setReject('RolePatch could not ingest this recruiter reply.');
+      }
+    } catch (err) {
+      console.error('[email] recruiter reply ingest failed', err);
+      message.setReject('RolePatch could not ingest this recruiter reply.');
+    }
+  },
+
   fetch: withTiming(async function fetch(request, env, ctx) {
     try {
+      const url = new URL(request.url);
+      if (url.pathname.startsWith(INTERNAL_PATH_PREFIX) && !isInternalWorkerRequest(request)) {
+        return new Response('Not found', { status: 404 });
+      }
       if (request.method !== 'GET') {
         return openNext.fetch(request, env, ctx);
       }
-      const url = new URL(request.url);
       if (url.pathname !== CACHE_PATH) {
         return openNext.fetch(request, env, ctx);
       }

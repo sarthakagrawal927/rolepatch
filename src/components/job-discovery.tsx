@@ -18,18 +18,25 @@ import { useAuth } from '@/components/auth-provider';
 import { createJobApplication } from '@/lib/actions/job-actions';
 import {
   addSavedJobShortlist,
+  createCompanyWatch,
   createSavedJobSearch,
+  deleteCompanyWatch,
   deleteSavedJobSearch,
+  listCompanyWatches,
   listJobDiscoveryAlerts,
   listSavedJobSearches,
   listSavedJobShortlist,
   markJobDiscoveryAlertsSeen,
   recordSavedSearchRun,
   removeSavedJobShortlist,
+  runCompanyWatch,
+  updateCompanyWatch,
   updateSavedJobSearch,
 } from '@/lib/actions/job-discovery-actions';
 import { diffNewJobs, isDuplicateJob, rankDiscoveredJobs } from '@/lib/job-discovery-alerts';
+import type { JobDiscoveryAlert } from '@/lib/job-discovery-alerts';
 import type { DiscoveredJob } from '@/lib/job-discovery-types';
+import type { CompanyWatch } from '@/lib/types';
 import {
   localAddJobDiscoveryAlert,
   localAddSavedJobShortlist,
@@ -60,6 +67,31 @@ function formatSalary(
   return `${cur} up to ${fmt(max!)}`;
 }
 
+function sourceLabel(source: string | null): string {
+  switch (source) {
+    case 'greenhouse':
+      return 'Greenhouse';
+    case 'lever':
+      return 'Lever';
+    case 'ashby':
+      return 'Ashby';
+    case 'workable':
+      return 'Workable';
+    case 'recruitee':
+      return 'Recruitee';
+    case 'personio':
+      return 'Personio';
+    case 'career_page':
+      return 'Career page';
+    case 'linkedin_fallback':
+      return 'LinkedIn fallback';
+    case 'linkedin':
+      return 'LinkedIn';
+    default:
+      return 'Not checked';
+  }
+}
+
 export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   const router = useRouter();
   const { isGuest } = useAuth();
@@ -72,6 +104,13 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [selectedResumeId, setSelectedResumeId] = useState(resumes[0]?.id ?? '');
   const [saveSearchName, setSaveSearchName] = useState('');
+  const [watchCompany, setWatchCompany] = useState('');
+  const [watchRoleQuery, setWatchRoleQuery] = useState('');
+  const [watchCareerUrl, setWatchCareerUrl] = useState('');
+  const [watchLocation, setWatchLocation] = useState('');
+  const [watchRemote, setWatchRemote] = useState(false);
+  const [checkingWatchId, setCheckingWatchId] = useState<string | null>(null);
+  const [companyWatches, setCompanyWatches] = useState<CompanyWatch[]>([]);
   const [savedSearches, setSavedSearches] = useState<
     Array<{ id: string; name: string; query: string; paused: boolean | number }>
   >([]);
@@ -79,7 +118,19 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
     Array<{ id: string; title: string; company: string; job_url: string }>
   >([]);
   const [alerts, setAlerts] = useState<
-    Array<{ id: string; title: string; detail: string; seen: boolean | number }>
+    Array<
+      Pick<
+        JobDiscoveryAlert,
+        | 'id'
+        | 'title'
+        | 'detail'
+        | 'external_job_id'
+        | 'company'
+        | 'job_url'
+        | 'location'
+        | 'source'
+      > & { seen: boolean | number }
+    >
   >([]);
 
   useEffect(() => {
@@ -95,9 +146,11 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
         listSavedJobShortlist(),
         listJobDiscoveryAlerts(),
       ]);
+      const watches = await listCompanyWatches();
       setSavedSearches(searches);
       setShortlist(savedJobs);
       setAlerts(alertRows.map((row) => ({ ...row, seen: row.seen === 1 })));
+      setCompanyWatches(watches);
     }
     void hydrate();
   }, [isGuest]);
@@ -178,6 +231,39 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
     setSaveSearchName('');
   }
 
+  async function handleSaveCompanyWatch() {
+    if (!watchCompany.trim()) return;
+    await createCompanyWatch({
+      company: watchCompany.trim(),
+      careerUrl: watchCareerUrl.trim() || undefined,
+      roleQuery: watchRoleQuery.trim() || undefined,
+      location: watchLocation.trim() || undefined,
+      remote: watchRemote,
+    });
+    setWatchCompany('');
+    setWatchRoleQuery('');
+    setWatchCareerUrl('');
+    setCompanyWatches(await listCompanyWatches());
+  }
+
+  async function handleRunCompanyWatch(watch: CompanyWatch) {
+    setCheckingWatchId(watch.id);
+    setQuery([watch.company, watch.role_query].filter(Boolean).join(' '));
+    setLocation(watch.location);
+    setRemote(watch.remote);
+    try {
+      await runCompanyWatch(watch.id);
+      const [watches, alertRows] = await Promise.all([
+        listCompanyWatches(),
+        listJobDiscoveryAlerts(),
+      ]);
+      setCompanyWatches(watches);
+      setAlerts(alertRows.map((row) => ({ ...row, seen: row.seen === 1 })));
+    } finally {
+      setCheckingWatchId(null);
+    }
+  }
+
   async function handleRunSavedSearch(search: {
     id: string;
     query: string;
@@ -203,6 +289,11 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
           type: 'new_match',
           title: job.title ?? 'New job match',
           detail: `${job.company ?? 'Company'} · ${job.location ?? 'Location unknown'}`,
+          external_job_id: job.id,
+          company: job.company ?? null,
+          job_url: job.job_url ?? null,
+          location: job.location ?? null,
+          source: job.site ?? 'saved_search',
         });
       }
       setAlerts(localListJobDiscoveryAlerts());
@@ -420,6 +511,123 @@ export function JobDiscovery({ resumes }: JobDiscoveryProps) {
           ))}
         </div>
       )}
+
+      <div className="rounded-2xl border border-[var(--border)]/60 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            Company watches
+          </p>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            {companyWatches.length}
+          </span>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
+          <input
+            value={watchCompany}
+            onChange={(event) => setWatchCompany(event.target.value)}
+            placeholder="Company"
+            className="input-base"
+          />
+          <input
+            value={watchRoleQuery}
+            onChange={(event) => setWatchRoleQuery(event.target.value)}
+            placeholder="Role keywords"
+            className="input-base"
+          />
+          <input
+            value={watchLocation}
+            onChange={(event) => setWatchLocation(event.target.value)}
+            placeholder="Location"
+            className="input-base"
+          />
+          <input
+            value={watchCareerUrl}
+            onChange={(event) => setWatchCareerUrl(event.target.value)}
+            placeholder="Career URL: ATS board or custom page"
+            className="input-base"
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <label className="inline-flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+            <input
+              type="checkbox"
+              checked={watchRemote}
+              onChange={(event) => setWatchRemote(event.target.checked)}
+              className="accent-[var(--primary)]"
+            />
+            Remote
+          </label>
+          <button
+            type="button"
+            onClick={handleSaveCompanyWatch}
+            disabled={!watchCompany.trim()}
+            className="px-3 py-2 text-xs font-medium rounded-lg border border-[var(--border)] hover:bg-muted disabled:opacity-40"
+          >
+            Save company watch
+          </button>
+        </div>
+        {companyWatches.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {companyWatches.slice(0, 6).map((watch) => (
+              <div key={watch.id} className="rounded-lg border border-[var(--border)]/50 px-3 py-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => handleRunCompanyWatch(watch)}
+                    className="font-medium text-foreground hover:text-[var(--primary)]"
+                  >
+                    {watch.company}
+                  </button>
+                  <span className="text-xs text-[var(--muted-foreground)]">
+                    {watch.role_query || 'Any role'}
+                    {watch.location ? ` · ${watch.location}` : ''}
+                    {watch.remote ? ' · Remote' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await updateCompanyWatch(watch.id, !watch.paused);
+                      setCompanyWatches(await listCompanyWatches());
+                    }}
+                    className="text-xs text-[var(--muted-foreground)] hover:text-foreground"
+                  >
+                    {watch.paused ? 'Resume' : 'Pause'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRunCompanyWatch(watch)}
+                    disabled={checkingWatchId === watch.id}
+                    className="text-xs text-[var(--primary)] hover:underline disabled:opacity-40"
+                  >
+                    {checkingWatchId === watch.id ? 'Checking...' : 'Check now'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await deleteCompanyWatch(watch.id);
+                      setCompanyWatches(await listCompanyWatches());
+                    }}
+                    className="ml-auto text-[var(--muted-foreground)] hover:text-destructive"
+                    aria-label="Delete company watch"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+                  <span>
+                    Last: {sourceLabel(watch.last_source)} · {watch.last_found_count ?? 0} roles
+                  </span>
+                  {watch.last_error && (
+                    <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-red-600">
+                      Fallback: {watch.last_error}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {shortlist.length > 0 && (
         <div className="rounded-2xl border border-[var(--border)]/60 p-4 space-y-2">
