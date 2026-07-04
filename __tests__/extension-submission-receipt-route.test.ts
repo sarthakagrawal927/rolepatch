@@ -37,6 +37,17 @@ describe('POST /api/extension/submission-receipt', () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed authenticated bodies before recording submission receipts', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+    const { POST } = await import('@/app/api/extension/submission-receipt/route');
+
+    const res = await POST(makeReq(null));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it('records a submitted receipt and marks the queue submitted', async () => {
     mockGetCurrentUserId.mockResolvedValue('user-1');
     mockExecute

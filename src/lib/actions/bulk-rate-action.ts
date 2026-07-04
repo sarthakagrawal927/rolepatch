@@ -4,8 +4,9 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 import { creditTokens, debitToken } from '@/lib/actions/token-actions';
-import { getAIModel } from '@/lib/ai';
+import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
+import { rankRolePatchJobsWithKnowledgebase } from '@/lib/knowledgebase-similarity';
 import type { AIProviderConfig } from '@/lib/types';
 
 const BATCH_SIZE = 20;
@@ -99,13 +100,22 @@ export async function rateJobsBulk(
   jobs = jobs.slice(0, MAX_JOBS);
   if (jobs.length === 0) return {};
 
+  const userId = await getCurrentUserId();
+  if (userId) {
+    try {
+      jobs =
+        (await rankRolePatchJobsWithKnowledgebase(userId, resumeSource, jobs, MAX_JOBS)) ?? jobs;
+    } catch {
+      // Similarity ranking is an optional quality layer; fit scoring should still work.
+    }
+  }
+
   const batches: BulkRateJob[][] = [];
   for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
     batches.push(jobs.slice(i, i + BATCH_SIZE));
   }
   const tokensNeeded = batches.length;
 
-  const userId = await getCurrentUserId();
   let tokensDebited = 0;
   if (userId) {
     for (let i = 0; i < tokensNeeded; i++) {
@@ -142,6 +152,6 @@ export async function rateJobsBulk(
     if (tokensDebited > 0 && userId) {
       await creditTokens(userId, tokensDebited, 'refund', 'ai_failure');
     }
-    throw err;
+    throw toUserFacingAIError(err);
   }
 }

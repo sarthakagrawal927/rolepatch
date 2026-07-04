@@ -9,6 +9,14 @@ function makeReq(body: unknown) {
   return new Request('https://rolepatch.com/api/internal/email/recruiter-reply', {
     method: 'POST',
     body: JSON.stringify(body),
+    headers: { 'content-type': 'application/json', 'x-rolepatch-internal': 'worker' },
+  });
+}
+
+function makeExternalReq(body: unknown) {
+  return new Request('https://rolepatch.com/api/internal/email/recruiter-reply', {
+    method: 'POST',
+    body: JSON.stringify(body),
     headers: { 'content-type': 'application/json' },
   });
 }
@@ -19,6 +27,24 @@ beforeEach(() => {
 });
 
 describe('POST /api/internal/email/recruiter-reply', () => {
+  it('rejects non-worker requests before touching the database', async () => {
+    const { POST } = await import('@/app/api/internal/email/recruiter-reply/route');
+    const res = await POST(makeExternalReq({ from: 'recruiter@example.com' }));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ ok: false, error: 'Not found' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed worker payloads before touching the database', async () => {
+    const { POST } = await import('@/app/api/internal/email/recruiter-reply/route');
+    const res = await POST(makeReq([]));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it('stores thread metadata and a suggested reply draft', async () => {
     const { buildReplyRoutingAddress } = await import('@/lib/recruiter-reply-routing');
     const to = buildReplyRoutingAddress('user-1');
@@ -73,5 +99,76 @@ describe('POST /api/internal/email/recruiter-reply', () => {
     expect(insertCall?.[0].args[11]).toBe('reply:msg-1');
     expect(insertCall?.[0].args[12]).toBe('Re: Frontend Engineer interview');
     expect(insertCall?.[0].args[13]).toContain('Frontend Engineer');
+  });
+
+  it('adds matched proof context to suggested drafts when a recruiter asks for proof', async () => {
+    const { buildReplyRoutingAddress } = await import('@/lib/recruiter-reply-routing');
+    const to = buildReplyRoutingAddress('user-1');
+    mockExecute
+      .mockResolvedValueOnce({ rows: [{ id: 'user-1' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'job-1',
+            resume_id: 'resume-1',
+            url: 'https://jobs.acme.test/1',
+            company: 'Acme',
+            role: 'Frontend Engineer',
+            jd_raw: '',
+            jd_text: 'Own checkout performance and client-side latency.',
+            status: 'applied',
+            interview_date: null,
+            follow_up_at: null,
+            salary_min: null,
+            salary_max: null,
+            salary_currency: null,
+            offer_amount: null,
+            notes: null,
+            rejection_reason: null,
+            created_at: 1,
+            updated_at: 1,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'evidence-1',
+            title: 'Checkout speedup',
+            situation: 'Slow checkout. Source: https://github.com/acme/checkout',
+            action: 'Led checkout performance work',
+            result: 'reduced checkout latency',
+            metric: '42%',
+            scope: '3 markets',
+            skills: '["performance"]',
+            role_targets: '["frontend"]',
+            impact_type: 'speed',
+            created_at: 1,
+            updated_at: 1,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const { POST } = await import('@/app/api/internal/email/recruiter-reply/route');
+    const res = await POST(
+      makeReq({
+        from: 'recruiter@acme.test',
+        to,
+        subject: 'Frontend Engineer portfolio examples',
+        text: 'Can you share proof or GitHub examples before the next step?',
+        message_id: 'msg-3',
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const insertCall = mockExecute.mock.calls.find(([arg]) =>
+      String((arg as { sql?: string }).sql).includes('INSERT INTO recruiter_reply_events')
+    );
+    expect(insertCall?.[0].args[13]).toContain('short proof packet');
+    expect(insertCall?.[0].args[13]).toContain('Checkout speedup');
+    expect(insertCall?.[0].args[13]).toContain('Source: https://github.com/acme/checkout');
   });
 });

@@ -5,6 +5,7 @@ import {
   runCompanyWatchForUser,
 } from '@/lib/actions/job-discovery-actions';
 import { db } from '@/lib/db';
+import { isInternalWorkerRequest } from '@/lib/internal-route-auth';
 import type { CompanyWatch } from '@/lib/types';
 
 // Invoked only by worker.mjs scheduled(). External /api/internal/* requests
@@ -38,7 +39,11 @@ function toCompanyWatch(row: CompanyWatchDbRow): CompanyWatch {
   };
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!isInternalWorkerRequest(req.headers)) {
+    return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+  }
+
   const result = await db.execute({
     sql: `SELECT * FROM company_watches
           WHERE paused = 0

@@ -12,15 +12,23 @@ describe('apply-agent provider support', () => {
     ['https://apply.workable.com/acme/j/frontend', 'workable'],
     ['https://acme.recruitee.com/o/customer-success', 'recruitee'],
     ['https://acme.jobs.personio.com/job/10', 'personio'],
+    ['https://jobs.smartrecruiters.com/Acme/743999999999999-engineer', 'smartrecruiters'],
   ])('infers %s as %s', (url, provider) => {
     expect(inferAtsProvider(url)).toBe(provider);
   });
 
   it('aligns reviewed browser support with extension-supported ATS providers', () => {
     expect(
-      ['greenhouse', 'lever', 'workday', 'ashby', 'workable', 'recruitee', 'personio'].every(
-        isReviewedBrowserProvider
-      )
+      [
+        'greenhouse',
+        'lever',
+        'workday',
+        'ashby',
+        'workable',
+        'recruitee',
+        'personio',
+        'smartrecruiters',
+      ].every(isReviewedBrowserProvider)
     ).toBe(true);
   });
 });

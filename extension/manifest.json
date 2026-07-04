@@ -30,6 +30,16 @@
     "https://*.ashbyhq.com/*",
     "https://*.workday.com/*",
     "https://*.myworkdayjobs.com/*",
+    "https://*.workable.com/*",
+    "https://apply.workable.com/*",
+    "https://*.recruitee.com/*",
+    "https://*.personio.com/*",
+    "https://*.personio.de/*",
+    "https://*.jobs.personio.com/*",
+    "https://*.jobs.personio.de/*",
+    "https://jobs.smartrecruiters.com/*",
+    "https://careers.smartrecruiters.com/*",
+    "https://*.smartrecruiters.com/*",
     "http://localhost:3000/*",
     "https://rolepatch.com/*"
   ]

@@ -12,7 +12,7 @@ import { useAuth } from '@/components/auth-provider';
 import { CreateResumeButton } from '@/components/create-resume-button';
 import { FitScoreBadge } from '@/components/fit-score-card';
 import { JobDetailsModal, type JobDetailsModalInitialValues } from '@/components/job-details-modal';
-import { JobDiscovery } from '@/components/job-discovery';
+import { JobDiscovery, type DiscoveryQueueContext } from '@/components/job-discovery';
 import { JobSearchTips } from '@/components/job-search-tips';
 import { MigrationBanner } from '@/components/migration-banner';
 import { NewJobButton } from '@/components/new-job-button';
@@ -61,6 +61,7 @@ import {
   localUpdateJobStatus,
 } from '@/lib/local-storage';
 import { normalizeJobUrl } from '@/lib/job-discovery-alerts';
+import type { DiscoveredJob } from '@/lib/job-discovery-types';
 import type {
   AchievementEvidence,
   ApplicationPacket,
@@ -315,13 +316,49 @@ export function Dashboard({
     await refreshApplyAgentState();
   }
 
+  function discoveryQueueNote(context?: DiscoveryQueueContext): string | null {
+    if (!context?.semanticScore) return null;
+    const evidence =
+      context.matchTerms && context.matchTerms.length > 0
+        ? ` Evidence: ${context.matchTerms.join(', ')}.`
+        : '';
+    return `RolePatch semantic match: ${context.semanticScore}% resume match.${evidence}`;
+  }
+
+  function mergeRolePatchQueueNote(
+    existing: string | null | undefined,
+    note: string | null,
+    marker: string
+  ): string | null {
+    if (!note) return existing ?? null;
+    if (!existing?.trim()) return note;
+    if (existing.includes(marker)) return existing;
+    return `${existing.trim()}\n\n${note}`;
+  }
+
+  function discoveryAlertNote(alert: ApplyAgentDiscoveryAlert): string {
+    const parts = [alert.source, alert.location].filter(Boolean);
+    return parts.length > 0
+      ? `RolePatch discovery alert: ${parts.join(' · ')}.`
+      : 'RolePatch discovery alert.';
+  }
+
   async function handleQueueDiscoveryAlert(alert: ApplyAgentDiscoveryAlert): Promise<void> {
     if (!alert.job_url) throw new Error('This discovery alert does not include a job URL');
     const resume = resumes[0];
     if (!resume) throw new Error('Create a base resume before queueing discovery alerts');
     const normalizedAlertUrl = normalizeJobUrl(alert.job_url);
     const existing = jobs.find((job) => job.url && normalizeJobUrl(job.url) === normalizedAlertUrl);
+    const note = discoveryAlertNote(alert);
     if (existing) {
+      const mergedNote = mergeRolePatchQueueNote(existing.notes, note, 'RolePatch discovery alert');
+      if (mergedNote !== existing.notes) {
+        if (isGuest) localUpdateJobDetails(existing.id, { notes: mergedNote });
+        else await updateJobDetails(existing.id, { notes: mergedNote });
+        setJobs((prev) =>
+          prev.map((job) => (job.id === existing.id ? { ...job, notes: mergedNote } : job))
+        );
+      }
       await handleQueueApplication(existing.id);
       return;
     }
@@ -333,6 +370,7 @@ export function Dashboard({
     if (isGuest) {
       const jobId = crypto.randomUUID();
       localSaveJob(jobId, company, role, resume.id, alert.job_url, jdText, jdText);
+      localUpdateJobDetails(jobId, { notes: note });
       localQueueApplication(jobId);
       setJobs(localListJobs());
       await refreshApplyAgentState();
@@ -347,6 +385,7 @@ export function Dashboard({
       jdText,
       jdText
     );
+    await updateJobDetails(jobId, { notes: note });
     await queueApplication(jobId);
     const now = Math.floor(Date.now() / 1000);
     setJobs((prev) => [
@@ -365,7 +404,88 @@ export function Dashboard({
         salary_max: null,
         salary_currency: null,
         offer_amount: null,
-        notes: null,
+        notes: note,
+        rejection_reason: null,
+      },
+      ...prev,
+    ]);
+    await refreshApplyAgentState();
+  }
+
+  async function handleQueueDiscoveryAlerts(alerts: ApplyAgentDiscoveryAlert[]): Promise<void> {
+    const seenUrls = new Set<string>();
+    const uniqueAlerts = alerts.filter((alert) => {
+      if (!alert.job_url) return false;
+      const normalized = normalizeJobUrl(alert.job_url);
+      if (seenUrls.has(normalized)) return false;
+      seenUrls.add(normalized);
+      return true;
+    });
+    for (const alert of uniqueAlerts) {
+      await handleQueueDiscoveryAlert(alert);
+    }
+  }
+
+  async function handleQueueDiscoveredJob(
+    job: DiscoveredJob,
+    resumeId: string,
+    context?: DiscoveryQueueContext
+  ): Promise<void> {
+    if (!job.job_url) throw new Error('This job does not include a job URL');
+    if (!resumeId) throw new Error('Create a base resume before queueing jobs');
+    const note = discoveryQueueNote(context);
+    const normalizedJobUrl = normalizeJobUrl(job.job_url);
+    const existing = jobs.find(
+      (item) => item.url && normalizeJobUrl(item.url) === normalizedJobUrl
+    );
+    if (existing) {
+      const mergedNote = mergeRolePatchQueueNote(existing.notes, note, 'RolePatch semantic match:');
+      if (mergedNote !== existing.notes) {
+        if (isGuest) localUpdateJobDetails(existing.id, { notes: mergedNote });
+        else await updateJobDetails(existing.id, { notes: mergedNote });
+        setJobs((prev) =>
+          prev.map((item) => (item.id === existing.id ? { ...item, notes: mergedNote } : item))
+        );
+      }
+      await handleQueueApplication(existing.id);
+      return;
+    }
+
+    const company = job.company || 'Unknown Company';
+    const role = job.title || 'Untitled Role';
+    const jdText = job.description || job.description_short || `${role} at ${company}`;
+
+    if (isGuest) {
+      const jobId = crypto.randomUUID();
+      localSaveJob(jobId, company, role, resumeId, job.job_url, jdText, jdText);
+      if (note) localUpdateJobDetails(jobId, { notes: note });
+      localQueueApplication(jobId);
+      setJobs(localListJobs());
+      await refreshApplyAgentState();
+      return;
+    }
+
+    const jobId = await createJobApplication(resumeId, job.job_url, company, role, jdText, jdText);
+    if (note) await updateJobDetails(jobId, { notes: note });
+    await queueApplication(jobId);
+    const now = Math.floor(Date.now() / 1000);
+    setJobs((prev) => [
+      {
+        id: jobId,
+        resume_id: resumeId,
+        url: job.job_url ?? '',
+        company,
+        role,
+        status: 'draft',
+        created_at: now,
+        updated_at: now,
+        interview_date: null,
+        follow_up_at: null,
+        salary_min: null,
+        salary_max: null,
+        salary_currency: null,
+        offer_amount: null,
+        notes: note,
         rejection_reason: null,
       },
       ...prev,
@@ -474,6 +594,7 @@ export function Dashboard({
   }
 
   async function handleSaveProfileAnswer(input: {
+    id?: string;
     category: ProfileAnswerCategory;
     label: string;
     answer: string;
@@ -551,7 +672,7 @@ export function Dashboard({
 
       {/* Header */}
       <div className="mb-12">
-        <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm font-medium text-[var(--muted-foreground)] mt-2 opacity-80">
           {isGuest
             ? 'Guest mode — sign in to save to the cloud'
@@ -626,6 +747,7 @@ export function Dashboard({
         discoveryAlerts={jobDiscoveryAlerts}
         onQueueApplication={handleQueueApplication}
         onQueueDiscoveryAlert={handleQueueDiscoveryAlert}
+        onQueueDiscoveryAlerts={handleQueueDiscoveryAlerts}
         onQueueReadyApplications={handleQueueReadyApplications}
         onRefreshReadiness={handleRefreshReadiness}
         onUpdateQueueStatus={handleUpdateQueueStatus}
@@ -652,7 +774,7 @@ export function Dashboard({
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-serif text-2xl font-bold">Resumes</h2>
+              <h2 className="text-2xl font-bold">Resumes</h2>
               <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
                 Profile bases for AI, frontend, backend, and other tracks
               </p>
@@ -717,13 +839,16 @@ export function Dashboard({
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-serif text-2xl font-bold">Discover jobs</h2>
+            <h2 className="text-2xl font-bold">Discover jobs</h2>
             <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
               Search LinkedIn or paste any ATS job URL — Ashby, Greenhouse, Lever, and more
             </p>
           </div>
         </div>
-        <JobDiscovery resumes={resumes.map((r) => ({ id: r.id, name: r.name }))} />
+        <JobDiscovery
+          resumes={resumes.map((r) => ({ id: r.id, name: r.name, source: r.source }))}
+          onQueueDiscoveredJob={handleQueueDiscoveredJob}
+        />
         <div className="mt-4">
           <JobSearchTips />
         </div>
@@ -737,7 +862,7 @@ export function Dashboard({
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-serif text-2xl font-bold">Applications</h2>
+              <h2 className="text-2xl font-bold">Applications</h2>
               <p className="text-xs font-medium text-[var(--muted-foreground)] opacity-60">
                 Your active job pipeline
               </p>

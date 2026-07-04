@@ -5,6 +5,7 @@ import type {
 } from '@/lib/job-discovery-alerts';
 import type { DiscoveredJob } from '@/lib/job-discovery-types';
 import { buildApplyAgentReadiness, inferAtsProvider } from '@/lib/apply-agent';
+import { buildProofItemsForJob } from '@/lib/achievement-evidence';
 import type {
   AchievementEvidence,
   ApplicationPacket,
@@ -616,6 +617,12 @@ export function localRecordManualApplicationReceipt(queueId: string): Applicatio
   if (jobIdx < 0) return null;
   const job = jobs[jobIdx];
   const coverLetter = localGetCoverLetter(job.id);
+  const proofItems = buildProofItemsForJob(
+    localListAchievementEvidence(),
+    job.role,
+    job.jd_text ?? job.jd_raw ?? '',
+    4
+  );
   const now = Math.floor(Date.now() / 1000);
   const fields: ApplicationReceiptField[] = [
     { label: 'Submission mode', value: 'Manual confirmation', source: 'user' },
@@ -625,6 +632,26 @@ export function localRecordManualApplicationReceipt(queueId: string): Applicatio
       value: answer.answer,
       source: 'profile',
     })),
+    ...(proofItems.length > 0
+      ? [
+          {
+            label: 'Proof review boundary',
+            value:
+              'Proof candidates were available for review; RolePatch did not automatically share them.',
+            source: 'system' as const,
+          },
+          {
+            label: 'Proof candidates available',
+            value: String(proofItems.length),
+            source: 'system' as const,
+          },
+          ...proofItems.map<ApplicationReceiptField>((item) => ({
+            label: 'Proof candidate',
+            value: `${item.title}: ${item.claim}${item.source_url ? ` Source: ${item.source_url}` : ''}`,
+            source: 'system',
+          })),
+        ]
+      : []),
   ];
   const receipt: ApplicationReceipt = {
     id: crypto.randomUUID(),
@@ -661,24 +688,28 @@ export function localListProfileAnswers(): ProfileAnswer[] {
 }
 
 export function localSaveProfileAnswer(input: {
+  id?: string;
   category: ProfileAnswerCategory;
   label: string;
   answer: string;
   sensitive: boolean;
 }): ProfileAnswer {
   const now = Math.floor(Date.now() / 1000);
+  const items = getItems<ProfileAnswer>(KEYS.profileAnswers);
+  const existing = input.id ? items.find((answer) => answer.id === input.id) : undefined;
   const answer: ProfileAnswer = {
-    id: crypto.randomUUID(),
+    id: existing?.id ?? crypto.randomUUID(),
     category: input.category,
     label: input.label.trim(),
     answer: input.answer.trim(),
     sensitive: input.sensitive,
-    created_at: now,
+    created_at: existing?.created_at ?? now,
     updated_at: now,
   };
-  const items = getItems<ProfileAnswer>(KEYS.profileAnswers);
-  items.push(answer);
-  setItems(KEYS.profileAnswers, items);
+  setItems(
+    KEYS.profileAnswers,
+    existing ? items.map((item) => (item.id === existing.id ? answer : item)) : [...items, answer]
+  );
   return answer;
 }
 
@@ -693,12 +724,27 @@ export function localListApplicationPackets(jobIds?: string[]): ApplicationPacke
   const allowed = jobIds && jobIds.length > 0 ? new Set(jobIds) : null;
   const receipts = localListApplicationReceipts();
   const profileAnswers = localListProfileAnswers();
+  const evidenceEntries = localListAchievementEvidence();
   return getItems<LocalJob>(KEYS.jobs)
     .filter((job) => !allowed || allowed.has(job.id))
     .map((job) => {
       const resume = localGetResume(job.resume_id);
       const tailored = latestByCreated(localGetTailoredResumes(job.id));
       const coverLetter = localGetCoverLetter(job.id);
+      const proofItems = buildProofItemsForJob(
+        evidenceEntries,
+        job.role,
+        job.jd_text ?? job.jd_raw ?? '',
+        4
+      ).map((item) => ({
+        id: item.id,
+        title: item.title,
+        claim: item.claim,
+        readiness: item.readiness.label,
+        missing: item.readiness.missing,
+        tags: item.tags,
+        source_url: item.source_url,
+      }));
       return {
         job_id: job.id,
         ats_url: job.url ?? '',
@@ -710,6 +756,7 @@ export function localListApplicationPackets(jobIds?: string[]): ApplicationPacke
         cover_letter_id: coverLetter?.id ?? null,
         cover_letter_excerpt: excerpt(coverLetter?.content),
         profile_answers: profileAnswers,
+        proof_items: proofItems,
         receipt: receipts.find((receipt) => receipt.job_id === job.id) ?? null,
       };
     });

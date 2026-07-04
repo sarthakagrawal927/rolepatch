@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const FAQ = [
   {
     q: 'What can I do with tokens?',
-    a: 'Each token lets you tailor a resume to a job description (1 token) or generate a cover letter (1 token). Editing, stash, and job tracking are always free.',
+    a: 'Tokens cover AI work: resume tailoring, cover letters, fit scoring, interview prep, outreach drafts, and bulk fit scoring. The reviewed apply-agent queue, packets, extension fill, and receipts are included.',
   },
   {
     q: 'Do tokens expire?',

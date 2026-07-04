@@ -4,7 +4,7 @@ import { generateText } from 'ai';
 import { v4 as uuid } from 'uuid';
 
 import { creditTokens, debitToken } from '@/lib/actions/token-actions';
-import { getAIModel } from '@/lib/ai';
+import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
 import type { AIProviderConfig, InterviewStory } from '@/lib/types';
@@ -87,7 +87,7 @@ export async function generateInterviewStories(
     if (debited && userId) {
       await creditTokens(userId, 1, 'refund', 'ai_failure');
     }
-    throw err;
+    throw toUserFacingAIError(err);
   }
 }
 

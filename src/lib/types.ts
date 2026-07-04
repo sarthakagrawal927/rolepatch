@@ -279,6 +279,15 @@ export interface ApplicationPacket {
   cover_letter_text?: string | null;
   cover_letter_excerpt: string | null;
   profile_answers: ProfileAnswer[];
+  proof_items?: Array<{
+    id: string;
+    title: string;
+    claim: string;
+    readiness: string;
+    missing: string[];
+    tags: string[];
+    source_url?: string;
+  }>;
   receipt: ApplicationReceipt | null;
 }
 

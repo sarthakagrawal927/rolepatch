@@ -30,6 +30,7 @@ afterEach(() => {
 describe('company career watch adapters', () => {
   it('detects supported career URLs', () => {
     expect(supportsCareerUrl('https://jobs.lever.co/acme')).toBe(true);
+    expect(supportsCareerUrl('https://jobs.smartrecruiters.com/Acme')).toBe(true);
     expect(supportsCareerUrl('notaurl')).toBe(false);
     expect(supportsCareerUrl('mailto:jobs@example.com')).toBe(false);
   });
@@ -287,6 +288,54 @@ describe('company career watch adapters', () => {
       location: 'Munich',
       job_type: 'full-time',
       description_short: 'People · full-time',
+    });
+  });
+
+  it('loads SmartRecruiters public company postings', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      Response.json({
+        content: [
+          {
+            id: '743999999999999',
+            name: 'Machine Learning Engineer',
+            releasedDate: '2026-07-03T00:00:00Z',
+            postingUrl:
+              'https://jobs.smartrecruiters.com/Acme/743999999999999-machine-learning-engineer',
+            location: { city: 'Remote', country: 'United States', remote: true },
+            department: { label: 'Engineering' },
+            function: { label: 'AI' },
+            typeOfEmployment: { label: 'Full-time' },
+          },
+          {
+            id: '744000000000000',
+            name: 'Account Executive',
+            location: { city: 'Austin', country: 'United States' },
+          },
+        ],
+      })
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const result = await discoverCompanyCareerJobs(
+      watch({
+        career_url: 'https://jobs.smartrecruiters.com/Acme',
+        role_query: 'machine learning',
+        remote: true,
+      })
+    );
+
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.smartrecruiters.com/v1/companies/Acme/postings?limit=100'
+    );
+    expect(result?.source).toBe('smartrecruiters');
+    expect(result?.jobs).toHaveLength(1);
+    expect(result?.jobs[0]).toMatchObject({
+      title: 'Machine Learning Engineer',
+      site: 'smartrecruiters',
+      location: 'Remote, United States',
+      is_remote: true,
+      job_type: 'Full-time',
+      description_short: 'Engineering · AI',
     });
   });
 

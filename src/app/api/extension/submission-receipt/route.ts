@@ -5,32 +5,9 @@ import { v4 as uuid } from 'uuid';
 import { inferAtsProvider, parseReadiness } from '@/lib/apply-agent';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
+import { extensionCorsHeaders } from '@/lib/extension-cors';
+import { parseExtensionSubmissionReceiptInput } from '@/lib/extension-route-input';
 import type { ApplicationReceiptField } from '@/lib/types';
-
-function corsHeaders(req: NextRequest): Record<string, string> {
-  const origin = req.headers.get('origin') ?? '';
-  const allow = origin.startsWith('chrome-extension://') ? origin : '*';
-  return {
-    'access-control-allow-origin': allow,
-    'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'content-type, x-rolepatch-session',
-    'access-control-allow-credentials': 'true',
-    'access-control-max-age': '86400',
-    vary: 'origin',
-  };
-}
-
-interface SubmissionReceiptRequest {
-  job_id?: string;
-  original_url?: string;
-  confirmation_url?: string;
-  confirmation_text?: string;
-  provider?: string;
-  status?: 'submitted' | 'failed';
-  failure_reason?: string;
-  mode?: string;
-  fields?: ApplicationReceiptField[];
-}
 
 interface JobRow {
   id: string;
@@ -104,11 +81,11 @@ async function learnProfileAnswersFromSubmittedFields(
 }
 
 export function OPTIONS(req: NextRequest) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(req) });
+  return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
 }
 
 export async function POST(req: NextRequest) {
-  const headers = corsHeaders(req);
+  const headers = extensionCorsHeaders(req);
   const authHeaders = new Headers(req.headers);
   const forwardedSession = req.headers.get('x-rolepatch-session');
   if (forwardedSession && !authHeaders.has('cookie')) {
@@ -120,16 +97,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401, headers });
   }
 
-  let payload: SubmissionReceiptRequest;
+  let payload: unknown;
   try {
-    payload = (await req.json()) as SubmissionReceiptRequest;
+    payload = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers });
   }
 
-  const jobId = (payload.job_id ?? '').trim();
-  const originalUrl = (payload.original_url ?? '').trim();
-  const confirmationUrl = (payload.confirmation_url ?? '').trim();
+  const parsed = parseExtensionSubmissionReceiptInput(payload);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: 400, headers });
+  }
+  const { jobId, originalUrl, confirmationUrl } = parsed.input;
   if (!jobId || !/^https?:\/\//i.test(confirmationUrl)) {
     return NextResponse.json(
       { ok: false, error: 'job_id and confirmation_url are required' },
@@ -162,31 +141,18 @@ export async function POST(req: NextRequest) {
   const queue = JSON.parse(JSON.stringify(queueResult.rows[0] ?? null)) as QueueRow | null;
   const coverLetterId = (coverLetterResult.rows[0]?.id as string | undefined) ?? null;
   const confirmationText =
-    payload.confirmation_text?.replace(/\s+/g, ' ').trim().slice(0, 1200) ||
-    'Submission confirmation captured from the ATS page.';
-  const failureReason = payload.failure_reason?.replace(/\s+/g, ' ').trim().slice(0, 800) || null;
-  const receiptStatus = payload.status === 'failed' || failureReason ? 'failed' : 'submitted';
+    parsed.input.confirmationText || 'Submission confirmation captured from the ATS page.';
+  const failureReason = parsed.input.failureReason || null;
+  const receiptStatus = parsed.input.status === 'failed' || failureReason ? 'failed' : 'submitted';
   const receiptId = uuid();
-  const submittedFields = Array.isArray(payload.fields)
-    ? payload.fields
-        .filter(
-          (field) =>
-            typeof field?.label === 'string' &&
-            typeof field?.value === 'string' &&
-            field.label.trim() &&
-            field.value.trim()
-        )
-        .slice(0, 30)
-        .map<ApplicationReceiptField>((field) => ({
-          label: field.label.replace(/\s+/g, ' ').trim().slice(0, 160),
-          value: field.value.replace(/\s+/g, ' ').trim().slice(0, 500),
-          source: 'ats',
-        }))
-    : [];
+  const submittedFields = parsed.input.fields.map<ApplicationReceiptField>((field) => ({
+    ...field,
+    source: 'ats',
+  }));
   const fields: ApplicationReceiptField[] = [
     {
       label: 'Submission mode',
-      value: payload.mode?.replace(/\s+/g, ' ').trim().slice(0, 160) || 'User submitted after extension fill',
+      value: parsed.input.mode || 'User submitted after extension fill',
       source: 'user',
     },
     { label: 'Confirmation URL', value: confirmationUrl, source: 'ats' },
@@ -208,7 +174,7 @@ export async function POST(req: NextRequest) {
       job.id,
       queue?.id ?? null,
       userId,
-      payload.provider?.trim() || inferAtsProvider(job.url),
+      parsed.input.provider || inferAtsProvider(job.url),
       receiptStatus,
       JSON.stringify(fields),
       job.resume_id,

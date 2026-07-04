@@ -1,9 +1,12 @@
 name: Deploy to Cloudflare Workers
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 jobs:
   deploy-production:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -18,7 +21,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
       - name: Smoke check production
-        run: curl --fail --silent --show-error --location https://rolepatch.com/ --output /dev/null
+        run: pnpm smoke:prod
 
   build-preview:
     if: github.event_name == 'pull_request'

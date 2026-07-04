@@ -1,8 +1,12 @@
 import type { JobApplication } from '@/lib/types';
+import {
+  hiringManagerSearchUrl as buildHiringManagerSearchUrl,
+  linkedinSearchUrl,
+} from '@/lib/linkedin-search';
 
 export type CampaignJob = Pick<
   JobApplication,
-  'id' | 'company' | 'role' | 'status' | 'created_at' | 'follow_up_at' | 'interview_date'
+  'id' | 'company' | 'role' | 'status' | 'created_at' | 'follow_up_at' | 'interview_date' | 'notes'
 >;
 
 export interface CampaignJobWithActivity extends CampaignJob {
@@ -28,6 +32,10 @@ export interface CampaignAction {
   jobId: string;
   label: string;
   detail: string;
+  contact: string | null;
+  recruiterSearchUrl: string;
+  hiringManagerSearchUrl: string;
+  timing: string | null;
   tone: 'urgent' | 'focus' | 'normal';
 }
 
@@ -51,6 +59,46 @@ function startOfWeek(unixSeconds: number): number {
 
 function lastActivityAt(job: CampaignJobWithActivity): number {
   return job.updated_at ?? job.created_at;
+}
+
+function dayDelta(fromUnix: number, toUnix: number): number {
+  return Math.floor((toUnix - fromUnix) / (24 * 60 * 60));
+}
+
+function overdueTimingLabel(dueAt: number, now: number): string {
+  const days = Math.max(0, dayDelta(dueAt, now));
+  if (days === 0) return 'Due today';
+  return `${days}d overdue`;
+}
+
+function upcomingTimingLabel(dueAt: number, now: number): string {
+  const days = Math.max(0, dayDelta(now, dueAt));
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return `In ${days}d`;
+}
+
+function contactSearchUrls(job: CampaignJobWithActivity) {
+  return {
+    recruiterSearchUrl: linkedinSearchUrl(job.company ?? ''),
+    hiringManagerSearchUrl: buildHiringManagerSearchUrl(job.company ?? '', job.role ?? ''),
+  };
+}
+
+export function extractCampaignContact(notes: string | null | undefined): string | null {
+  if (!notes?.trim()) return null;
+  const email = notes.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  if (email) return email;
+
+  const linkedin = notes.match(/https?:\/\/(?:www\.)?linkedin\.com\/[^\s)]+/i)?.[0];
+  if (linkedin) return linkedin;
+
+  const labeled = notes.match(
+    /\b(?:recruiter|contact|hiring manager|interviewer)\s*[:-]\s*([^\n.;|]+)/i
+  )?.[1];
+  if (labeled?.trim()) return labeled.trim();
+
+  return null;
 }
 
 export function buildCampaignSummary(
@@ -124,6 +172,9 @@ function buildNextActions(jobs: CampaignJobWithActivity[], now: number): Campaig
         jobId: job.id,
         label: 'Follow up',
         detail: `${job.role || 'Role'} at ${job.company || 'company'}`,
+        contact: extractCampaignContact(job.notes),
+        ...contactSearchUrls(job),
+        timing: overdueTimingLabel(job.follow_up_at, now),
         tone: 'urgent',
       });
     }
@@ -137,6 +188,9 @@ function buildNextActions(jobs: CampaignJobWithActivity[], now: number): Campaig
         jobId: job.id,
         label: 'Prepare interview',
         detail: `${job.role || 'Role'} at ${job.company || 'company'}`,
+        contact: extractCampaignContact(job.notes),
+        ...contactSearchUrls(job),
+        timing: upcomingTimingLabel(job.interview_date, now),
         tone: 'focus',
       });
     }
@@ -146,6 +200,9 @@ function buildNextActions(jobs: CampaignJobWithActivity[], now: number): Campaig
         jobId: job.id,
         label: job.status === 'draft' ? 'Tailor draft' : 'Apply or archive',
         detail: `${job.role || 'Role'} at ${job.company || 'company'}`,
+        contact: extractCampaignContact(job.notes),
+        ...contactSearchUrls(job),
+        timing: `${Math.max(7, dayDelta(lastActivityAt(job), now))}d inactive`,
         tone: 'normal',
       });
     }

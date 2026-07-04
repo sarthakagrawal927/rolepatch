@@ -131,7 +131,7 @@ lightweight HTML inspection. The check records an audit receipt, detects
 form/field/submit/upload/captcha signals, and updates the queue to
 `ready_to_submit`, `needs_user`, or `failed`. It does not click submit.
 The reviewed provider allowlist covers Greenhouse, Lever, Workday, Ashby,
-Workable, Recruitee, and Personio.
+Workable, Recruitee, Personio, and SmartRecruiters.
 
 Results include a nullable machine-readable `failure_code` for retry routing
 and UI filters. Current codes are `provider_unsupported`, `captcha_detected`,
@@ -161,17 +161,39 @@ results/errors, and still do not submit applications.
 { "queue_id": "queue_123" }
 ```
 
-Runs a single guarded submit attempt through Cloudflare Browser Rendering. This
-is the first unattended-submit path and is intentionally narrow: it requires the
-Browser Rendering binding, an allowlisted provider, visible fields that can be
-filled from saved profile answers/materials, no CAPTCHA/human verification, no
-file uploads, no missing required fields, and a detectable submit button. It
+Runs a single reviewed guarded submit attempt through Cloudflare Browser
+Rendering. This is not an unattended apply path: it requires a ready queue item,
+the Browser Rendering binding, an allowlisted provider, visible fields that can
+be filled from saved profile answers/materials, no CAPTCHA/human verification,
+no file uploads, no missing required fields, and a detectable submit button. It
 records a receipt for every attempt, updates the queue to `submitted`,
 `needs_user`, or `failed`, and only marks the tracked application `applied` when
 an ATS confirmation is detected.
 
-Submit results include the same nullable `failure_code` field and persist it in
-the receipt field snapshot for audit and retry triage.
+The shared submit runner also enforces saved queue-safety preferences before
+provider or browser work starts: required work-authorization/sponsorship
+answers, excluded companies, duplicate normalized ATS URLs, minimum fit score,
+and the daily guarded-submit cap.
+
+Submit results include the same nullable `failure_code` field, persist it in the
+receipt field snapshot for audit/retry triage, and include a `guardrails` object
+that declares the reviewed-submit boundary:
+
+```json
+{
+  "guardrails": {
+    "mode": "guarded_submit",
+    "unattended": false,
+    "requires_ready_queue": true,
+    "refuses_captcha": true,
+    "refuses_file_uploads": true,
+    "refuses_missing_required_fields": true,
+    "requires_confirmation_detection": true,
+    "enforces_daily_submit_cap": true,
+    "enforces_queue_safety": true
+  }
+}
+```
 
 Batch guarded submit uses the same route with `queue_ids` and/or `limit`:
 
@@ -193,7 +215,39 @@ Returns prepared application packets. Filter with either repeated
 `job_id=...` params or a comma-separated `job_ids=...`.
 
 Each packet includes ATS URL/provider, resume/material excerpts, saved profile
-answers, and the latest receipt for that job.
+answers, optional user-provided proof items from achievement evidence, and the
+latest receipt for that job. Proof items are ranked against the packet job's
+role and job description text, but remain review context only; they are not
+published or shared with employers by this route. The dashboard can manually
+copy a proof packet from these items; that copy action is explicit user control,
+not automatic employer sharing. Imported evidence may include an optional
+`source_url`, which is shown in the dashboard proof card and included in the
+manual proof packet copy text.
+
+```json
+{
+  "job_id": "job_123",
+  "ats_url": "https://jobs.lever.co/acme/1",
+  "ats_provider": "lever",
+  "tailored_excerpt": "Tailored resume excerpt...",
+  "cover_letter_excerpt": "Cover letter excerpt...",
+  "profile_answers": [
+    { "id": "answer_123", "label": "Portfolio URL", "answer": "https://example.com" }
+  ],
+  "proof_items": [
+    {
+      "id": "evidence_123",
+      "title": "Checkout speedup",
+      "claim": "Led checkout performance work, reduced latency (42% across 3 markets)",
+      "readiness": "Proof-ready",
+      "missing": [],
+      "tags": ["performance", "frontend"],
+      "source_url": "https://github.com/acme/checkout"
+    }
+  ],
+  "receipt": null
+}
+```
 
 ## Receipts
 
@@ -212,7 +266,10 @@ Returns receipts. Supports the same `job_id` / `job_ids` filters.
 ```
 
 Records a manual submitted receipt, marks the queue `submitted`, and moves the
-tracked application to `applied`.
+tracked application to `applied`. Manual receipts also snapshot job-matched
+proof candidates that were available at review time. Those fields are audit
+context only; they do not mean RolePatch shared proof with the employer. If a
+proof candidate has a source URL, the receipt snapshot includes it.
 
 ## Extension Receipts
 
@@ -225,7 +282,8 @@ review-first boundary:
 { "url": "https://jobs.lever.co/acme/1" }
 ```
 
-Returns the tracked job packet for the current ATS page.
+Returns the tracked job packet for the current ATS page, including the same
+optional `proof_items` review context as `/api/apply-agent/packets`.
 
 `POST /api/extension/fill-receipt`
 

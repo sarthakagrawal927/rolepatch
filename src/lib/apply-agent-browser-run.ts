@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { inferAtsProvider } from '@/lib/apply-agent';
 import { parseReadiness } from '@/lib/apply-agent';
 import { db } from '@/lib/db';
+import { normalizeJobUrl } from '@/lib/job-discovery-alerts';
 import type {
   ApplicationReceiptField,
   ApplyAgentFailureCode,
@@ -21,7 +22,15 @@ export const REVIEWED_BROWSER_PROVIDERS = new Set([
   'workable',
   'recruitee',
   'personio',
+  'smartrecruiters',
 ]);
+
+const DAILY_GUARDED_CAP_PATTERN = /daily guarded|daily submit|submit cap|application cap/i;
+const EXCLUSION_ANSWER_PATTERN =
+  /excluded|avoid|do not apply|don't apply|never apply|blocked compan/i;
+const MINIMUM_FIT_ANSWER_PATTERN = /minimum fit|fit threshold|minimum score|score threshold/i;
+const DEFAULT_DAILY_GUARDED_SUBMIT_CAP = 5;
+const DEFAULT_MINIMUM_FIT_SCORE = 70;
 
 export function isReviewedBrowserProvider(provider: string): boolean {
   return REVIEWED_BROWSER_PROVIDERS.has(provider);
@@ -32,6 +41,7 @@ interface QueueJobRow {
   job_id: string;
   readiness_json: string;
   url: string;
+  company: string | null;
   resume_id: string | null;
 }
 
@@ -42,6 +52,20 @@ interface CoverLetterRow {
 
 interface QueueIdRow {
   id: string;
+}
+
+interface ProfileAnswerLimitRow {
+  label: string;
+  answer: string;
+}
+
+interface ProfileAnswerSafetyRow extends ProfileAnswerLimitRow {
+  category: string;
+}
+
+interface JobUrlRow {
+  id: string;
+  url: string | null;
 }
 
 interface BrowserSignals {
@@ -68,6 +92,152 @@ async function getBrowserBinding(): Promise<{ fetch: (req: Request) => Promise<R
   } catch {
     return null;
   }
+}
+
+function dailyGuardedSubmitCapFromAnswers(answers: ProfileAnswerLimitRow[]): number {
+  const answer = answers.find((item) =>
+    DAILY_GUARDED_CAP_PATTERN.test(`${item.label} ${item.answer}`)
+  );
+  if (!answer) return DEFAULT_DAILY_GUARDED_SUBMIT_CAP;
+  const cap = Number(answer.answer.match(/\d+/)?.[0] ?? '');
+  if (!Number.isFinite(cap)) return DEFAULT_DAILY_GUARDED_SUBMIT_CAP;
+  return Math.min(50, Math.max(1, Math.round(cap)));
+}
+
+function minimumFitScoreFromAnswers(answers: ProfileAnswerLimitRow[]): number {
+  const answer = answers.find((item) =>
+    MINIMUM_FIT_ANSWER_PATTERN.test(`${item.label} ${item.answer}`)
+  );
+  if (!answer) return DEFAULT_MINIMUM_FIT_SCORE;
+  const score = Number(answer.answer.match(/\d+/)?.[0] ?? '');
+  if (!Number.isFinite(score)) return DEFAULT_MINIMUM_FIT_SCORE;
+  return Math.min(100, Math.max(0, Math.round(score)));
+}
+
+function normalizedSafetyTerm(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function splitSafetyList(value: string): string[] {
+  return value
+    .split(/[,\n;|]+/)
+    .map((item) => normalizedSafetyTerm(item))
+    .filter((item) => item.length >= 3);
+}
+
+function exclusionTermsFromAnswers(answers: ProfileAnswerLimitRow[]): string[] {
+  const terms = new Set<string>();
+  for (const answer of answers) {
+    if (!EXCLUSION_ANSWER_PATTERN.test(`${answer.label} ${answer.answer}`)) continue;
+    for (const term of splitSafetyList(answer.answer)) terms.add(term);
+  }
+  return Array.from(terms);
+}
+
+function companyMatchesExclusion(
+  company: string | null | undefined,
+  terms: string[]
+): string | null {
+  const normalizedCompany = normalizedSafetyTerm(company ?? '');
+  if (!normalizedCompany) return null;
+  return (
+    terms.find((term) => normalizedCompany.includes(term) || term.includes(normalizedCompany)) ??
+    null
+  );
+}
+
+function missingRequiredAnswerLabels(answers: ProfileAnswerSafetyRow[]): string[] {
+  const categories = new Set(answers.map((answer) => answer.category));
+  return [
+    ['work_authorization', 'Work auth'],
+    ['sponsorship', 'Sponsorship'],
+  ]
+    .filter(([category]) => !categories.has(category))
+    .map(([, label]) => label);
+}
+
+async function reviewGuardedSubmitSafety(userId: string, queue: QueueJobRow): Promise<void> {
+  const [profileResult, fitResult, jobUrlResult] = await Promise.all([
+    db.execute({
+      sql: 'SELECT category, label, answer FROM profile_answers WHERE user_id = ?',
+      args: [userId],
+    }),
+    db.execute({
+      sql: 'SELECT overall_score FROM fit_scores WHERE job_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 1',
+      args: [queue.job_id, userId],
+    }),
+    db.execute({
+      sql: 'SELECT id, url FROM job_applications WHERE user_id = ? AND url IS NOT NULL',
+      args: [userId],
+    }),
+  ]);
+
+  const profileAnswers = JSON.parse(JSON.stringify(profileResult.rows)) as ProfileAnswerSafetyRow[];
+  const missingAnswers = missingRequiredAnswerLabels(profileAnswers);
+  if (missingAnswers.length > 0) {
+    throw new Error(
+      `Resolve safety review first: Required answers missing (${missingAnswers.join(', ')}).`
+    );
+  }
+
+  const excludedTerm = companyMatchesExclusion(
+    queue.company,
+    exclusionTermsFromAnswers(profileAnswers)
+  );
+  if (excludedTerm) {
+    throw new Error(
+      `Resolve safety review first: Excluded company matches saved exclusion "${excludedTerm}".`
+    );
+  }
+
+  const jobUrls = JSON.parse(JSON.stringify(jobUrlResult.rows)) as JobUrlRow[];
+  const normalizedQueueUrl = normalizeJobUrl(queue.url);
+  const duplicateUrl = jobUrls.some(
+    (job) => job.id !== queue.job_id && job.url && normalizeJobUrl(job.url) === normalizedQueueUrl
+  );
+  if (duplicateUrl) {
+    throw new Error('Resolve safety review first: Duplicate job URL.');
+  }
+
+  const latestFitScore = Number(
+    (fitResult.rows[0] as { overall_score?: unknown } | undefined)?.overall_score
+  );
+  const minimumFitScore = minimumFitScoreFromAnswers(profileAnswers);
+  if (Number.isFinite(latestFitScore) && latestFitScore < minimumFitScore) {
+    throw new Error(
+      `Resolve safety review first: Fit score is ${latestFitScore}; minimum is ${minimumFitScore}.`
+    );
+  }
+}
+
+async function getGuardedSubmitAllowance(userId: string): Promise<{
+  cap: number;
+  used: number;
+  remaining: number;
+}> {
+  const since = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+  const [profileResult, receiptResult] = await Promise.all([
+    db.execute({
+      sql: 'SELECT label, answer FROM profile_answers WHERE user_id = ?',
+      args: [userId],
+    }),
+    db.execute({
+      sql: `SELECT COUNT(*) AS count
+            FROM application_receipts
+            WHERE user_id = ?
+              AND status = 'submitted'
+              AND created_at >= ?
+              AND fields_json LIKE '%Guarded browser submit%'`,
+      args: [userId, since],
+    }),
+  ]);
+  const answers = JSON.parse(JSON.stringify(profileResult.rows)) as ProfileAnswerLimitRow[];
+  const cap = dailyGuardedSubmitCapFromAnswers(answers);
+  const used = Number((receiptResult.rows[0] as { count?: unknown } | undefined)?.count ?? 0);
+  return { cap, used, remaining: Math.max(0, cap - used) };
 }
 
 async function inspectWithCloudflareBrowser(url: string): Promise<BrowserSignals | null> {
@@ -263,7 +433,7 @@ export async function runReviewedApplyBrowserCheckForUser(
   queueId: string
 ): Promise<ReviewedBrowserCheckResult> {
   const queueResult = await db.execute({
-    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.resume_id
+    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.company, j.resume_id
           FROM application_queue q
           JOIN job_applications j ON j.id = q.job_id AND j.user_id = q.user_id
           WHERE q.id = ? AND q.user_id = ?
@@ -398,8 +568,15 @@ export async function runGuardedApplyBrowserSubmitForUser(
   userId: string,
   queueId: string
 ): Promise<GuardedBrowserSubmitResult> {
+  const allowance = await getGuardedSubmitAllowance(userId);
+  if (allowance.remaining <= 0) {
+    throw new Error(
+      `Daily guarded submit cap reached (${allowance.used}/${allowance.cap}). Raise the safety cap or wait before submitting more applications.`
+    );
+  }
+
   const queueResult = await db.execute({
-    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.resume_id
+    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.company, j.resume_id
           FROM application_queue q
           JOIN job_applications j ON j.id = q.job_id AND j.user_id = q.user_id
           WHERE q.id = ? AND q.user_id = ? AND q.status = 'ready_to_submit'
@@ -408,6 +585,7 @@ export async function runGuardedApplyBrowserSubmitForUser(
   });
   const queue = JSON.parse(JSON.stringify(queueResult.rows[0] ?? null)) as QueueJobRow | null;
   if (!queue) throw new Error('Queued application is not ready for guarded submit');
+  await reviewGuardedSubmitSafety(userId, queue);
 
   const provider = inferAtsProvider(queue.url);
   if (!isReviewedBrowserProvider(provider)) {
@@ -768,9 +946,16 @@ export async function runGuardedApplyBrowserSubmitBatchForUser(
   userId: string,
   input: { queueIds?: string[]; limit?: number } = {}
 ): Promise<GuardedBrowserSubmitBatchResult> {
+  const allowance = await getGuardedSubmitAllowance(userId);
+  if (allowance.remaining <= 0) {
+    throw new Error(
+      `Daily guarded submit cap reached (${allowance.used}/${allowance.cap}). Raise the safety cap or wait before submitting more applications.`
+    );
+  }
+
   const requestedIds = [...new Set((input.queueIds ?? []).map((id) => id.trim()).filter(Boolean))];
   const limitSeed = input.limit ?? (requestedIds.length || 3);
-  const limit = Math.max(1, Math.min(Number(limitSeed), 5));
+  const limit = Math.max(1, Math.min(Number(limitSeed), 5, allowance.remaining));
   let queueIds = requestedIds.slice(0, limit);
 
   if (queueIds.length === 0) {

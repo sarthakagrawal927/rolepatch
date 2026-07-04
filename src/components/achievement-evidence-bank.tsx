@@ -1,12 +1,13 @@
 'use client';
 
-import { Clipboard, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Clipboard, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import {
   formatEvidenceBullet,
+  proofReadinessForEvidence,
   rankEvidenceForRole,
   scoreEvidenceQuality,
   splitEvidenceList,
@@ -100,6 +101,15 @@ export function AchievementEvidenceBank({ serverEntries, compact = false, roleHi
     const ranked = roleHint ? rankEvidenceForRole(entries, roleHint) : entries;
     return compact ? ranked.slice(0, 3) : ranked;
   }, [compact, entries, roleHint]);
+  const proofSummary = useMemo(() => {
+    const readiness = entries.map(proofReadinessForEvidence);
+    return {
+      proofReady: readiness.filter((item) => item.status === 'proof_ready').length,
+      packetReady: readiness.filter((item) => item.status === 'packet_ready').length,
+      needsSupport: readiness.filter((item) => item.status === 'needs_support').length,
+      needsClaim: readiness.filter((item) => item.status === 'needs_claim').length,
+    };
+  }, [entries]);
 
   function openNew() {
     setEditing(null);
@@ -199,70 +209,121 @@ export function AchievementEvidenceBank({ serverEntries, compact = false, roleHi
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {visibleEntries.map((entry) => {
-            const quality = scoreEvidenceQuality(entry);
-            return (
-              <article
-                key={entry.id}
-                className="rounded-xl border border-[var(--border)]/70 bg-background/40 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-foreground">{entry.title}</p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted-foreground)]">
-                      {formatEvidenceBullet(entry)}
-                    </p>
+        <>
+          {!compact && (
+            <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-foreground">
+                    <ShieldCheck className="h-4 w-4 text-[var(--accent)]" />
+                    Proof readiness
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">
+                    TrueHire-style proof packets start from this evidence. Items are user-provided
+                    until external verification ships.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <ProofCount label="Proof-ready" value={proofSummary.proofReady} tone="strong" />
+                  <ProofCount label="Packet-ready" value={proofSummary.packetReady} tone="usable" />
+                  <ProofCount
+                    label="Needs support"
+                    value={proofSummary.needsSupport}
+                    tone="warning"
+                  />
+                  <ProofCount label="Needs claim" value={proofSummary.needsClaim} tone="danger" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {visibleEntries.map((entry) => {
+              const quality = scoreEvidenceQuality(entry);
+              const proofReadiness = proofReadinessForEvidence(entry);
+              return (
+                <article
+                  key={entry.id}
+                  className="rounded-xl border border-[var(--border)]/70 bg-background/40 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-foreground">{entry.title}</p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted-foreground)]">
+                        {formatEvidenceBullet(entry)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="rounded-full bg-[var(--primary)]/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--primary)]">
+                        {entry.impact_type}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                          quality === 'strong'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : quality === 'usable'
+                              ? 'bg-amber-500/10 text-amber-400'
+                              : 'bg-red-500/10 text-red-400'
+                        }`}
+                      >
+                        {quality}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="rounded-full bg-[var(--primary)]/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--primary)]">
-                      {entry.impact_type}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                        quality === 'strong'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : quality === 'usable'
-                            ? 'bg-amber-500/10 text-amber-400'
-                            : 'bg-red-500/10 text-red-400'
-                      }`}
-                    >
-                      {quality}
-                    </span>
+
+                  <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--card)]/70 p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${proofReadinessClass(
+                          proofReadiness.status
+                        )}`}
+                      >
+                        {proofReadiness.label}
+                      </span>
+                      <span className="text-xs text-[var(--muted-foreground)]">
+                        {proofReadiness.summary}
+                      </span>
+                    </div>
+                    {proofReadiness.missing.length > 0 && (
+                      <p className="mt-2 text-[11px] text-[var(--muted-foreground)]">
+                        Missing: {proofReadiness.missing.join(', ')}
+                      </p>
+                    )}
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {[...entry.skills, ...entry.role_targets].slice(0, 5).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)]"
+
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {[...entry.skills, ...entry.role_targets].slice(0, 5).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copyBullet(entry)}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-foreground"
                     >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => copyBullet(entry)}
-                    className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-foreground"
-                  >
-                    <Clipboard className="h-3.5 w-3.5" />
-                    {copiedId === entry.id ? 'Copied' : 'Copy'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(entry)}
-                    className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-foreground"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    Edit
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                      <Clipboard className="h-3.5 w-3.5" />
+                      {copiedId === entry.id ? 'Copied' : 'Copy'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(entry)}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-foreground"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {open && (
@@ -379,6 +440,39 @@ export function AchievementEvidenceBank({ serverEntries, compact = false, roleHi
         </div>
       )}
     </section>
+  );
+}
+
+function proofReadinessClass(status: ReturnType<typeof proofReadinessForEvidence>['status']) {
+  if (status === 'proof_ready') return 'bg-emerald-500/10 text-emerald-400';
+  if (status === 'packet_ready') return 'bg-sky-500/10 text-sky-400';
+  if (status === 'needs_support') return 'bg-amber-500/10 text-amber-400';
+  return 'bg-red-500/10 text-red-400';
+}
+
+function ProofCount({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'strong' | 'usable' | 'warning' | 'danger';
+}) {
+  const toneClass =
+    tone === 'strong'
+      ? 'border-emerald-500/30 text-emerald-300'
+      : tone === 'usable'
+        ? 'border-sky-500/30 text-sky-300'
+        : tone === 'warning'
+          ? 'border-amber-500/30 text-amber-300'
+          : 'border-red-500/30 text-red-300';
+
+  return (
+    <div className={`rounded-lg border px-3 py-2 ${toneClass}`}>
+      <p className="text-base font-black leading-none">{value}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest">{label}</p>
+    </div>
   );
 }
 

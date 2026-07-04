@@ -39,6 +39,17 @@ describe('POST /api/extension/tailor', () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed authenticated bodies before reading or writing', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+    const { POST } = await import('@/app/api/extension/tailor/route');
+
+    const res = await POST(makeReq([]));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when user has no resume', async () => {
     mockGetCurrentUserId.mockResolvedValue('user-1');
     mockExecute.mockResolvedValueOnce({ rows: [] }); // resume lookup → none

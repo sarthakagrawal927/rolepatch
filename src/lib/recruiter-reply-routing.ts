@@ -33,11 +33,19 @@ export interface RecruiterReplyDraftContext {
   subject: string;
   from: string;
   job?: Pick<JobApplication, 'company' | 'role'> | null;
+  proofItems?: RecruiterReplyDraftProofItem[];
+  proofRequested?: boolean;
 }
 
 export interface RecruiterReplyDraft {
   subject: string;
   body: string;
+}
+
+export interface RecruiterReplyDraftProofItem {
+  title: string;
+  claim: string;
+  source_url?: string;
 }
 
 const ROUTING_LOCAL_PREFIX = 'reply+';
@@ -119,6 +127,14 @@ export function buildRecruiterReplyThreadKey(
   return `subject:${domain}:${normalizeEmailThreadSubject(email.subject) || 'no-subject'}`;
 }
 
+export function recruiterReplyRequestsProof(
+  email: Pick<InboundRecruiterEmail, 'subject' | 'text'>
+): boolean {
+  return /\b(portfolio|work samples?|examples?|github|proof|evidence|verify|verification|references?|case stud(?:y|ies))\b/i.test(
+    `${email.subject} ${email.text}`
+  );
+}
+
 function greeting(from: string): string {
   const name = from
     .split('@')[0]
@@ -139,16 +155,18 @@ export function buildRecruiterReplyDraft(context: RecruiterReplyDraftContext): R
   const opener = greeting(context.from);
   const subject = replySubject(context.subject);
 
+  const proofContext = proofReplyContext(context);
+
   if (context.classification === 'interview') {
     return {
       subject,
-      body: `${opener}\n\nThanks for reaching out. I am interested in continuing for ${role} at ${company}. I would be happy to schedule the next step. Please send over the available times or scheduling link, and I will confirm promptly.\n\nBest,\n`,
+      body: `${opener}\n\nThanks for reaching out. I am interested in continuing for ${role} at ${company}. I would be happy to schedule the next step. Please send over the available times or scheduling link, and I will confirm promptly.${proofContext}\n\nBest,\n`,
     };
   }
   if (context.classification === 'offer') {
     return {
       subject,
-      body: `${opener}\n\nThank you for the update and for sharing the offer details. I am excited about ${role} at ${company}. I will review the information carefully and follow up with any questions or confirmation shortly.\n\nBest,\n`,
+      body: `${opener}\n\nThank you for the update and for sharing the offer details. I am excited about ${role} at ${company}. I will review the information carefully and follow up with any questions or confirmation shortly.${proofContext}\n\nBest,\n`,
     };
   }
   if (context.classification === 'rejected') {
@@ -160,13 +178,22 @@ export function buildRecruiterReplyDraft(context: RecruiterReplyDraftContext): R
   if (context.classification === 'follow_up') {
     return {
       subject,
-      body: `${opener}\n\nThanks for following up. I am still interested in ${role} at ${company} and would be happy to share anything else that would be useful for the next step.\n\nBest,\n`,
+      body: `${opener}\n\nThanks for following up. I am still interested in ${role} at ${company} and would be happy to share anything else that would be useful for the next step.${proofContext}\n\nBest,\n`,
     };
   }
   return {
     subject,
-    body: `${opener}\n\nThanks for the note. I appreciate the update and am interested in learning more about the next step for ${role} at ${company}.\n\nBest,\n`,
+    body: `${opener}\n\nThanks for the note. I appreciate the update and am interested in learning more about the next step for ${role} at ${company}.${proofContext}\n\nBest,\n`,
   };
+}
+
+function proofReplyContext(context: RecruiterReplyDraftContext): string {
+  if (!context.proofRequested || !context.proofItems || context.proofItems.length === 0) return '';
+  const lines = context.proofItems.slice(0, 3).map((item) => {
+    const source = item.source_url ? ` Source: ${item.source_url}` : '';
+    return `- ${item.title}: ${item.claim}${source}`;
+  });
+  return `\n\nI can also share a short proof packet for relevant work if helpful:\n${lines.join('\n')}`;
 }
 
 export function classifyRecruiterReply(

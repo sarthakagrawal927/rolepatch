@@ -39,6 +39,17 @@ describe('POST /api/extension/save-job', () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed authenticated bodies before reading or writing', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+    const { POST } = await import('@/app/api/extension/save-job/route');
+
+    const res = await POST(makeReq(null));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it('creates and queues a scraped job from the extension', async () => {
     mockGetCurrentUserId.mockResolvedValue('user-1');
     mockExecute

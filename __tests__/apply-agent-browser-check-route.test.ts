@@ -87,4 +87,27 @@ describe('POST /api/apply-agent/browser-check', () => {
     });
     expect((await res.json()).batch.errors).toHaveLength(1);
   });
+
+  it('rejects non-object request bodies before running browser checks', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+
+    const { POST } = await import('@/app/api/apply-agent/browser-check/route');
+    const res = await POST(makeReq(null));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockRunReviewedApplyBrowserCheckForUser).not.toHaveBeenCalled();
+    expect(mockRunReviewedApplyBrowserCheckBatchForUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid batch limits before running browser checks', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+
+    const { POST } = await import('@/app/api/apply-agent/browser-check/route');
+    const res = await POST(makeReq({ queue_ids: ['queue-1'], limit: '2' }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'limit must be a positive integer' });
+    expect(mockRunReviewedApplyBrowserCheckBatchForUser).not.toHaveBeenCalled();
+  });
 });

@@ -8,6 +8,7 @@ import {
   extractReplyRoutingUserId,
   findBestRecruiterJobMatch,
   plainTextFromRawEmail,
+  recruiterReplyRequestsProof,
 } from '@/lib/recruiter-reply-routing';
 import type { JobApplication } from '@/lib/types';
 
@@ -105,5 +106,39 @@ describe('recruiter reply routing', () => {
     expect(draft.body).toContain('Frontend Engineer');
     expect(draft.body).toContain('Acme');
     expect(draft.body).not.toContain('I am available tomorrow');
+  });
+
+  it('adds proof context to drafts only when proof is requested', () => {
+    expect(
+      recruiterReplyRequestsProof({
+        subject: 'Portfolio examples',
+        text: 'Can you share GitHub proof or work samples?',
+      })
+    ).toBe(true);
+    expect(
+      recruiterReplyRequestsProof({
+        subject: 'Interview',
+        text: 'Can you schedule time?',
+      })
+    ).toBe(false);
+
+    const draft = buildRecruiterReplyDraft({
+      classification: 'follow_up',
+      subject: 'Portfolio examples',
+      from: 'recruiter@acme.test',
+      job: { company: 'Acme', role: 'Frontend Engineer' },
+      proofRequested: true,
+      proofItems: [
+        {
+          title: 'Checkout speedup',
+          claim: 'Led checkout performance work, reduced latency (42% across 3 markets)',
+          source_url: 'https://github.com/acme/checkout',
+        },
+      ],
+    });
+
+    expect(draft.body).toContain('short proof packet');
+    expect(draft.body).toContain('Checkout speedup');
+    expect(draft.body).toContain('Source: https://github.com/acme/checkout');
   });
 });

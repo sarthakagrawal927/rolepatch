@@ -6,6 +6,14 @@ import { v4 as uuid } from 'uuid';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
 import type { AchievementEvidence, AchievementImpact } from '@/lib/types';
+import {
+  TRUEHIRE_PUBLIC_BASE_URL,
+  mapTrueHirePublicExportToProof,
+  normalizeTrueHireHandle,
+  trueHireDataUrl,
+  trueHireEvidenceDedupeKey,
+  trueHireProofItemToEvidenceInput,
+} from '@/lib/truehire-proof';
 
 const IMPACT_TYPES = new Set<AchievementImpact>([
   'revenue',
@@ -22,6 +30,12 @@ export type AchievementEvidenceInput = Omit<
   AchievementEvidence,
   'id' | 'created_at' | 'updated_at'
 >;
+
+export interface TrueHireProofImportResult {
+  handle: string;
+  imported: number;
+  skipped: number;
+}
 
 function parseList(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
@@ -113,6 +127,68 @@ export async function createAchievementEvidence(input: AchievementEvidenceInput)
   return id;
 }
 
+export async function importTrueHireProofEvidence(
+  handleInput: string
+): Promise<TrueHireProofImportResult> {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error('Sign in to import TrueHire proof');
+  const handle = normalizeTrueHireHandle(handleInput);
+  if (!handle) throw new Error('Enter a TrueHire handle or profile URL.');
+
+  const baseUrl = process.env.TRUEHIRE_PUBLIC_BASE_URL ?? TRUEHIRE_PUBLIC_BASE_URL;
+  const response = await fetch(trueHireDataUrl(handle, baseUrl), {
+    headers: { accept: 'application/json' },
+    cache: 'no-store',
+  });
+  if (response.status === 404) throw new Error('TrueHire profile not found.');
+  if (!response.ok) throw new Error('TrueHire import is unavailable right now.');
+
+  const preview = mapTrueHirePublicExportToProof(await response.json(), baseUrl);
+  const existing = await listAchievementEvidenceForUser(userId);
+  const existingKeys = new Set(
+    existing.map((entry) =>
+      trueHireEvidenceDedupeKey({ title: entry.title, situation: entry.situation })
+    )
+  );
+
+  let imported = 0;
+  let skipped = 0;
+  for (const item of preview.items) {
+    const input = normalize(trueHireProofItemToEvidenceInput(item, preview.profile));
+    const key = trueHireEvidenceDedupeKey(input);
+    if (existingKeys.has(key)) {
+      skipped += 1;
+      continue;
+    }
+    const id = uuid();
+    await db.execute({
+      sql: `INSERT INTO achievement_evidence (
+        id, user_id, title, situation, action, result, metric, scope, skills, role_targets, impact_type
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        id,
+        userId,
+        input.title,
+        input.situation,
+        input.action,
+        input.result,
+        input.metric,
+        input.scope,
+        serializeList(input.skills),
+        serializeList(input.role_targets),
+        input.impact_type,
+      ],
+    });
+    existingKeys.add(key);
+    imported += 1;
+  }
+
+  revalidatePath('/evidence');
+  revalidatePath('/dashboard');
+  revalidatePath('/proof');
+  return { handle: preview.profile.handle, imported, skipped };
+}
+
 export async function updateAchievementEvidence(
   id: string,
   input: AchievementEvidenceInput
@@ -154,4 +230,12 @@ export async function deleteAchievementEvidence(id: string): Promise<void> {
   });
   revalidatePath('/evidence');
   revalidatePath('/dashboard');
+}
+
+async function listAchievementEvidenceForUser(userId: string): Promise<AchievementEvidence[]> {
+  const result = await db.execute({
+    sql: 'SELECT * FROM achievement_evidence WHERE user_id = ? ORDER BY updated_at DESC',
+    args: [userId],
+  });
+  return result.rows.map((row) => toEvidence(row as Record<string, unknown>));
 }

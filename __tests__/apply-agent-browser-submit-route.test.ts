@@ -63,7 +63,16 @@ describe('POST /api/apply-agent/browser-submit', () => {
 
     expect(res.status).toBe(200);
     expect(mockRunGuardedApplyBrowserSubmitForUser).toHaveBeenCalledWith('user-1', 'queue-1');
-    expect((await res.json()).result.status).toBe('submitted');
+    const json = await res.json();
+    expect(json.result.status).toBe('submitted');
+    expect(json.guardrails).toMatchObject({
+      mode: 'guarded_submit',
+      unattended: false,
+      refuses_captcha: true,
+      requires_confirmation_detection: true,
+      enforces_daily_submit_cap: true,
+      enforces_queue_safety: true,
+    });
   });
 
   it('runs guarded submit in a batch', async () => {
@@ -85,6 +94,31 @@ describe('POST /api/apply-agent/browser-submit', () => {
       queueIds: ['queue-1', 'queue-2'],
       limit: 2,
     });
-    expect((await res.json()).batch.errors).toHaveLength(1);
+    const json = await res.json();
+    expect(json.batch.errors).toHaveLength(1);
+    expect(json.guardrails.unattended).toBe(false);
+  });
+
+  it('rejects non-object request bodies before running guarded submit', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+
+    const { POST } = await import('@/app/api/apply-agent/browser-submit/route');
+    const res = await POST(makeReq([]));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockRunGuardedApplyBrowserSubmitForUser).not.toHaveBeenCalled();
+    expect(mockRunGuardedApplyBrowserSubmitBatchForUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid batch limits before running guarded submit', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+
+    const { POST } = await import('@/app/api/apply-agent/browser-submit/route');
+    const res = await POST(makeReq({ queue_ids: ['queue-1'], limit: 0 }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'limit must be a positive integer' });
+    expect(mockRunGuardedApplyBrowserSubmitBatchForUser).not.toHaveBeenCalled();
   });
 });

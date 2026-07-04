@@ -5,9 +5,24 @@ import { v4 as uuid } from 'uuid';
 import { db } from '@/lib/db';
 import { getTokensForProduct } from '@/lib/token-config';
 
+interface DodoWebhookPayload {
+  type?: string;
+  data?: {
+    payment_id?: string;
+    metadata?: { user_id?: string };
+    total_amount?: number;
+    currency?: string;
+    product_cart?: Array<{ product_id?: string }>;
+  };
+}
+
 export async function POST(request: Request) {
   const headersList = await headers();
   const rawBody = await request.text();
+  const webhookKey = process.env.DODO_PAYMENTS_WEBHOOK_KEY?.trim();
+  if (!webhookKey) {
+    return new Response('Webhook not configured', { status: 503 });
+  }
 
   // Verify webhook signature
   const webhookHeaders = {
@@ -17,14 +32,19 @@ export async function POST(request: Request) {
   };
 
   try {
-    const wh = new Webhook(process.env.DODO_PAYMENTS_WEBHOOK_KEY!);
+    const wh = new Webhook(webhookKey);
     wh.verify(rawBody, webhookHeaders);
   } catch {
     return new Response('Invalid signature', { status: 401 });
   }
 
-  const payload = JSON.parse(rawBody);
-  const eventType: string = payload.type;
+  let payload: DodoWebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as DodoWebhookPayload;
+  } catch {
+    return new Response('Invalid payload', { status: 400 });
+  }
+  const eventType = payload.type ?? '';
 
   if (eventType === 'payment.succeeded') {
     const data = payload.data;
@@ -123,9 +143,21 @@ export async function POST(request: Request) {
           args: [tokensToRevoke, userId],
         });
 
+        const balResult = await tx.execute({
+          sql: 'SELECT balance FROM token_balances WHERE user_id = ?',
+          args: [userId],
+        });
+        const newBalance = balResult.rows[0]?.balance as number | undefined;
+
         await tx.execute({
           sql: `UPDATE payments SET status = 'refunded' WHERE id = ?`,
           args: [paymentId],
+        });
+
+        await tx.execute({
+          sql: `INSERT INTO token_transactions (id, user_id, amount, type, reference_id, balance_after)
+                VALUES (?, ?, ?, 'refund', ?, ?)`,
+          args: [uuid(), userId, -tokensToRevoke, paymentId, newBalance ?? 0],
         });
 
         await tx.commit();

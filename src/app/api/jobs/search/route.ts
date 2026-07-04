@@ -1,15 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getCurrentUserId } from '@/lib/auth-utils';
-import { searchJobs } from '@/lib/job-search';
+import { parseJsonObjectInput } from '@/lib/json-route-input';
+import { searchJobs, toUserFacingJobSearchError } from '@/lib/job-search';
 
 export async function POST(req: NextRequest) {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return NextResponse.json({ error: 'Sign in to discover jobs' }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -17,7 +12,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const params = (body ?? {}) as Record<string, unknown>;
+  const parsed = parseJsonObjectInput(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+  const params = parsed.body;
   const query = typeof params.query === 'string' ? params.query.trim() : '';
   if (!query) {
     return NextResponse.json({ error: 'query is required' }, { status: 400 });
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ error: `Job search failed: ${message}` }, { status: 502 });
+    const safeError = toUserFacingJobSearchError(err);
+    return NextResponse.json({ error: safeError.message, detail: safeError }, { status: 502 });
   }
 }

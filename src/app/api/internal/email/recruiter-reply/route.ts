@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { v4 as uuid } from 'uuid';
 
+import { buildProofItemsForJob } from '@/lib/achievement-evidence';
 import { db } from '@/lib/db';
+import { isInternalWorkerRequest } from '@/lib/internal-route-auth';
+import { parseJsonObjectInput } from '@/lib/json-route-input';
 import {
   buildRecruiterReplyDraft,
   buildRecruiterReplyThreadKey,
@@ -9,39 +12,39 @@ import {
   extractReplyRoutingUserId,
   findBestRecruiterJobMatch,
   plainTextFromRawEmail,
+  recruiterReplyRequestsProof,
   type InboundRecruiterEmail,
 } from '@/lib/recruiter-reply-routing';
-import type { JobApplication } from '@/lib/types';
-
-interface InboundReplyPayload {
-  from?: string;
-  to?: string;
-  subject?: string;
-  text?: string;
-  raw_text?: string;
-  message_id?: string | null;
-  in_reply_to?: string | null;
-}
+import type { AchievementEvidence, JobApplication } from '@/lib/types';
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
 export async function POST(req: Request) {
-  let body: InboundReplyPayload;
+  if (!isInternalWorkerRequest(req.headers)) {
+    return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+  }
+
+  let body: unknown;
   try {
-    body = (await req.json()) as InboundReplyPayload;
+    body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
 
+  const parsed = parseJsonObjectInput(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
+  }
+
   const email: InboundRecruiterEmail = {
-    from: asString(body.from),
-    to: asString(body.to),
-    subject: asString(body.subject) || '(no subject)',
-    text: asString(body.text) || plainTextFromRawEmail(asString(body.raw_text)),
-    message_id: asString(body.message_id) || null,
-    in_reply_to: asString(body.in_reply_to) || null,
+    from: asString(parsed.body.from),
+    to: asString(parsed.body.to),
+    subject: asString(parsed.body.subject) || '(no subject)',
+    text: asString(parsed.body.text) || plainTextFromRawEmail(asString(parsed.body.raw_text)),
+    message_id: asString(parsed.body.message_id) || null,
+    in_reply_to: asString(parsed.body.in_reply_to) || null,
   };
   if (!email.from || !email.to) {
     return NextResponse.json({ ok: false, error: 'from and to are required' }, { status: 400 });
@@ -71,11 +74,27 @@ export async function POST(req: Request) {
   const match = findBestRecruiterJobMatch(email, jobs);
   const decision = classifyRecruiterReply(email);
   const threadKey = buildRecruiterReplyThreadKey(email);
+  const proofRequested = recruiterReplyRequestsProof(email);
+  const proofItems =
+    proofRequested && match
+      ? buildProofItemsForJob(
+          await listAchievementEvidenceForReply(userId),
+          match.job.role,
+          match.job.jd_text,
+          3
+        ).map((item) => ({
+          title: item.title,
+          claim: item.claim,
+          source_url: item.source_url,
+        }))
+      : [];
   const draft = buildRecruiterReplyDraft({
     classification: decision.classification,
     subject: email.subject,
     from: email.from,
     job: match?.job ?? null,
+    proofRequested,
+    proofItems,
   });
 
   const eventId = uuid();
@@ -139,4 +158,45 @@ export async function POST(req: Request) {
     classification: decision.classification,
     applied_status: match && decision.status ? decision.status : null,
   });
+}
+
+async function listAchievementEvidenceForReply(userId: string): Promise<AchievementEvidence[]> {
+  const result = await db.execute({
+    sql: 'SELECT * FROM achievement_evidence WHERE user_id = ? ORDER BY updated_at DESC',
+    args: [userId],
+  });
+  return (JSON.parse(JSON.stringify(result.rows)) as Record<string, unknown>[]).map(
+    toReplyEvidence
+  );
+}
+
+function toReplyEvidence(row: Record<string, unknown>): AchievementEvidence {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    situation: String(row.situation ?? ''),
+    action: String(row.action ?? ''),
+    result: String(row.result ?? ''),
+    metric: String(row.metric ?? ''),
+    scope: String(row.scope ?? ''),
+    skills: parseReplyJsonList(row.skills),
+    role_targets: parseReplyJsonList(row.role_targets),
+    impact_type: String(row.impact_type ?? 'other') as AchievementEvidence['impact_type'],
+    created_at: Number(row.created_at ?? 0),
+    updated_at: Number(row.updated_at ?? 0),
+  };
+}
+
+function parseReplyJsonList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
 }

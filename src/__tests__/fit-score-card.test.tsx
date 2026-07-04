@@ -47,6 +47,31 @@ describe('FitScoreCard', () => {
     expect(screen.getByText('Missing cloud certifications')).toBeDefined();
     expect(screen.getByText(/Strong fit overall/)).toBeDefined();
   });
+
+  it('labels zero-weight dimensions as evidence', async () => {
+    render(
+      <FitScoreCard
+        fitScore={{
+          ...mockFitScore,
+          dimensions: [
+            ...mockFitScore.dimensions,
+            {
+              name: 'Semantic Similarity',
+              score: 91,
+              weight: 0,
+              detail: 'Cloudflare Knowledgebase embedding similarity.',
+            },
+          ],
+        }}
+      />
+    );
+    const user = userEvent.setup();
+
+    await user.click(screen.getByText('Job Fit Score'));
+
+    expect(screen.getByText('Semantic Similarity')).toBeDefined();
+    expect(screen.getByText('(evidence)')).toBeDefined();
+  });
 });
 
 describe('FitScoreBadge', () => {

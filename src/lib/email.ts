@@ -19,7 +19,7 @@ export interface SendResult {
   error?: string;
 }
 
-const DEFAULT_FROM = 'RolePatch <alerts@rolepatch.com>';
+export const DEFAULT_EMAIL_FROM = 'RolePatch <alerts@rolepatch.com>';
 
 export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
@@ -39,7 +39,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<SendResult> {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM?.trim() || DEFAULT_FROM,
+      from: process.env.EMAIL_FROM?.trim() || DEFAULT_EMAIL_FROM,
       to: [email.to],
       subject: email.subject,
       html: email.html,

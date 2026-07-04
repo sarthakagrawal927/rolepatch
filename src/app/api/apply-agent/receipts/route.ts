@@ -5,6 +5,7 @@ import {
   listApplyAgentReceiptsForUser,
   recordApplyAgentManualReceiptForUser,
 } from '@/lib/apply-agent-api';
+import { parseApplyAgentManualReceiptInput } from '@/lib/apply-agent-route-input';
 import { getCurrentUserId } from '@/lib/auth-utils';
 
 function jobIdsFromUrl(req: NextRequest): string[] | undefined {
@@ -32,26 +33,21 @@ export async function POST(req: NextRequest) {
   const userId = await getCurrentUserId(new Headers(req.headers));
   if (!userId) return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401 });
 
-  let body: { queue_id?: string; confirmation_text?: string; confirmation_url?: string };
+  let body: unknown;
   try {
-    body = (await req.json()) as {
-      queue_id?: string;
-      confirmation_text?: string;
-      confirmation_url?: string;
-    };
+    body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const queueId = body.queue_id?.trim();
-  if (!queueId)
-    return NextResponse.json({ ok: false, error: 'queue_id is required' }, { status: 400 });
+  const parsed = parseApplyAgentManualReceiptInput(body);
+  if (!parsed.ok) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
 
   try {
     const receipt = await recordApplyAgentManualReceiptForUser(userId, {
-      queueId,
-      confirmationText: body.confirmation_text,
-      confirmationUrl: body.confirmation_url,
+      queueId: parsed.input.queueId,
+      confirmationText: parsed.input.confirmationText,
+      confirmationUrl: parsed.input.confirmationUrl,
     });
     return NextResponse.json({ ok: true, receipt }, { status: 201 });
   } catch (err) {

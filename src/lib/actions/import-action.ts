@@ -4,7 +4,7 @@ import { generateText } from 'ai';
 import { revalidatePath } from 'next/cache';
 import { v4 as uuid } from 'uuid';
 
-import { getAIModel } from '@/lib/ai';
+import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
 import type { AIProviderConfig } from '@/lib/types';
@@ -103,11 +103,17 @@ export async function importResumeFromFile(
     throw new Error('Could not extract enough text from file. Try a different format.');
   }
 
-  const { text: markdown } = await generateText({
-    model: getAIModel(aiConfig),
-    system: STRUCTURING_SYSTEM_PROMPT,
-    prompt: `Raw resume text:\n\n${trimmed}`,
-  });
+  let markdown: string;
+  try {
+    const result = await generateText({
+      model: getAIModel(aiConfig),
+      system: STRUCTURING_SYSTEM_PROMPT,
+      prompt: `Raw resume text:\n\n${trimmed}`,
+    });
+    markdown = result.text;
+  } catch (err) {
+    throw toUserFacingAIError(err);
+  }
 
   const userId = await getCurrentUserId();
   if (!userId) {

@@ -98,6 +98,36 @@ export function PricingCards({ paymentVerified }: { paymentVerified: boolean }) 
         </div>
       )}
 
+      <div className="mb-8 grid gap-3 md:grid-cols-3">
+        {[
+          {
+            title: 'Free reviewed workflow',
+            detail:
+              'Queue jobs, prepare packets, fill with the extension, and record receipts without spending tokens.',
+          },
+          {
+            title: 'Tokens fund AI work',
+            detail:
+              'Spend tokens on tailoring, cover letters, fit scoring, interview prep, outreach drafts, and bulk fit scoring.',
+          },
+          {
+            title: 'No subscription',
+            detail:
+              'Buy packs when needed. Guarded submit stays review-first and does not become unattended bulk apply.',
+          },
+        ].map((item) => (
+          <div
+            key={item.title}
+            className="rounded-xl border border-[var(--border)] bg-muted/20 p-4"
+          >
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+              {item.title}
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted-foreground)]">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {TOKEN_PACKS.map((pack) => (
           <div

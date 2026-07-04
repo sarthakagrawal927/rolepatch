@@ -35,6 +35,17 @@ describe('POST /api/extension/apply-packet', () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed authenticated bodies before reading packets', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+    const { POST } = await import('@/app/api/extension/apply-packet/route');
+
+    const res = await POST(makeReq(null));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'Request body must be an object' });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when the current ATS URL is not tracked', async () => {
     mockGetCurrentUserId.mockResolvedValue('user-1');
     mockExecute.mockResolvedValueOnce({ rows: [] });
@@ -55,6 +66,7 @@ describe('POST /api/extension/apply-packet', () => {
             url: 'https://boards.greenhouse.io/acme/jobs/1',
             company: 'Acme',
             role: 'Frontend Engineer',
+            jd_text: 'Own checkout performance and client-side latency.',
             resume_id: 'resume-1',
             resume_name: 'Base resume',
           },
@@ -92,6 +104,38 @@ describe('POST /api/extension/apply-packet', () => {
             created_at: 3,
           },
         ],
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'evidence-1',
+            title: 'Checkout speedup',
+            situation: 'Slow checkout. Source: https://github.com/acme/checkout',
+            action: 'Led checkout performance work',
+            result: 'reduced checkout latency',
+            metric: '42%',
+            scope: '3 markets',
+            skills: '["performance"]',
+            role_targets: '["frontend"]',
+            impact_type: 'speed',
+            created_at: 1,
+            updated_at: 1,
+          },
+          {
+            id: 'evidence-2',
+            title: 'Platform migration',
+            situation: 'Legacy cluster',
+            action: 'Led platform migration',
+            result: 'improved deploy reliability',
+            metric: '35%',
+            scope: '12 services',
+            skills: '["kubernetes"]',
+            role_targets: '["platform"]',
+            impact_type: 'technical',
+            created_at: 1,
+            updated_at: 100,
+          },
+        ],
       });
 
     const { POST } = await import('@/app/api/extension/apply-packet/route');
@@ -101,6 +145,17 @@ describe('POST /api/extension/apply-packet', () => {
     expect(json.ok).toBe(true);
     expect(json.packet.ats_provider).toBe('greenhouse');
     expect(json.packet.profile_answers).toHaveLength(1);
+    expect(json.packet.proof_items).toEqual([
+      expect.objectContaining({
+        title: 'Checkout speedup',
+        readiness: 'Proof-ready',
+        source_url: 'https://github.com/acme/checkout',
+      }),
+      expect.objectContaining({
+        title: 'Platform migration',
+        readiness: 'Proof-ready',
+      }),
+    ]);
     expect(json.packet.receipt.fields).toHaveLength(1);
     expect(json.packet.cover_letter_text).toContain('Cover letter');
   });
@@ -115,11 +170,13 @@ describe('POST /api/extension/apply-packet', () => {
             url: 'https://jobs.lever.co/acme/abc',
             company: 'Acme',
             role: 'Backend Engineer',
+            jd_text: 'Build backend services.',
             resume_id: 'resume-1',
             resume_name: 'Base resume',
           },
         ],
       })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })

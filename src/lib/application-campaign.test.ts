@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCampaignSummary, type CampaignJobWithActivity } from '@/lib/application-campaign';
+import {
+  buildCampaignSummary,
+  extractCampaignContact,
+  type CampaignJobWithActivity,
+} from '@/lib/application-campaign';
 
 const now = 1_775_772_000;
 
@@ -14,6 +18,7 @@ function job(overrides: Partial<CampaignJobWithActivity>): CampaignJobWithActivi
     updated_at: overrides.updated_at ?? overrides.created_at ?? now,
     follow_up_at: overrides.follow_up_at ?? null,
     interview_date: overrides.interview_date ?? null,
+    notes: overrides.notes ?? null,
   };
 }
 
@@ -45,6 +50,58 @@ describe('application campaign summary', () => {
     expect(summary.followUpsDue).toBe(1);
     expect(summary.staleDrafts).toBe(1);
     expect(summary.nextActions.map((action) => action.jobId)).toEqual(['follow-up', 'stale']);
+    expect(summary.nextActions.map((action) => action.timing)).toEqual([
+      'Due today',
+      '9d inactive',
+    ]);
+  });
+
+  it('adds timing labels for overdue follow-ups and upcoming interviews', () => {
+    const summary = buildCampaignSummary(
+      [
+        job({ id: 'overdue', status: 'applied', follow_up_at: now - 2 * 24 * 60 * 60 }),
+        job({ id: 'interview', status: 'interview', interview_date: now + 2 * 24 * 60 * 60 }),
+      ],
+      { now }
+    );
+
+    expect(summary.nextActions.map((action) => [action.jobId, action.timing])).toEqual([
+      ['overdue', '2d overdue'],
+      ['interview', 'In 2d'],
+    ]);
+  });
+
+  it('extracts recruiter contact context from notes for next actions', () => {
+    const summary = buildCampaignSummary(
+      [
+        job({
+          id: 'follow-up',
+          status: 'applied',
+          follow_up_at: now - 60,
+          notes: 'Recruiter: Jane Patel\njane@acme.test',
+        }),
+      ],
+      { now }
+    );
+
+    expect(summary.nextActions[0]).toMatchObject({
+      jobId: 'follow-up',
+      contact: 'jane@acme.test',
+    });
+    expect(decodeURIComponent(summary.nextActions[0].recruiterSearchUrl)).toContain(
+      'site:linkedin.com/in "recruiter" "Acme"'
+    );
+    expect(decodeURIComponent(summary.nextActions[0].hiringManagerSearchUrl)).toContain(
+      'site:linkedin.com/in "Engineer hiring manager" "Acme"'
+    );
+  });
+
+  it('extracts contact hints from common note formats', () => {
+    expect(extractCampaignContact('Recruiter: Jane Patel')).toBe('Jane Patel');
+    expect(extractCampaignContact('Contact - https://linkedin.com/in/jane')).toBe(
+      'https://linkedin.com/in/jane'
+    );
+    expect(extractCampaignContact('No contact yet')).toBeNull();
   });
 
   it('uses the latest activity timestamp for weekly and stale calculations', () => {

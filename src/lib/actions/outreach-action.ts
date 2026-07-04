@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 
 import { creditTokens, debitToken } from '@/lib/actions/token-actions';
-import { getAIModel } from '@/lib/ai';
+import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
 import type { AIProviderConfig, OutreachEmail } from '@/lib/types';
@@ -72,7 +72,7 @@ export async function generateOutreachEmail(
     return { subject: object.subject, body: object.body };
   } catch (err) {
     await creditTokens(userId, 1, 'refund', 'ai_failure');
-    throw err;
+    throw toUserFacingAIError(err);
   }
 }
 

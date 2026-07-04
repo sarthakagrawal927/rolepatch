@@ -122,6 +122,60 @@ test.describe('Add Job modal (guest mode)', () => {
     await expect(submitButton).toBeEnabled();
   });
 
+  test('falls back to manual JD paste and opens tailor page when scrape cannot read URL', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard');
+    await page.evaluate(() => {
+      const now = Math.floor(Date.now() / 1000);
+      localStorage.setItem(
+        'rt-resumes',
+        JSON.stringify([
+          {
+            id: 'manual-resume-1',
+            name: 'Manual Resume',
+            source:
+              '\\documentclass{article}\\begin{document}\\section{Experience}Built reliable TypeScript systems.\\end{document}',
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.removeItem('rt-jobs');
+    });
+    await page.reload();
+
+    await page.getByRole('button', { name: /\+ Add Job/i }).click();
+    await page.getByPlaceholder(/boards\.greenhouse\.io/i).fill('http://127.0.0.1/job');
+    await page.getByRole('button', { name: 'Add Job', exact: true }).click();
+
+    await expect(page.getByLabel('Job description')).toBeVisible({ timeout: 15000 });
+    await page.getByLabel('Company').fill('Fallback Co');
+    await page.getByLabel('Role').fill('Platform Engineer');
+    await page
+      .getByLabel('Job description')
+      .fill(
+        'We need a platform engineer with TypeScript, distributed systems, observability, and strong incident response experience.'
+      );
+    await page.getByRole('button', { name: 'Save pasted JD' }).click();
+
+    await page.waitForURL(/\/tailor\/.+/);
+    await expect(page.locator('pre').filter({ hasText: /observability/i })).toBeVisible({
+      timeout: 15000,
+    });
+
+    const jobs = await page.evaluate(() => JSON.parse(localStorage.getItem('rt-jobs') ?? '[]'));
+    expect(jobs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          company: 'Fallback Co',
+          role: 'Platform Engineer',
+          jd_text: expect.stringContaining('observability'),
+        }),
+      ])
+    );
+  });
+
   test('Add Job button shows toast when no resume exists', async ({ page }) => {
     await page.goto('/dashboard');
     // Clear any existing resumes
@@ -132,7 +186,9 @@ test.describe('Add Job modal (guest mode)', () => {
     await addJobButton.click();
 
     // Should show toast about creating a resume first
-    await expect(page.getByText(/create a resume first/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Create a resume first before adding a job.')).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -230,6 +286,142 @@ test.describe('Tailor page (guest mode with pre-seeded job)', () => {
       timeout: 15000,
     });
     await expect(page.getByRole('link', { name: /back/i })).toBeVisible();
+  });
+});
+
+test.describe('Apply-agent queue receipts (guest mode)', () => {
+  test('records a manual receipt from a queued guest application', async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.evaluate(() => {
+      const now = Math.floor(Date.now() / 1000);
+      localStorage.setItem(
+        'rt-resumes',
+        JSON.stringify([
+          {
+            id: 'receipt-resume-1',
+            name: 'Receipt Resume',
+            source:
+              '\\documentclass{article}\\begin{document}\\section{Experience}Built reliable apply workflows.\\end{document}',
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.setItem(
+        'rt-jobs',
+        JSON.stringify([
+          {
+            id: 'receipt-job-1',
+            company: 'ReceiptCo',
+            role: 'Platform Engineer',
+            resume_id: 'receipt-resume-1',
+            url: 'https://jobs.lever.co/receiptco/123',
+            jd_raw: 'Build a transparent application workflow with receipts.',
+            jd_text: 'Build a transparent application workflow with receipts.',
+            status: 'tailored',
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.setItem(
+        'rt-tailored',
+        JSON.stringify([
+          {
+            id: 'tailored-receipt-1',
+            job_id: 'receipt-job-1',
+            resume_id: 'receipt-resume-1',
+            source: 'Tailored resume content',
+            accepted: 0,
+            changes: [],
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.setItem(
+        'rt-cover-letters',
+        JSON.stringify([
+          {
+            id: 'cover-receipt-1',
+            job_id: 'receipt-job-1',
+            resume_id: 'receipt-resume-1',
+            content: 'Cover letter content',
+            company_research: 'ReceiptCo research',
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.setItem(
+        'rt-profile-answers',
+        JSON.stringify([
+          {
+            id: 'profile-receipt-1',
+            category: 'work_authorization',
+            label: 'Work authorization',
+            answer: 'Yes, authorized to work in the United States.',
+            sensitive: true,
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.setItem(
+        'rt-application-queue',
+        JSON.stringify([
+          {
+            id: 'queue-receipt-1',
+            job_id: 'receipt-job-1',
+            status: 'ready_to_submit',
+            readiness: {
+              status: 'ready_for_review',
+              summary: 'Tailored materials and profile answers are ready for final review.',
+              missing: [],
+              checks: {
+                resume: true,
+                tailored_resume: true,
+                cover_letter: true,
+                profile_answers: true,
+                receipt: false,
+              },
+            },
+            created_at: now,
+            updated_at: now,
+          },
+        ])
+      );
+      localStorage.removeItem('rt-application-receipts');
+    });
+    await page.reload();
+
+    await expect(page.getByText('Application queue', { exact: true })).toBeVisible();
+    await expect(page.getByText(/ReceiptCo · Tailored materials/i)).toBeVisible();
+    await page.getByRole('button', { name: 'Mark submitted' }).click();
+
+    await expect(page.getByText(/Receipt: lever/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Marked submitted manually in RolePatch/i)).toBeVisible();
+
+    const state = await page.evaluate(() => ({
+      jobs: JSON.parse(localStorage.getItem('rt-jobs') ?? '[]'),
+      queue: JSON.parse(localStorage.getItem('rt-application-queue') ?? '[]'),
+      receipts: JSON.parse(localStorage.getItem('rt-application-receipts') ?? '[]'),
+    }));
+
+    expect(state.jobs[0].status).toBe('applied');
+    expect(state.queue[0].status).toBe('submitted');
+    expect(state.queue[0].readiness.checks.receipt).toBe(true);
+    expect(state.receipts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          job_id: 'receipt-job-1',
+          queue_id: 'queue-receipt-1',
+          provider: 'lever',
+          status: 'submitted',
+          confirmation_text: 'Marked submitted manually in RolePatch.',
+        }),
+      ])
+    );
   });
 });
 

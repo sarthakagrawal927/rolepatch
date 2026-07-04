@@ -8,8 +8,10 @@ import {
   normalizeReceipt,
   parseReadiness,
 } from '@/lib/apply-agent';
+import { buildProofItemsForJob } from '@/lib/achievement-evidence';
 import { db } from '@/lib/db';
 import type {
+  AchievementEvidence,
   ApplicationPacket,
   ApplicationQueueEntry,
   ApplicationQueueStatus,
@@ -57,6 +59,8 @@ interface JobReadinessRow {
 interface PacketJobRow {
   id: string;
   url: string;
+  role: string;
+  jd_text: string;
   resume_id: string | null;
   resume_name: string | null;
 }
@@ -204,17 +208,18 @@ export async function listApplyAgentPacketsForUser(
           .join(', ')})`
       : '';
 
-  const [jobResult, tailoredResult, coverResult, receipts, profileResult] = await Promise.all([
-    db.execute({
-      sql: `SELECT j.id, j.url, j.resume_id, r.name AS resume_name
+  const [jobResult, tailoredResult, coverResult, receipts, profileResult, evidenceEntries] =
+    await Promise.all([
+      db.execute({
+        sql: `SELECT j.id, j.url, j.role, j.jd_text, j.resume_id, r.name AS resume_name
             FROM job_applications j
             LEFT JOIN resumes r ON r.id = j.resume_id AND r.user_id = j.user_id
             WHERE j.user_id = ? ${jobFilter}
             ORDER BY j.updated_at DESC`,
-      args,
-    }),
-    db.execute({
-      sql: `SELECT tr.id, tr.job_id, tr.source
+        args,
+      }),
+      db.execute({
+        sql: `SELECT tr.id, tr.job_id, tr.source
             FROM tailored_resumes tr
             JOIN (
               SELECT job_id, MAX(created_at) AS created_at
@@ -223,10 +228,10 @@ export async function listApplyAgentPacketsForUser(
               GROUP BY job_id
             ) latest ON latest.job_id = tr.job_id AND latest.created_at = tr.created_at
             WHERE tr.user_id = ?`,
-      args: [userId, userId],
-    }),
-    db.execute({
-      sql: `SELECT cl.id, cl.job_id, cl.content
+        args: [userId, userId],
+      }),
+      db.execute({
+        sql: `SELECT cl.id, cl.job_id, cl.content
             FROM cover_letters cl
             JOIN (
               SELECT job_id, MAX(created_at) AS created_at
@@ -235,14 +240,15 @@ export async function listApplyAgentPacketsForUser(
               GROUP BY job_id
             ) latest ON latest.job_id = cl.job_id AND latest.created_at = cl.created_at
             WHERE cl.user_id = ?`,
-      args: [userId, userId],
-    }),
-    listApplyAgentReceiptsForUser(userId, jobIds),
-    db.execute({
-      sql: 'SELECT id, category, label, answer, sensitive, created_at, updated_at FROM profile_answers WHERE user_id = ? ORDER BY updated_at DESC',
-      args: [userId],
-    }),
-  ]);
+        args: [userId, userId],
+      }),
+      listApplyAgentReceiptsForUser(userId, jobIds),
+      db.execute({
+        sql: 'SELECT id, category, label, answer, sensitive, created_at, updated_at FROM profile_answers WHERE user_id = ? ORDER BY updated_at DESC',
+        args: [userId],
+      }),
+      listAchievementEvidenceForPacket(userId),
+    ]);
 
   const tailoredByJob = new Map(
     (JSON.parse(JSON.stringify(tailoredResult.rows)) as PacketTailoredRow[]).map((row) => [
@@ -262,6 +268,9 @@ export async function listApplyAgentPacketsForUser(
   return (JSON.parse(JSON.stringify(jobResult.rows)) as PacketJobRow[]).map((job) => {
     const tailored = tailoredByJob.get(job.id);
     const cover = coverByJob.get(job.id);
+    const proofItems = buildProofItemsForJob(evidenceEntries, job.role, job.jd_text, 4).map(
+      packetProofItem
+    );
     return {
       job_id: job.id,
       ats_url: job.url,
@@ -273,9 +282,60 @@ export async function listApplyAgentPacketsForUser(
       cover_letter_id: cover?.id ?? null,
       cover_letter_excerpt: excerpt(cover?.content),
       profile_answers: profileAnswers,
+      proof_items: proofItems,
       receipt: receiptByJob.get(job.id) ?? null,
     };
   });
+}
+
+async function listAchievementEvidenceForPacket(userId: string): Promise<AchievementEvidence[]> {
+  // Avoid coupling packet reads to request-scoped auth helpers; this mirrors
+  // listAchievementEvidence() but keeps the packet API keyed by the caller's user id.
+  const result = await db.execute({
+    sql: 'SELECT * FROM achievement_evidence WHERE user_id = ? ORDER BY updated_at DESC',
+    args: [userId],
+  });
+  return (JSON.parse(JSON.stringify(result.rows)) as Record<string, unknown>[]).map((row) => ({
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    situation: String(row.situation ?? ''),
+    action: String(row.action ?? ''),
+    result: String(row.result ?? ''),
+    metric: String(row.metric ?? ''),
+    scope: String(row.scope ?? ''),
+    skills: Array.isArray(row.skills) ? row.skills : parsePacketJsonList(row.skills),
+    role_targets: Array.isArray(row.role_targets)
+      ? row.role_targets
+      : parsePacketJsonList(row.role_targets),
+    impact_type: String(row.impact_type ?? 'other') as AchievementEvidence['impact_type'],
+    created_at: Number(row.created_at ?? 0),
+    updated_at: Number(row.updated_at ?? 0),
+  }));
+}
+
+function parsePacketJsonList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function packetProofItem(item: ReturnType<typeof buildProofItemsForJob>[number]) {
+  return {
+    id: item.id,
+    title: item.title,
+    claim: item.claim,
+    readiness: item.readiness.label,
+    missing: item.readiness.missing,
+    tags: item.tags,
+    source_url: item.source_url,
+  };
 }
 
 export async function queueApplyAgentApplicationForUser(
@@ -391,7 +451,7 @@ export async function recordApplyAgentManualReceiptForUser(
   input: { queueId: string; confirmationText?: string; confirmationUrl?: string }
 ): Promise<ApplicationReceipt> {
   const queueResult = await db.execute({
-    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.resume_id
+    sql: `SELECT q.id, q.job_id, q.readiness_json, j.url, j.role, j.jd_text, j.resume_id
           FROM application_queue q
           JOIN job_applications j ON j.id = q.job_id AND j.user_id = q.user_id
           WHERE q.id = ? AND q.user_id = ?
@@ -404,6 +464,8 @@ export async function recordApplyAgentManualReceiptForUser(
         job_id: string;
         readiness_json: string;
         url: string;
+        role: string;
+        jd_text: string;
         resume_id: string | null;
       }
     | undefined;
@@ -428,6 +490,33 @@ export async function recordApplyAgentManualReceiptForUser(
     value: answer.answer,
     source: 'profile',
   }));
+  const proofItems = buildProofItemsForJob(
+    await listAchievementEvidenceForPacket(userId),
+    queue.role,
+    queue.jd_text,
+    4
+  );
+  const proofFields: ApplicationReceiptField[] =
+    proofItems.length > 0
+      ? [
+          {
+            label: 'Proof review boundary',
+            value:
+              'Proof candidates were available for review; RolePatch did not automatically share them.',
+            source: 'system',
+          },
+          {
+            label: 'Proof candidates available',
+            value: String(proofItems.length),
+            source: 'system',
+          },
+          ...proofItems.map<ApplicationReceiptField>((item) => ({
+            label: 'Proof candidate',
+            value: `${item.title}: ${item.claim}${item.source_url ? ` Source: ${item.source_url}` : ''}`,
+            source: 'system',
+          })),
+        ]
+      : [];
   const receiptId = uuid();
   const fields: ApplicationReceiptField[] = [
     { label: 'Submission mode', value: 'API manual confirmation', source: 'user' },
@@ -437,6 +526,7 @@ export async function recordApplyAgentManualReceiptForUser(
       source: 'system',
     },
     ...profileFields,
+    ...proofFields,
   ];
 
   await db.execute({

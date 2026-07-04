@@ -142,6 +142,31 @@ function scrapePersonio(): Partial<ScrapedJob> | null {
   return { title: title ?? document.title, company: company ?? undefined, description, source: 'personio' };
 }
 
+function scrapeSmartRecruiters(): Partial<ScrapedJob> | null {
+  if (!/smartrecruiters\.com/.test(location.hostname)) return null;
+  const title =
+    textFromSelector('[data-testid="job-title"]') ??
+    textFromSelector('[class*="job-title"]') ??
+    textFromSelector('[class*="jobTitle"]') ??
+    textFromSelector('h1');
+  const company =
+    textFromSelector('[data-testid="company-name"]') ??
+    textFromSelector('[class*="company"]') ??
+    textFromSelector('[class*="Company"]');
+  const description =
+    textFromSelector('[data-testid="job-description"]') ??
+    textFromSelector('[class*="job-description"]') ??
+    textFromSelector('[class*="jobDescription"]') ??
+    textFromSelector('main');
+  if (!description) return null;
+  return {
+    title: title ?? document.title,
+    company: company ?? undefined,
+    description,
+    source: 'smartrecruiters',
+  };
+}
+
 function scrapeGeneric(): Partial<ScrapedJob> {
   const candidate =
     textFromSelector('main') ?? textFromSelector('article') ?? document.body.innerText;
@@ -159,6 +184,7 @@ function scrape(): ScrapedJob {
     scrapeWorkable() ??
     scrapeRecruitee() ??
     scrapePersonio() ??
+    scrapeSmartRecruiters() ??
     scrapeGeneric();
   return {
     url: location.href,
@@ -178,6 +204,7 @@ function provider(): string {
   if (host.includes('workable.com')) return 'workable';
   if (host.includes('recruitee.com')) return 'recruitee';
   if (host.includes('personio.')) return 'personio';
+  if (host.includes('smartrecruiters.com')) return 'smartrecruiters';
   return host.replace(/^www\./, '') || 'generic';
 }
 

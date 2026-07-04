@@ -42,7 +42,7 @@ export function ApplicationCampaignTracker({
             <Target className="h-3.5 w-3.5" />
             Campaign tracker
           </div>
-          <h2 className="font-serif text-2xl font-bold">Application campaign</h2>
+          <h2 className="text-2xl font-bold">Application campaign</h2>
           <p className="mt-1 text-xs font-medium text-[var(--muted-foreground)] opacity-70">
             Weekly output, response rate, follow-ups, and stale opportunities in one view.
           </p>
@@ -128,15 +128,46 @@ export function ApplicationCampaignTracker({
           ) : (
             <div className="space-y-2">
               {summary.nextActions.map((action) => (
-                <button
+                <div
                   key={`${action.jobId}-${action.label}`}
-                  type="button"
-                  onClick={() => onOpenDetails(action.jobId)}
-                  className={`w-full rounded-lg border px-3 py-2 text-left transition-all hover:scale-[1.01] ${actionToneClass(action.tone)}`}
+                  className={`rounded-lg border px-3 py-2 ${actionToneClass(action.tone)}`}
                 >
-                  <div className="text-xs font-black uppercase tracking-widest">{action.label}</div>
+                  <div className="flex items-center justify-between gap-3 text-xs font-black uppercase tracking-widest">
+                    <span>{action.label}</span>
+                    {action.timing && <span className="shrink-0 opacity-80">{action.timing}</span>}
+                  </div>
                   <div className="mt-0.5 truncate text-sm font-medium">{action.detail}</div>
-                </button>
+                  {action.contact && (
+                    <div className="mt-1 truncate text-xs opacity-80">
+                      Contact: {action.contact}
+                    </div>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenDetails(action.jobId)}
+                      className="rounded-md border border-current/20 px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-opacity hover:opacity-80"
+                    >
+                      Details
+                    </button>
+                    <a
+                      href={action.recruiterSearchUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="rounded-md border border-current/20 px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-opacity hover:opacity-80"
+                    >
+                      Find recruiter
+                    </a>
+                    <a
+                      href={action.hiringManagerSearchUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="rounded-md border border-current/20 px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-opacity hover:opacity-80"
+                    >
+                      Find hiring manager
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
           )}

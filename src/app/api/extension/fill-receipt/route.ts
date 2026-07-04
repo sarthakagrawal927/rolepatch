@@ -5,35 +5,10 @@ import { v4 as uuid } from 'uuid';
 import { inferAtsProvider } from '@/lib/apply-agent';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
+import { extensionCorsHeaders } from '@/lib/extension-cors';
+import { parseExtensionFillReceiptInput } from '@/lib/extension-route-input';
 import { jobUrlVariants, sqlPlaceholders } from '@/lib/job-url';
 import type { ApplicationReceiptField } from '@/lib/types';
-
-function corsHeaders(req: NextRequest): Record<string, string> {
-  const origin = req.headers.get('origin') ?? '';
-  const allow = origin.startsWith('chrome-extension://') ? origin : '*';
-  return {
-    'access-control-allow-origin': allow,
-    'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'content-type, x-rolepatch-session',
-    'access-control-allow-credentials': 'true',
-    'access-control-max-age': '86400',
-    vary: 'origin',
-  };
-}
-
-interface FillReceiptRequest {
-  url?: string;
-  job_id?: string;
-  filled?: number;
-  detected?: number;
-  skipped?: number;
-  provider?: string;
-  submit_detected?: boolean;
-  upload_fields?: string[];
-  uploaded_files?: string[];
-  fields?: ApplicationReceiptField[];
-  error?: string;
-}
 
 interface JobRow {
   id: string;
@@ -46,11 +21,11 @@ interface QueueRow {
 }
 
 export function OPTIONS(req: NextRequest) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(req) });
+  return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
 }
 
 export async function POST(req: NextRequest) {
-  const headers = corsHeaders(req);
+  const headers = extensionCorsHeaders(req);
   const authHeaders = new Headers(req.headers);
   const forwardedSession = req.headers.get('x-rolepatch-session');
   if (forwardedSession && !authHeaders.has('cookie')) {
@@ -62,15 +37,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Not authenticated' }, { status: 401, headers });
   }
 
-  let payload: FillReceiptRequest;
+  let payload: unknown;
   try {
-    payload = (await req.json()) as FillReceiptRequest;
+    payload = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers });
   }
 
-  const url = (payload.url ?? '').trim();
-  const jobId = (payload.job_id ?? '').trim();
+  const parsed = parseExtensionFillReceiptInput(payload);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: 400, headers });
+  }
+  const { url, jobId } = parsed.input;
   if (!/^https?:\/\//i.test(url) || !jobId) {
     return NextResponse.json(
       { ok: false, error: 'job_id and http(s) url are required' },
@@ -106,24 +84,22 @@ export async function POST(req: NextRequest) {
   ]);
   const queue = JSON.parse(JSON.stringify(queueResult.rows[0] ?? null)) as QueueRow | null;
   const coverLetterId = (coverLetterResult.rows[0]?.id as string | undefined) ?? null;
-  const fields = Array.isArray(payload.fields) ? payload.fields : [];
-  const uploadFields = Array.isArray(payload.upload_fields)
-    ? payload.upload_fields.filter((field) => typeof field === 'string' && field.trim()).slice(0, 12)
-    : [];
-  const uploadedFiles = Array.isArray(payload.uploaded_files)
-    ? payload.uploaded_files.filter((field) => typeof field === 'string' && field.trim()).slice(0, 12)
-    : [];
+  const { fields, uploadFields, uploadedFiles } = parsed.input;
   const receiptFields: ApplicationReceiptField[] = [
     { label: 'Submission mode', value: 'Extension assisted fill', source: 'system' },
-    { label: 'Detected provider', value: payload.provider || inferAtsProvider(job.url), source: 'system' },
     {
-      label: 'Submit button detected',
-      value: payload.submit_detected ? 'Yes' : 'No',
+      label: 'Detected provider',
+      value: parsed.input.provider || inferAtsProvider(job.url),
       source: 'system',
     },
-    { label: 'Filled fields', value: String(payload.filled ?? 0), source: 'system' },
-    { label: 'Detected fields', value: String(payload.detected ?? 0), source: 'system' },
-    { label: 'Skipped fields', value: String(payload.skipped ?? 0), source: 'system' },
+    {
+      label: 'Submit button detected',
+      value: parsed.input.submitDetected ? 'Yes' : 'No',
+      source: 'system',
+    },
+    { label: 'Filled fields', value: String(parsed.input.filled), source: 'system' },
+    { label: 'Detected fields', value: String(parsed.input.detected), source: 'system' },
+    { label: 'Skipped fields', value: String(parsed.input.skipped), source: 'system' },
     {
       label: 'Manual file uploads needed',
       value: uploadFields.length > 0 ? uploadFields.join(' | ') : 'None detected',
@@ -134,10 +110,10 @@ export async function POST(req: NextRequest) {
       value: uploadedFiles.length > 0 ? uploadedFiles.join(' | ') : 'None',
       source: 'system',
     },
-    ...fields.slice(0, 80),
+    ...fields,
   ];
   const receiptId = uuid();
-  const failureReason = payload.error?.replace(/\s+/g, ' ').trim().slice(0, 800) || null;
+  const failureReason = parsed.input.error || null;
   const receiptStatus = failureReason ? 'failed' : 'filled';
   const confirmationText = failureReason
     ? `Extension fill failed: ${failureReason}`

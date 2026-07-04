@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Plain Playwright config (formerly @saas-maker/test-config/playwright factory, inlined).
 const ci = Boolean(process.env.CI);
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? 'pnpm dev';
 
 export default defineConfig({
   testDir: './e2e',
@@ -15,18 +17,18 @@ export default defineConfig({
     ? [['list'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
     : 'list',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: ci ? 'retain-on-failure' : 'off',
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['iPhone 13'] } },
+    { name: 'mobile', use: { ...devices['Pixel 5'] } },
   ],
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
+    command: webServerCommand,
+    url: baseURL,
     reuseExistingServer: !ci,
   },
 });

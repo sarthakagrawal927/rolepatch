@@ -12,6 +12,7 @@ export interface ScrapedJob {
     | 'workable'
     | 'recruitee'
     | 'personio'
+    | 'smartrecruiters'
     | 'generic';
 }
 
@@ -28,6 +29,16 @@ export interface ApplyPacketReceipt {
   status: 'filled' | 'submitted' | 'failed' | 'skipped';
 }
 
+export interface ApplyPacketProofItem {
+  id: string;
+  title: string;
+  claim: string;
+  readiness: string;
+  missing: string[];
+  tags: string[];
+  source_url?: string;
+}
+
 export interface ApplyPacket {
   job_id: string;
   company?: string;
@@ -39,6 +50,7 @@ export interface ApplyPacket {
   cover_letter_text?: string | null;
   cover_letter_excerpt?: string | null;
   profile_answers: ApplyPacketProfileAnswer[];
+  proof_items?: ApplyPacketProofItem[];
   receipt?: ApplyPacketReceipt | null;
 }
 

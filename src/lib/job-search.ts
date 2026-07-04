@@ -36,6 +36,12 @@ export interface JobSearchParams {
   hours_old?: number;
 }
 
+export interface JobSearchUserError {
+  message: string;
+  retryable: boolean;
+  reason: 'rate_limited' | 'timeout' | 'unavailable';
+}
+
 const LINKEDIN_GUEST_URL = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search';
 const PAGE_SIZE = 10;
 const MAX_PAGES = 12;
@@ -67,6 +73,37 @@ function clean(value: string | null | undefined): string | null {
   if (!value) return null;
   const s = value.replace(/\s+/g, ' ').trim();
   return s.length > 0 ? s : null;
+}
+
+function errorText(error: unknown): string {
+  const base = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+  const code = (error as { code?: unknown })?.code;
+  return `${base} ${code ?? ''}`.toLowerCase();
+}
+
+export function toUserFacingJobSearchError(error: unknown): JobSearchUserError {
+  const text = errorText(error);
+  if (text.includes('429') || text.includes('rate limit') || text.includes('too many requests')) {
+    return {
+      reason: 'rate_limited',
+      retryable: true,
+      message:
+        'LinkedIn is slowing down searches right now. Wait a moment, narrow the query, or use a company watch.',
+    };
+  }
+  if (text.includes('timeout') || text.includes('timed out') || text.includes('aborted')) {
+    return {
+      reason: 'timeout',
+      retryable: true,
+      message: 'The job search took too long. Try again with a narrower role or location.',
+    };
+  }
+  return {
+    reason: 'unavailable',
+    retryable: true,
+    message:
+      'Job search is temporarily unavailable. Paste a job URL or use company watches while this recovers.',
+  };
 }
 
 function text(el: JobElement, sel: string): string | null {

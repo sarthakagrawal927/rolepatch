@@ -92,7 +92,11 @@ export function FitScoreCard({ fitScore }: FitScoreCardProps) {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-bold text-[var(--muted-foreground)]">
                       {dim.name}
-                      <span className="opacity-40 ml-1">({dim.weight}%)</span>
+                      {dim.weight > 0 ? (
+                        <span className="opacity-40 ml-1">({dim.weight}%)</span>
+                      ) : (
+                        <span className="opacity-40 ml-1">(evidence)</span>
+                      )}
                     </span>
                     <span className={`text-xs font-black ${dimColor.text}`}>{dim.score}</span>
                   </div>

@@ -2,33 +2,20 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { inferAtsProvider, normalizeReceipt } from '@/lib/apply-agent';
+import { buildProofItemsForJob } from '@/lib/achievement-evidence';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
+import { extensionCorsHeaders } from '@/lib/extension-cors';
+import { parseExtensionUrlInput } from '@/lib/extension-route-input';
 import { jobUrlVariants, sqlPlaceholders } from '@/lib/job-url';
-import type { ApplicationReceipt, ProfileAnswer } from '@/lib/types';
-
-function corsHeaders(req: NextRequest): Record<string, string> {
-  const origin = req.headers.get('origin') ?? '';
-  const allow = origin.startsWith('chrome-extension://') ? origin : '*';
-  return {
-    'access-control-allow-origin': allow,
-    'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'content-type, x-rolepatch-session',
-    'access-control-allow-credentials': 'true',
-    'access-control-max-age': '86400',
-    vary: 'origin',
-  };
-}
-
-interface PacketRequest {
-  url?: string;
-}
+import type { AchievementEvidence, ApplicationReceipt, ProfileAnswer } from '@/lib/types';
 
 interface JobRow {
   id: string;
   url: string;
   company: string;
   role: string;
+  jd_text: string;
   resume_id: string | null;
   resume_name: string | null;
 }
@@ -61,11 +48,11 @@ function excerpt(value: string | null | undefined, max = 260): string | null {
 }
 
 export function OPTIONS(req: NextRequest) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(req) });
+  return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
 }
 
 export async function POST(req: NextRequest) {
-  const headers = corsHeaders(req);
+  const headers = extensionCorsHeaders(req);
   const authHeaders = new Headers(req.headers);
   const forwardedSession = req.headers.get('x-rolepatch-session');
   if (forwardedSession && !authHeaders.has('cookie')) {
@@ -80,21 +67,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let payload: PacketRequest;
+  let payload: unknown;
   try {
-    payload = (await req.json()) as PacketRequest;
+    payload = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers });
   }
 
-  const url = (payload.url ?? '').trim();
+  const parsed = parseExtensionUrlInput(payload);
+  if (!parsed.ok) {
+    return NextResponse.json({ ok: false, error: parsed.error }, { status: 400, headers });
+  }
+  const { url } = parsed.input;
   if (!/^https?:\/\//i.test(url)) {
     return NextResponse.json({ ok: false, error: 'url must be http(s)' }, { status: 400, headers });
   }
   const urlVariants = jobUrlVariants(url);
 
   const jobResult = await db.execute({
-    sql: `SELECT j.id, j.url, j.company, j.role, j.resume_id, r.name AS resume_name
+    sql: `SELECT j.id, j.url, j.company, j.role, j.jd_text, j.resume_id, r.name AS resume_name
           FROM job_applications j
           LEFT JOIN resumes r ON r.id = j.resume_id AND r.user_id = j.user_id
           WHERE j.url IN (${sqlPlaceholders(urlVariants)}) AND j.user_id = ?
@@ -113,40 +104,45 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [tailoredResult, coverResult, profileResult, receiptResult] = await Promise.all([
-    db.execute({
-      sql: `SELECT id, source
+  const [tailoredResult, coverResult, profileResult, receiptResult, evidenceResult] =
+    await Promise.all([
+      db.execute({
+        sql: `SELECT id, source
             FROM tailored_resumes
             WHERE job_id = ? AND user_id = ?
             ORDER BY created_at DESC
             LIMIT 1`,
-      args: [job.id, userId],
-    }),
-    db.execute({
-      sql: `SELECT id, content
+        args: [job.id, userId],
+      }),
+      db.execute({
+        sql: `SELECT id, content
             FROM cover_letters
             WHERE job_id = ? AND user_id = ?
             ORDER BY created_at DESC
             LIMIT 1`,
-      args: [job.id, userId],
-    }),
-    db.execute({
-      sql: `SELECT id, category, label, answer, sensitive, created_at, updated_at
+        args: [job.id, userId],
+      }),
+      db.execute({
+        sql: `SELECT id, category, label, answer, sensitive, created_at, updated_at
             FROM profile_answers
             WHERE user_id = ?
             ORDER BY updated_at DESC`,
-      args: [userId],
-    }),
-    db.execute({
-      sql: `SELECT id, job_id, queue_id, provider, status, fields_json, resume_id,
+        args: [userId],
+      }),
+      db.execute({
+        sql: `SELECT id, job_id, queue_id, provider, status, fields_json, resume_id,
                    cover_letter_id, confirmation_text, confirmation_url, failure_reason, created_at
             FROM application_receipts
             WHERE job_id = ? AND user_id = ?
             ORDER BY created_at DESC
             LIMIT 1`,
-      args: [job.id, userId],
-    }),
-  ]);
+        args: [job.id, userId],
+      }),
+      db.execute({
+        sql: 'SELECT * FROM achievement_evidence WHERE user_id = ? ORDER BY updated_at DESC',
+        args: [userId],
+      }),
+    ]);
 
   const tailored = JSON.parse(JSON.stringify(tailoredResult.rows[0] ?? null)) as MaterialRow | null;
   const cover = JSON.parse(JSON.stringify(coverResult.rows[0] ?? null)) as MaterialRow | null;
@@ -155,6 +151,22 @@ export async function POST(req: NextRequest) {
   const receipt = receiptRow
     ? normalizeReceipt({ ...receiptRow, fields: receiptRow.fields_json })
     : null;
+  const proofItems = buildProofItemsForJob(
+    (JSON.parse(JSON.stringify(evidenceResult.rows)) as Record<string, unknown>[]).map(
+      toPacketEvidence
+    ),
+    job.role,
+    job.jd_text,
+    4
+  ).map((item) => ({
+    id: item.id,
+    title: item.title,
+    claim: item.claim,
+    readiness: item.readiness.label,
+    missing: item.readiness.missing,
+    tags: item.tags,
+    source_url: item.source_url,
+  }));
 
   return NextResponse.json(
     {
@@ -174,9 +186,40 @@ export async function POST(req: NextRequest) {
         cover_letter_text: cover?.content ?? null,
         cover_letter_excerpt: excerpt(cover?.content),
         profile_answers: profileAnswers,
+        proof_items: proofItems,
         receipt,
       },
     },
     { status: 200, headers }
   );
+}
+
+function toPacketEvidence(row: Record<string, unknown>): AchievementEvidence {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    situation: String(row.situation ?? ''),
+    action: String(row.action ?? ''),
+    result: String(row.result ?? ''),
+    metric: String(row.metric ?? ''),
+    scope: String(row.scope ?? ''),
+    skills: parsePacketJsonList(row.skills),
+    role_targets: parsePacketJsonList(row.role_targets),
+    impact_type: String(row.impact_type ?? 'other') as AchievementEvidence['impact_type'],
+    created_at: Number(row.created_at ?? 0),
+    updated_at: Number(row.updated_at ?? 0),
+  };
+}
+
+function parsePacketJsonList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
 }

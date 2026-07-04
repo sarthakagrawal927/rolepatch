@@ -1,6 +1,29 @@
 import type { AchievementEvidence } from '@/lib/types';
 
 export type EvidenceQuality = 'strong' | 'usable' | 'weak';
+export type ProofReadinessStatus = 'proof_ready' | 'packet_ready' | 'needs_support' | 'needs_claim';
+
+export interface ProofReadiness {
+  status: ProofReadinessStatus;
+  label: string;
+  summary: string;
+  missing: string[];
+}
+
+export interface ProofPacketPreviewItem {
+  id: string;
+  title: string;
+  claim: string;
+  impact: string;
+  readiness: ProofReadiness;
+  tags: string[];
+  source_url?: string;
+}
+
+export interface ProofPacketPreview {
+  shareable: ProofPacketPreviewItem[];
+  needsWork: ProofPacketPreviewItem[];
+}
 
 export interface EvidenceMatchReason {
   keywordOverlap: string[];
@@ -46,6 +69,115 @@ export function scoreEvidenceQuality(entry: AchievementEvidence): EvidenceQualit
   if (hasOutcome && hasMetric && hasAction && hasScope) return 'strong';
   if (hasOutcome && hasAction) return 'usable';
   return 'weak';
+}
+
+export function proofReadinessForEvidence(entry: AchievementEvidence): ProofReadiness {
+  const missing: string[] = [];
+  if (!entry.action.trim()) missing.push('action');
+  if (!entry.result.trim()) missing.push('outcome');
+  if (!entry.metric.trim()) missing.push('metric');
+  if (!entry.scope.trim() && !entry.situation.trim()) missing.push('scope or context');
+  if (entry.skills.length === 0 && entry.role_targets.length === 0)
+    missing.push('skills or role tags');
+
+  const missingCoreClaim = missing.includes('action') || missing.includes('outcome');
+  if (missingCoreClaim) {
+    return {
+      status: 'needs_claim',
+      label: 'Needs claim',
+      summary: 'Add the action and outcome before this can support a proof packet.',
+      missing,
+    };
+  }
+
+  const missingSupport = missing.some((item) => item === 'metric' || item === 'scope or context');
+  if (missingSupport) {
+    return {
+      status: 'needs_support',
+      label: 'Needs support',
+      summary: 'Add a metric and context so this reads as credible proof, not a loose claim.',
+      missing,
+    };
+  }
+
+  if (missing.includes('skills or role tags')) {
+    return {
+      status: 'packet_ready',
+      label: 'Packet-ready',
+      summary: 'Strong enough for packet review; add tags to improve matching and proof routing.',
+      missing,
+    };
+  }
+
+  return {
+    status: 'proof_ready',
+    label: 'Proof-ready',
+    summary:
+      'Ready to preview in proof packets. Still user-provided until external verification ships.',
+    missing,
+  };
+}
+
+export function buildProofPacketPreview(
+  entries: AchievementEvidence[],
+  limit = 6
+): ProofPacketPreview {
+  const items = entries.map((entry) => {
+    const readiness = proofReadinessForEvidence(entry);
+    return {
+      id: entry.id,
+      title: entry.title,
+      claim: formatEvidenceBullet(entry),
+      impact: entry.impact_type,
+      readiness,
+      tags: [...entry.skills, ...entry.role_targets].slice(0, 6),
+      source_url: extractEvidenceSourceUrl(entry),
+    };
+  });
+
+  const shareableStatuses = new Set<ProofReadinessStatus>(['proof_ready', 'packet_ready']);
+  return {
+    shareable: items
+      .filter((item) => shareableStatuses.has(item.readiness.status))
+      .sort((a, b) => proofPacketSortScore(b) - proofPacketSortScore(a))
+      .slice(0, limit),
+    needsWork: items
+      .filter((item) => !shareableStatuses.has(item.readiness.status))
+      .sort((a, b) => proofPacketSortScore(b) - proofPacketSortScore(a))
+      .slice(0, limit),
+  };
+}
+
+export function buildProofItemsForJob(
+  entries: AchievementEvidence[],
+  role: string,
+  jdText = '',
+  limit = 4
+): ProofPacketPreviewItem[] {
+  const rankedEntries = rankEvidenceForJob(entries, role, jdText);
+  return buildProofPacketPreview(rankedEntries, limit).shareable;
+}
+
+export function extractEvidenceSourceUrl(
+  entry: Pick<AchievementEvidence, 'situation' | 'scope'>
+): string | undefined {
+  const sourceText = `${entry.situation} ${entry.scope}`;
+  const match =
+    sourceText.match(/\bSource:\s*(https?:\/\/[^\s)]+)/i) ??
+    sourceText.match(/\bhttps?:\/\/[^\s)]+/i);
+  if (!match) return undefined;
+  try {
+    return new URL(match[1] ?? match[0]).toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function proofPacketSortScore(item: ProofPacketPreviewItem): number {
+  if (item.readiness.status === 'proof_ready') return 4;
+  if (item.readiness.status === 'packet_ready') return 3;
+  if (item.readiness.status === 'needs_support') return 2;
+  return 1;
 }
 
 export function explainEvidenceMatch(

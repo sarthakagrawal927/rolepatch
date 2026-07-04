@@ -12,6 +12,7 @@ export type CareerDiscoverySource =
   | 'workable'
   | 'recruitee'
   | 'personio'
+  | 'smartrecruiters'
   | 'career_page';
 
 export interface CareerDiscoveryResult {
@@ -96,6 +97,31 @@ interface RecruiteeOffer {
   remote?: boolean;
   created_at?: string;
   status?: string;
+}
+
+interface SmartRecruitersPosting {
+  id?: string;
+  uuid?: string;
+  name?: string;
+  releasedDate?: string;
+  postingUrl?: string;
+  applyUrl?: string;
+  location?: {
+    city?: string;
+    region?: string;
+    country?: string;
+    remote?: boolean;
+  };
+  department?: {
+    label?: string;
+    name?: string;
+  };
+  function?: {
+    label?: string;
+  };
+  typeOfEmployment?: {
+    label?: string;
+  };
 }
 
 type LinkedomDocument = {
@@ -197,6 +223,13 @@ function recruiteeToken(url: URL): string | null {
 
 function isPersonioHost(url: URL): boolean {
   return /(^|\.)jobs\.personio\.(com|de)$/i.test(url.hostname);
+}
+
+function smartRecruitersToken(url: URL): string | null {
+  if (!url.hostname.includes('smartrecruiters.com')) return null;
+  const first = boardToken(url);
+  if (!first || ['jobs', 'careers', 'company'].includes(first.toLowerCase())) return null;
+  return first;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -470,6 +503,58 @@ async function discoverPersonio(
   return { source: 'personio', jobs: filterJobs(jobs, watch) };
 }
 
+async function discoverSmartRecruiters(
+  url: URL,
+  watch: CompanyWatch
+): Promise<CareerDiscoveryResult | null> {
+  const token = smartRecruitersToken(url);
+  if (!token) return null;
+  const data = await fetchJson<{ content?: SmartRecruitersPosting[] }>(
+    `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(token)}/postings?limit=100`
+  );
+  const jobs = (data.content ?? [])
+    .map((posting): DiscoveredJob | null => {
+      const title = clean(posting.name);
+      const postingId = clean(posting.id ?? posting.uuid);
+      const jobUrl = clean(
+        posting.postingUrl ??
+          posting.applyUrl ??
+          (postingId
+            ? `https://jobs.smartrecruiters.com/${encodeURIComponent(token)}/${encodeURIComponent(postingId)}`
+            : null)
+      );
+      if (!title && !jobUrl) return null;
+      const location = clean(
+        [posting.location?.city, posting.location?.region, posting.location?.country]
+          .filter(Boolean)
+          .join(', ')
+      );
+      const descriptionShort = clean(
+        [posting.department?.label ?? posting.department?.name, posting.function?.label]
+          .filter(Boolean)
+          .join(' · ')
+      );
+      return {
+        id: stableId(`smartrecruiters:${postingId ?? jobUrl ?? title}`),
+        site: 'smartrecruiters',
+        title: title ?? 'Untitled role',
+        company: watch.company,
+        location,
+        is_remote: Boolean(posting.location?.remote) || /\bremote\b/i.test(location ?? ''),
+        date_posted: clean(posting.releasedDate),
+        job_type: clean(posting.typeOfEmployment?.label),
+        min_amount: null,
+        max_amount: null,
+        currency: null,
+        job_url: jobUrl,
+        description: null,
+        description_short: descriptionShort,
+      };
+    })
+    .filter((job): job is DiscoveredJob => Boolean(job));
+  return { source: 'smartrecruiters', jobs: filterJobs(jobs, watch) };
+}
+
 async function parseHtmlLinks(
   html: string,
   baseUrl: string,
@@ -546,6 +631,7 @@ export async function discoverCompanyCareerJobs(
     (await discoverWorkable(url, watch)) ??
     (await discoverRecruitee(url, watch)) ??
     (await discoverPersonio(url, watch)) ??
+    (await discoverSmartRecruiters(url, watch)) ??
     discoverCareerPage(url, watch)
   );
 }

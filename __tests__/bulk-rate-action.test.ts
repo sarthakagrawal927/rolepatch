@@ -32,6 +32,12 @@ vi.mock('next/headers', () => ({
   headers: async () => ({ get: () => null }),
 }));
 
+const mockRankRolePatchJobsWithKnowledgebase = vi.fn();
+vi.mock('@/lib/knowledgebase-similarity', () => ({
+  rankRolePatchJobsWithKnowledgebase: (...args: unknown[]) =>
+    mockRankRolePatchJobsWithKnowledgebase(...args),
+}));
+
 function makeJobs(n: number) {
   return Array.from({ length: n }, (_, i) => ({
     id: `job-${i}`,
@@ -56,6 +62,8 @@ beforeEach(() => {
   mockDebitToken.mockReset();
   mockCreditTokens.mockReset();
   mockGenerateObject.mockReset();
+  mockRankRolePatchJobsWithKnowledgebase.mockReset();
+  mockRankRolePatchJobsWithKnowledgebase.mockResolvedValue(null);
 });
 
 describe('rateJobsBulk', () => {
@@ -120,6 +128,30 @@ describe('rateJobsBulk', () => {
     expect(mockCreditTokens).not.toHaveBeenCalled();
   });
 
+  it('signed-in: uses Knowledgebase semantic ranking before sending jobs to AI', async () => {
+    mockGetCurrentUserId.mockResolvedValue('user-1');
+    mockDebitToken.mockResolvedValue({ success: true, balance: 10 });
+    const jobs = makeJobs(3);
+    mockRankRolePatchJobsWithKnowledgebase.mockResolvedValue([jobs[2], jobs[0], jobs[1]]);
+    mockGenerateObject.mockImplementation(async ({ prompt }: { prompt: string }) => {
+      const ids = [...prompt.matchAll(/\(id: (job-\d+)\)/g)].map((m) => m[1]);
+      return { object: { ratings: ids.map((id) => fakeRating(id)) } };
+    });
+
+    const { rateJobsBulk } = await import('@/lib/actions/bulk-rate-action');
+    await rateJobsBulk('RESUME', jobs, {} as unknown as never);
+
+    expect(mockRankRolePatchJobsWithKnowledgebase).toHaveBeenCalledWith(
+      'user-1',
+      'RESUME',
+      jobs,
+      100
+    );
+    const [[call]] = mockGenerateObject.mock.calls as [[{ prompt: string }]];
+    expect(call.prompt.indexOf('(id: job-2)')).toBeLessThan(call.prompt.indexOf('(id: job-0)'));
+    expect(call.prompt.indexOf('(id: job-0)')).toBeLessThan(call.prompt.indexOf('(id: job-1)'));
+  });
+
   it('signed-in: throws and refunds already-debited tokens if a debit fails mid-way', async () => {
     mockGetCurrentUserId.mockResolvedValue('user-1');
     mockDebitToken
@@ -146,7 +178,7 @@ describe('rateJobsBulk', () => {
     const { rateJobsBulk } = await import('@/lib/actions/bulk-rate-action');
 
     await expect(rateJobsBulk('RESUME', jobs, {} as unknown as never)).rejects.toThrow(
-      /AI blew up/
+      /Couldn't reach the AI service/i
     );
     expect(mockCreditTokens).toHaveBeenCalledWith('user-1', 2, 'refund', 'ai_failure');
   });

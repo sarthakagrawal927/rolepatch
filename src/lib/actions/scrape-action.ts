@@ -1,5 +1,7 @@
 'use server';
 
+import { headers } from 'next/headers';
+
 import { detectAtsBoard, slugToCompanyName } from '@/lib/ats-boards';
 
 const dynImport = new Function('m', 'return import(m)') as (m: string) => Promise<unknown>;
@@ -19,9 +21,69 @@ interface ScrapeResult {
  */
 export type ScrapeOutcome =
   | { ok: true; data: ScrapeResult }
-  | { ok: false; reason: 'invalid_url' | 'unreadable' | 'network'; message: string };
+  | {
+      ok: false;
+      reason: 'invalid_url' | 'unreadable' | 'network' | 'rate_limited';
+      message: string;
+    };
 
 const MAX_SCRAPE_ATTEMPTS = 3;
+const SCRAPE_RATE_LIMIT_MAX = 20;
+const SCRAPE_RATE_LIMIT_WINDOW_MS = 60_000;
+const SCRAPE_RATE_LIMIT_MAX_KEYS = 1000;
+
+class ScrapeRateLimitError extends Error {
+  constructor() {
+    super('Too many scrape attempts');
+    this.name = 'ScrapeRateLimitError';
+  }
+}
+
+const scrapeRateLimits = new Map<string, { count: number; resetAt: number }>();
+
+function pruneScrapeRateLimits(now: number): void {
+  if (scrapeRateLimits.size <= SCRAPE_RATE_LIMIT_MAX_KEYS) return;
+  for (const [key, state] of scrapeRateLimits) {
+    if (state.resetAt <= now) scrapeRateLimits.delete(key);
+  }
+}
+
+async function getScrapeRateLimitKey(): Promise<string> {
+  try {
+    const requestHeaders = await headers();
+    const forwardedFor = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim();
+    const ip =
+      requestHeaders.get('cf-connecting-ip') ??
+      requestHeaders.get('x-real-ip') ??
+      forwardedFor ??
+      'anonymous';
+    return `ip:${ip}`;
+  } catch {
+    return 'ip:anonymous';
+  }
+}
+
+async function assertScrapeRateLimit(): Promise<void> {
+  const now = Date.now();
+  pruneScrapeRateLimits(now);
+  const key = await getScrapeRateLimitKey();
+  const current = scrapeRateLimits.get(key);
+
+  if (!current || current.resetAt <= now) {
+    scrapeRateLimits.set(key, { count: 1, resetAt: now + SCRAPE_RATE_LIMIT_WINDOW_MS });
+    return;
+  }
+
+  if (current.count >= SCRAPE_RATE_LIMIT_MAX) {
+    throw new ScrapeRateLimitError();
+  }
+
+  current.count += 1;
+}
+
+export async function resetScrapeRateLimitsForTests(): Promise<void> {
+  scrapeRateLimits.clear();
+}
 
 function isRetryableStatus(status: number): boolean {
   // 429 + 5xx are worth retrying; 4xx (other than 429) are not.
@@ -105,6 +167,7 @@ function validateUrl(raw: string): URL {
 
 export async function scrapeJobUrl(url: string): Promise<ScrapeResult> {
   validateUrl(url);
+  await assertScrapeRateLimit();
 
   // Primary: Jina Reader (with backoff retry on transient failures).
   try {
@@ -193,6 +256,15 @@ export async function scrapeJobUrlSafe(url: string): Promise<ScrapeOutcome> {
     }
     return { ok: true, data };
   } catch (err) {
+    if (err instanceof ScrapeRateLimitError) {
+      return {
+        ok: false,
+        reason: 'rate_limited',
+        message:
+          'Too many scrape attempts right now. Wait a minute, or paste the job description text manually to continue.',
+      };
+    }
+
     const message = err instanceof Error ? err.message : 'Unknown error';
     // A failed parse means the page loaded but had no readable content.
     const reason = message.includes('parse') ? 'unreadable' : 'network';

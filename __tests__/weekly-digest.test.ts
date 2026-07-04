@@ -5,6 +5,8 @@ import {
   buildWeeklyDigests,
   DIGEST_MAX_ITEMS,
   type DigestAlertRow,
+  type DigestQueueRow,
+  type DigestReceiptRow,
   type DigestUser,
 } from '@/lib/weekly-digest';
 
@@ -17,6 +19,25 @@ function alert(overrides: Partial<DigestAlertRow> = {}): DigestAlertRow {
     user_id: 'u1',
     title: 'Staff Engineer',
     detail: 'Acme · Remote',
+    created_at: 1_700_000_000,
+    ...overrides,
+  };
+}
+
+function queueRow(overrides: Partial<DigestQueueRow> = {}): DigestQueueRow {
+  return {
+    user_id: 'u1',
+    status: 'ready_to_submit',
+    updated_at: 1_700_000_000,
+    ...overrides,
+  };
+}
+
+function receiptRow(overrides: Partial<DigestReceiptRow> = {}): DigestReceiptRow {
+  return {
+    user_id: 'u1',
+    status: 'submitted',
+    provider: 'greenhouse',
     created_at: 1_700_000_000,
     ...overrides,
   };
@@ -73,6 +94,39 @@ describe('buildWeeklyDigest', () => {
     expect(digest?.html).toContain('and 3 more');
     expect(digest?.text).toContain('and 3 more');
   });
+
+  it('builds an apply-agent recap when there are queue or receipt updates', () => {
+    const digest = buildWeeklyDigest(
+      user,
+      [],
+      DASHBOARD,
+      [
+        queueRow({ status: 'queued' }),
+        queueRow({ status: 'ready_to_submit' }),
+        queueRow({ status: 'needs_user' }),
+      ],
+      [
+        receiptRow({ status: 'filled', provider: 'lever' }),
+        receiptRow({ status: 'submitted', provider: 'greenhouse' }),
+        receiptRow({ status: 'failed', provider: 'workday' }),
+      ]
+    );
+
+    expect(digest?.subject).toBe('6 apply updates this week — RolePatch');
+    expect(digest?.html).toContain('Apply-agent recap');
+    expect(digest?.html).toContain('1 ready for guarded submit');
+    expect(digest?.html).toContain('1 need your attention');
+    expect(digest?.html).toContain('1 submitted receipts captured');
+    expect(digest?.text).toContain('- Recent ATS: lever, greenhouse, workday');
+  });
+
+  it('combines new matches and apply-agent activity in the subject', () => {
+    const digest = buildWeeklyDigest(user, [alert()], DASHBOARD, [queueRow()], [receiptRow()]);
+
+    expect(digest?.subject).toBe('1 new match + 2 apply updates this week — RolePatch');
+    expect(digest?.text).toContain('Staff Engineer');
+    expect(digest?.text).toContain('Apply-agent recap');
+  });
 });
 
 describe('buildWeeklyDigests', () => {
@@ -96,5 +150,26 @@ describe('buildWeeklyDigests', () => {
   it('ignores alerts for users not in the recipient list (e.g. opted out)', () => {
     const digests = buildWeeklyDigests([], [alert()], DASHBOARD);
     expect(digests).toHaveLength(0);
+  });
+
+  it('groups apply-agent activity per opted-in user even without fresh alerts', () => {
+    const users: DigestUser[] = [
+      user,
+      { id: 'u2', email: 'kim@example.com', name: 'Kim' },
+      { id: 'u3', email: 'lee@example.com', name: 'Lee' },
+    ];
+
+    const digests = buildWeeklyDigests(
+      users,
+      [alert({ user_id: 'u2', title: 'Role B' })],
+      DASHBOARD,
+      [queueRow({ user_id: 'u1' })],
+      [receiptRow({ user_id: 'u3', status: 'failed', provider: 'lever' })]
+    );
+
+    expect(digests).toHaveLength(3);
+    expect(digests.map((digest) => digest.userId)).toEqual(['u1', 'u2', 'u3']);
+    expect(digests[0].subject).toBe('1 apply update this week — RolePatch');
+    expect(digests[2].text).toContain('1 blocked attempts need retry');
   });
 });

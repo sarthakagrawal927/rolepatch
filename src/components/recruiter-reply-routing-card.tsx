@@ -52,7 +52,7 @@ export function RecruiterReplyRoutingCard({ address, events }: RecruiterReplyRou
             <Mail className="h-3.5 w-3.5" />
             Reply routing
           </div>
-          <h2 className="font-serif text-xl font-bold">Recruiter replies</h2>
+          <h2 className="text-xl font-bold">Recruiter replies</h2>
           <p className="mt-1 max-w-2xl text-xs font-medium text-[var(--muted-foreground)] opacity-75">
             Forward recruiter emails here. RolePatch links confident replies to applications and
             updates interview, offer, or rejection status.

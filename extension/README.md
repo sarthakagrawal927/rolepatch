@@ -78,15 +78,15 @@ bypass captchas or run unattended bulk apply.
 ## How scraping/fill works
 
 `src/content.ts` tries site-specific selectors first for Greenhouse, Lever,
-LinkedIn, Workday, Ashby, Workable, Recruitee, and Personio. If none match, it
-falls back to `document.body.innerText`.
+LinkedIn, Workday, Ashby, Workable, Recruitee, Personio, and SmartRecruiters.
+If none match, it falls back to `document.body.innerText`.
 Works on any page via `activeTab` + on-demand injection — no permanent
 content scripts registered.
 
 For filling, the content script uses provider-aware label context for
-Greenhouse, Lever, Workday, Ashby, Workable, Recruitee, Personio, and generic
-forms, then matches visible empty inputs/selects/radio/checkboxes against saved
-RolePatch profile answers.
+Greenhouse, Lever, Workday, Ashby, Workable, Recruitee, Personio,
+SmartRecruiters, and generic forms, then matches visible empty
+inputs/selects/radio/checkboxes against saved RolePatch profile answers.
 
 ## Files
 

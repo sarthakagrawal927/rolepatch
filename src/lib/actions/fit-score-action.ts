@@ -8,10 +8,40 @@ import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { trackCoreAction } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
-import type { AIProviderConfig, FitScore } from '@/lib/types';
+import { scoreRolePatchJobWithKnowledgebase } from '@/lib/knowledgebase-similarity';
+import type { AIProviderConfig, FitScore, FitScoreDimension } from '@/lib/types';
 
 const MAX_RESUME_CHARS = 20_000;
 const MAX_JD_CHARS = 15_000;
+
+async function getKnowledgebaseSimilarityDimension(
+  userId: string | null,
+  resumeSource: string,
+  jobId: string,
+  jdText: string
+): Promise<FitScoreDimension | null> {
+  if (!userId) return null;
+  const result = await db.execute({
+    sql: 'SELECT id, role, company, jd_text FROM job_applications WHERE id = ? AND user_id = ? LIMIT 1',
+    args: [jobId, userId],
+  });
+  const row = result.rows[0];
+  if (!row) return null;
+  const score = await scoreRolePatchJobWithKnowledgebase(userId, resumeSource, {
+    id: row.id as string,
+    title: (row.role as string) || 'Untitled role',
+    company: (row.company as string) || 'Unknown company',
+    description: ((row.jd_text as string) || jdText).slice(0, MAX_JD_CHARS),
+  });
+  if (score == null) return null;
+  return {
+    name: 'Semantic Similarity',
+    score,
+    weight: 0,
+    detail:
+      'Cloudflare Knowledgebase embedding similarity between this resume and job description; shown as evidence and not included in the weighted AI score.',
+  };
+}
 
 export async function generateFitScore(
   resumeSource: string,
@@ -46,11 +76,26 @@ export async function generateFitScore(
 
     const id = uuid();
     const now = Math.floor(Date.now() / 1000);
+    const dimensions = Array.isArray(parsed.dimensions)
+      ? (parsed.dimensions as FitScoreDimension[])
+      : [];
+    try {
+      const semanticDimension = await getKnowledgebaseSimilarityDimension(
+        userId,
+        resumeSource,
+        jobId,
+        jdText
+      );
+      if (semanticDimension) dimensions.push(semanticDimension);
+    } catch {
+      // Knowledgebase similarity is optional evidence; the AI fit score remains usable without it.
+    }
+
     const fitScore: FitScore = {
       id,
       job_id: jobId,
       overall_score: Math.round(parsed.overall),
-      dimensions: parsed.dimensions,
+      dimensions,
       strengths: parsed.strengths,
       gaps: parsed.gaps,
       recommendation: parsed.recommendation,

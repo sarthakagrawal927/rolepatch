@@ -12,7 +12,7 @@ const generateObjectLoose = generateObject as unknown as (
 import { v4 as uuid } from 'uuid';
 
 import { creditTokens, debitToken } from '@/lib/actions/token-actions';
-import { getAIModel } from '@/lib/ai';
+import { getAIModel, toUserFacingAIError } from '@/lib/ai';
 import { getCurrentUserId } from '@/lib/auth-utils';
 import { db } from '@/lib/db';
 import type { AIProviderConfig, SkillRoadmapItem, SkillsRoadmap } from '@/lib/types';
@@ -141,7 +141,7 @@ export async function generateSkillsRoadmap(
     if (debited && userId) {
       await creditTokens(userId, 1, 'refund', 'ai_failure');
     }
-    throw err;
+    throw toUserFacingAIError(err);
   }
 }
 
