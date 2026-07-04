@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   headersGet: vi.fn(),
   verify: vi.fn(),
   dbExecute: vi.fn(),
-  dbTransaction: vi.fn(),
+  dbBatch: vi.fn(),
   uuid: vi.fn(() => 'token-tx-1'),
 }));
 
@@ -29,7 +29,7 @@ vi.mock('uuid', () => ({
 vi.mock('@/lib/db', () => ({
   db: {
     execute: (...args: unknown[]) => mocks.dbExecute(...args),
-    transaction: (...args: unknown[]) => mocks.dbTransaction(...args),
+    batch: (...args: unknown[]) => mocks.dbBatch(...args),
   },
 }));
 
@@ -49,16 +49,6 @@ function makeRawReq(body: string) {
   }) as Parameters<(typeof DodoWebhookRoute)['POST']>[0];
 }
 
-function makeTx() {
-  const tx = {
-    execute: vi.fn(),
-    commit: vi.fn().mockResolvedValue(undefined),
-    rollback: vi.fn().mockResolvedValue(undefined),
-  };
-  mocks.dbTransaction.mockResolvedValue(tx);
-  return tx;
-}
-
 beforeEach(() => {
   vi.resetModules();
   vi.unstubAllEnvs();
@@ -72,7 +62,8 @@ beforeEach(() => {
   mocks.verify.mockReturnValue(undefined);
   mocks.dbExecute.mockReset();
   mocks.dbExecute.mockResolvedValue({ rows: [] });
-  mocks.dbTransaction.mockReset();
+  mocks.dbBatch.mockReset();
+  mocks.dbBatch.mockResolvedValue([]);
   mocks.uuid.mockClear();
 });
 
@@ -87,7 +78,7 @@ describe('POST /api/webhook/dodo-payments', () => {
     expect(await res.text()).toBe('Webhook not configured');
     expect(mocks.verify).not.toHaveBeenCalled();
     expect(mocks.dbExecute).not.toHaveBeenCalled();
-    expect(mocks.dbTransaction).not.toHaveBeenCalled();
+    expect(mocks.dbBatch).not.toHaveBeenCalled();
   });
 
   it('rejects invalid webhook signatures before touching the database', async () => {
@@ -101,7 +92,7 @@ describe('POST /api/webhook/dodo-payments', () => {
     expect(res.status).toBe(401);
     expect(await res.text()).toBe('Invalid signature');
     expect(mocks.dbExecute).not.toHaveBeenCalled();
-    expect(mocks.dbTransaction).not.toHaveBeenCalled();
+    expect(mocks.dbBatch).not.toHaveBeenCalled();
   });
 
   it('rejects malformed verified payloads before touching the database', async () => {
@@ -112,18 +103,10 @@ describe('POST /api/webhook/dodo-payments', () => {
     expect(await res.text()).toBe('Invalid payload');
     expect(mocks.verify).toHaveBeenCalled();
     expect(mocks.dbExecute).not.toHaveBeenCalled();
-    expect(mocks.dbTransaction).not.toHaveBeenCalled();
+    expect(mocks.dbBatch).not.toHaveBeenCalled();
   });
 
-  it('credits tokens for a new successful payment in one transaction', async () => {
-    const tx = makeTx();
-    tx.execute.mockImplementation(async (statement: { sql: string }) => {
-      if (statement.sql.includes('SELECT balance FROM token_balances')) {
-        return { rows: [{ balance: 13 }] };
-      }
-      return { rows: [] };
-    });
-
+  it('credits tokens for a new successful payment in one D1 batch', async () => {
     const { POST } = await import('@/app/api/webhook/dodo-payments/route');
     const res = await POST(
       makeReq({
@@ -143,24 +126,17 @@ describe('POST /api/webhook/dodo-payments', () => {
       sql: 'SELECT id FROM payments WHERE id = ?',
       args: ['pay_1'],
     });
-    expect(mocks.dbTransaction).toHaveBeenCalledWith('write');
-    expect(tx.execute).toHaveBeenCalledWith(
+    expect(mocks.dbBatch).toHaveBeenCalledWith([
       expect.objectContaining({
         args: ['pay_1', 'user_1', 'prod_starter', 500, 'USD', 10, expect.any(String)],
-      })
-    );
-    expect(tx.execute).toHaveBeenCalledWith(
+      }),
       expect.objectContaining({
         args: ['user_1', 10, 10, 10, 10],
-      })
-    );
-    expect(tx.execute).toHaveBeenCalledWith(
+      }),
       expect.objectContaining({
-        args: ['token-tx-1', 'user_1', 10, 'pay_1', 13],
-      })
-    );
-    expect(tx.commit).toHaveBeenCalledTimes(1);
-    expect(tx.rollback).not.toHaveBeenCalled();
+        args: ['token-tx-1', 'user_1', 10, 'pay_1', 'user_1'],
+      }),
+    ]);
   });
 
   it('does not grant tokens again for an already processed payment', async () => {
@@ -180,17 +156,10 @@ describe('POST /api/webhook/dodo-payments', () => {
 
     expect(res.status).toBe(200);
     expect(await res.text()).toBe('Already processed');
-    expect(mocks.dbTransaction).not.toHaveBeenCalled();
+    expect(mocks.dbBatch).not.toHaveBeenCalled();
   });
 
   it('deducts refunded payment tokens and records a refund transaction', async () => {
-    const tx = makeTx();
-    tx.execute.mockImplementation(async (statement: { sql: string }) => {
-      if (statement.sql.includes('SELECT balance FROM token_balances')) {
-        return { rows: [{ balance: 2 }] };
-      }
-      return { rows: [] };
-    });
     mocks.dbExecute.mockResolvedValue({
       rows: [{ user_id: 'user_1', tokens_granted: 10 }],
     });
@@ -199,38 +168,22 @@ describe('POST /api/webhook/dodo-payments', () => {
     const res = await POST(makeReq({ type: 'refund.succeeded', data: { payment_id: 'pay_1' } }));
 
     expect(res.status).toBe(200);
-    expect(tx.execute).toHaveBeenCalledWith(
+    expect(mocks.dbBatch).toHaveBeenCalledWith([
       expect.objectContaining({
         args: [10, 'user_1'],
-      })
-    );
-    expect(tx.execute).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sql: 'SELECT balance FROM token_balances WHERE user_id = ?',
-        args: ['user_1'],
-      })
-    );
-    expect(tx.execute).toHaveBeenCalledWith(
+      }),
       expect.objectContaining({
         args: ['pay_1'],
-      })
-    );
-    expect(tx.execute).toHaveBeenCalledWith(
+      }),
       expect.objectContaining({
-        args: ['token-tx-1', 'user_1', -10, 'pay_1', 2],
-      })
-    );
-    expect(tx.commit).toHaveBeenCalledTimes(1);
-    expect(tx.rollback).not.toHaveBeenCalled();
+        args: ['token-tx-1', 'user_1', -10, 'pay_1', 'user_1'],
+      }),
+    ]);
   });
 
-  it('rolls back a refund transaction when marking the payment refunded fails', async () => {
-    const tx = makeTx();
+  it('propagates D1 batch failures when refund writes fail', async () => {
     const writeFailure = new Error('write failed');
-    tx.execute
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ balance: 0 }] })
-      .mockRejectedValueOnce(writeFailure);
+    mocks.dbBatch.mockRejectedValueOnce(writeFailure);
     mocks.dbExecute.mockResolvedValue({
       rows: [{ user_id: 'user_1', tokens_granted: 10 }],
     });
@@ -244,8 +197,6 @@ describe('POST /api/webhook/dodo-payments', () => {
       sql: 'SELECT user_id, tokens_granted FROM payments WHERE id = ? AND status = ?',
       args: ['pay_1', 'completed'],
     });
-    expect(mocks.dbTransaction).toHaveBeenCalledWith('write');
-    expect(tx.rollback).toHaveBeenCalledTimes(1);
-    expect(tx.commit).not.toHaveBeenCalled();
+    expect(mocks.dbBatch).toHaveBeenCalledOnce();
   });
 });
