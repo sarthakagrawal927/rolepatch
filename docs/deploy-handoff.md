@@ -8,11 +8,11 @@ This is the publish checklist for the apply-agent/proof/UI parity slice.
 
 - Local release preflight passed with `pnpm release:verify` on 2026-07-04
   23:32 IST.
-- Production at `https://rolepatch.com` is stale until the verified local slice
-  is committed, pushed, and deployed.
-- Latest public production smoke remains 2/6: `/` and `/pricing` pass; `/jobs`,
-  `/proof`, `/api/proof/truehire-preview`, and current `/settings` readiness are
-  not live yet.
+- Production at `https://rolepatch.com` is deployed from commit `5f5151c`.
+- GitHub Actions deploy run `28715037108` passed, including the workflow
+  production smoke step.
+- Companion CI run `28715037109` passed.
+- Independent post-deploy `pnpm smoke:prod` passed 6/6 at 2026-07-04 23:38 IST.
 - Symphony deploy follow-up: `4847b8bf`.
 - TrueHire proof-project follow-up: `2d15f69c`.
 
