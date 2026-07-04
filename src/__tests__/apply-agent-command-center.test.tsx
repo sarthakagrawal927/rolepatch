@@ -619,7 +619,24 @@ describe('ApplyAgentCommandCenter', () => {
     renderCommandCenter({
       jobs: [job('tailored', { id: 'tailored', role: 'Frontend Engineer', company: 'Vercel' })],
       queue: [queueEntry('tailored', { status: 'failed' })],
-      receipts: [receipt()],
+      receipts: [
+        receipt({
+          fields: [
+            { label: 'Browser runner mode', value: 'Guarded browser submit', source: 'system' },
+            { label: 'Failure code', value: 'missing_required_fields', source: 'system' },
+            {
+              label: 'Required fields',
+              value: 'Work authorization | Sponsorship | Phone number',
+              source: 'system',
+            },
+            {
+              label: 'Missing answer fields',
+              value: 'Work authorization | Sponsorship',
+              source: 'system',
+            },
+          ],
+        }),
+      ],
     });
 
     expect(screen.getByText('Missing answer prompts')).toBeDefined();

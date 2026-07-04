@@ -342,21 +342,29 @@ function receiptFieldValue(receipt: ApplicationReceipt, label: string): string |
 }
 
 function extractMissingRequiredLabels(receipt: ApplicationReceipt): string[] {
+  const labels: string[] = [];
+  const seenLabels = new Set<string>();
+  const addLabel = (label: string) => {
+    const normalized = label.trim().replace(/\s+/g, ' ');
+    const key = normalized.toLowerCase();
+    if (normalized.length <= 1 || key === 'none' || seenLabels.has(key)) return;
+    seenLabels.add(key);
+    labels.push(normalized);
+  };
+
+  for (const label of splitReceiptList(receiptFieldValue(receipt, 'Missing answer fields'))) {
+    addLabel(label);
+  }
+
   const sources = [
     receiptFieldValue(receipt, 'Blocked reasons'),
     receipt.failure_reason,
     receipt.confirmation_text,
   ].filter((value): value is string => Boolean(value));
-  const labels: string[] = [];
   for (const source of sources) {
     const match = source.match(/required fields? (?:are )?empty:\s*([^|.]+)/i);
     if (!match?.[1]) continue;
-    labels.push(
-      ...match[1]
-        .split(',')
-        .map((label) => label.trim().replace(/\s+/g, ' '))
-        .filter((label) => label.length > 1 && label.toLowerCase() !== 'none')
-    );
+    for (const label of match[1].split(',')) addLabel(label);
   }
   return labels;
 }
