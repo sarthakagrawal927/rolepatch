@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
+import { buildApplyAgentAnswerHints } from '@/lib/apply-agent-answer-matching';
 import { inferAtsProvider } from '@/lib/apply-agent';
 import { parseReadiness } from '@/lib/apply-agent';
 import { db } from '@/lib/db';
@@ -630,18 +631,42 @@ export async function runGuardedApplyBrowserSubmitForUser(
     }),
   ]);
   const profileAnswers = JSON.parse(JSON.stringify(profileResult.rows)) as ProfileAnswer[];
+  const answerHints = buildApplyAgentAnswerHints(profileAnswers);
   const cover = JSON.parse(JSON.stringify(coverResult.rows[0] ?? null)) as CoverLetterRow | null;
 
   try {
     const page = await browser.newPage();
     await page.goto(queue.url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
     const preflight = await page.evaluate(
-      ({ answers, coverLetter }) => {
+      ({ hints, coverLetter }) => {
         const normalize = (value: string) =>
           value
             .toLowerCase()
+            .replace(/h[\s-]?1b/g, 'h1b')
             .replace(/[^a-z0-9]+/g, ' ')
             .trim();
+        const stopwords = new Set([
+          'and',
+          'are',
+          'can',
+          'did',
+          'does',
+          'for',
+          'have',
+          'into',
+          'now',
+          'our',
+          'the',
+          'this',
+          'will',
+          'with',
+          'you',
+          'your',
+        ]);
+        const terms = (value: string) =>
+          normalize(value)
+            .split(' ')
+            .filter((term) => term.length > 2 && !stopwords.has(term));
         const visible = (el: Element) => {
           const style = window.getComputedStyle(el);
           const rect = (el as HTMLElement).getBoundingClientRect();
@@ -690,13 +715,21 @@ export async function runGuardedApplyBrowserSubmitForUser(
         const bestAnswer = (label: string) => {
           const target = normalize(label);
           let best: { answer: string; score: number } | null = null;
-          for (const answer of answers) {
-            const labelText = normalize(answer.label);
-            const terms = labelText.split(' ').filter((term: string) => term.length > 2);
-            const score =
-              (target.includes(labelText) || labelText.includes(target) ? 8 : 0) +
-              terms.filter((term: string) => target.includes(term)).length;
-            if (score > 0 && (!best || score > best.score)) best = { answer: answer.answer, score };
+          for (const hint of hints) {
+            let score = 0;
+            for (const alias of hint.aliases) {
+              const aliasText = normalize(alias);
+              if (!aliasText) continue;
+              if (target === aliasText) score = Math.max(score, 14);
+              if (target.includes(aliasText) || aliasText.includes(target)) {
+                score = Math.max(score, 10);
+              }
+              const overlap = terms(aliasText).filter((term: string) => target.includes(term));
+              score = Math.max(score, overlap.length);
+            }
+            if (score > 0 && (!best || score > best.score)) {
+              best = { answer: hint.answer, score };
+            }
           }
           return best && best.score >= 2 ? best.answer : null;
         };
@@ -867,7 +900,7 @@ export async function runGuardedApplyBrowserSubmitForUser(
           fields: fields.slice(0, 30),
         };
       },
-      { answers: profileAnswers, coverLetter: cover?.content ?? '' }
+      { hints: answerHints, coverLetter: cover?.content ?? '' }
     );
 
     if (!preflight.submitClicked) {
