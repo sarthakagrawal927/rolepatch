@@ -21,8 +21,8 @@ cpu_ms = 30000
 
 [triggers]
 crons = [
-  # Daily company-watch job discovery sync.
-  "0 13 * * *",
+  # Hourly company-watch job discovery sync.
+  "0 * * * *",
   # Weekly saved-search/apply-agent digest.
   "0 14 * * 1"
 ]

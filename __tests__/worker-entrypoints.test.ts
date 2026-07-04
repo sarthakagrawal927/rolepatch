@@ -10,13 +10,13 @@ describe('custom Cloudflare worker entrypoint', () => {
     expect(workerSource).toContain('async scheduled(event, env, ctx)');
     expect(workerSource).toContain('/api/internal/cron/company-watchlist');
     expect(workerSource).toContain('/api/internal/cron/weekly-digest');
-    expect(workerSource).toContain('0 13 * * *');
+    expect(workerSource).toContain('0 * * * *');
     expect(workerSource).toContain('0 14 * * 1');
   });
 
   it('provisions Cloudflare cron triggers for the scheduled tasks', () => {
     expect(wranglerConfig).toContain('[triggers]');
-    expect(wranglerConfig).toContain('"0 13 * * *"');
+    expect(wranglerConfig).toContain('"0 * * * *"');
     expect(wranglerConfig).toContain('"0 14 * * 1"');
   });
 

@@ -312,7 +312,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 - Saved job searches with pause, delete, and manual re-run.
 - Guest saved searches, shortlists, and discovered-job tailoring drafts persist locally; signed-in users get synced persistence.
-- Company watchlists with pause, delete, manual check, and daily Worker cron.
+- Company watchlists with pause, delete, manual check, and hourly Worker cron.
 - Career URL watches prefer Greenhouse, Lever, Ashby, Workable, Recruitee, Personio, and SmartRecruiters public feeds/APIs, then a generic HTML parser for custom career pages, and fall back to LinkedIn search when no career jobs are found.
 - Each company watch records and displays the last run source (`greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `personio`, `smartrecruiters`, `career_page`, `linkedin`, or `linkedin_fallback`), found count, and adapter error when fallback is needed.
 - Dashboard discovery summarizes active saved searches and company watches, unseen alert volume, latest watch yield, fallback/source health, and a source-decision recommendation so expansion decisions can use product evidence.

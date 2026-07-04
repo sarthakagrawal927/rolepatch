@@ -31,7 +31,7 @@ const INTERNAL_BASE_URL = 'https://rolepatch.com';
 const SCHEDULED_TASKS = [
   {
     name: 'company-watchlist',
-    cron: '0 13 * * *',
+    cron: '0 * * * *',
     path: '/api/internal/cron/company-watchlist',
   },
   {
