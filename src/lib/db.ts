@@ -1,5 +1,5 @@
-// Minimal D1 client wrapper. Keeps the app-level db.execute/db.transaction API
-// stable while moving persistence onto the Cloudflare D1 binding.
+// Minimal D1 client wrapper. Keeps the app-level db.execute/db.batch API
+// stable around the Cloudflare D1 binding.
 
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
@@ -34,6 +34,7 @@ interface D1PreparedStatement {
 
 interface D1DatabaseLike {
   prepare(sql: string): D1PreparedStatement;
+  batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
 }
 
 interface CloudflareEnv {
@@ -109,23 +110,30 @@ async function executeD1(db: D1DatabaseLike, input: ExecuteArgs | string): Promi
   };
 }
 
-class D1CompatibilityTransaction {
-  private closed = false;
-
-  constructor(private readonly binding: D1DatabaseLike) {}
-
-  async execute(input: ExecuteArgs | string): Promise<ExecuteResult> {
-    if (this.closed) throw new Error('Transaction is closed');
-    return executeD1(this.binding, input);
-  }
-
-  async commit(): Promise<void> {
-    this.closed = true;
-  }
-
-  async rollback(): Promise<void> {
-    this.closed = true;
-  }
+async function batchD1(
+  db: D1DatabaseLike,
+  inputs: Array<ExecuteArgs | string>
+): Promise<ExecuteResult[]> {
+  const statements = inputs.map((input) => {
+    const sql = typeof input === 'string' ? input : input.sql;
+    const args = typeof input === 'string' ? [] : [...(input.args ?? [])].map(coerceArg);
+    const statement = db.prepare(sql);
+    return args.length > 0 ? statement.bind(...args) : statement;
+  });
+  const payloads = await db.batch(statements);
+  return payloads.map((payload) => {
+    const rawRows = payload.results ?? [];
+    const columns = rawRows[0] ? Object.keys(rawRows[0]) : [];
+    return {
+      columns,
+      rows: rawRows.map((row) => rowWithNumericIndexes(row, columns)),
+      rowsAffected: payload.meta?.changes ?? 0,
+      lastInsertRowid:
+        payload.meta?.last_row_id === undefined || payload.meta.last_row_id === null
+          ? null
+          : BigInt(payload.meta.last_row_id),
+    };
+  });
 }
 
 class D1Client {
@@ -133,11 +141,8 @@ class D1Client {
     return executeD1(getD1Binding(), input);
   }
 
-  async transaction(
-    _mode: 'read' | 'write' | 'deferred' = 'write'
-  ): Promise<D1CompatibilityTransaction> {
-    void _mode;
-    return new D1CompatibilityTransaction(getD1Binding());
+  async batch(inputs: Array<ExecuteArgs | string>): Promise<ExecuteResult[]> {
+    return batchD1(getD1Binding(), inputs);
   }
 }
 

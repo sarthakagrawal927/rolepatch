@@ -11,7 +11,7 @@ vi.mock('@opennextjs/cloudflare', () => ({
 }));
 
 function createFakeD1() {
-  const calls: Array<{ method: 'all' | 'run'; sql: string; args: SqlArg[] }> = [];
+  const calls: Array<{ method: 'all' | 'run' | 'batch'; sql: string; args: SqlArg[] }> = [];
   const payloads: Array<{
     results?: Record<string, string | number | null>[];
     meta?: { changes?: number; last_row_id?: number };
@@ -37,6 +37,12 @@ function createFakeD1() {
         }),
       };
       return statement;
+    }),
+    batch: vi.fn(async (statements: Array<{ args: SqlArg[] }>) => {
+      for (const statement of statements) {
+        calls.push({ method: 'batch', sql: 'batch-statement', args: statement.args });
+      }
+      return payloads.splice(0, statements.length);
     }),
   };
 }
@@ -114,6 +120,32 @@ describe('D1 db wrapper', () => {
     expect(fakeD1.calls[0]?.method).toBe('all');
     expect(result.rows[0]?.balance).toBe(2);
     expect(result.rowsAffected).toBe(1);
+  });
+
+  it('uses D1 batch() for atomic statement groups', async () => {
+    const fakeD1 = createFakeD1();
+    mockContext.env = { DB: fakeD1 };
+    fakeD1.payloads.push(
+      { meta: { changes: 1 } },
+      { results: [{ balance: 4 }], meta: { changes: 0 } }
+    );
+
+    const { db } = await import('@/lib/db');
+    const results = await db.batch([
+      {
+        sql: 'UPDATE token_balances SET balance = balance + ? WHERE user_id = ?',
+        args: [1, 'u1'],
+      },
+      {
+        sql: 'SELECT balance FROM token_balances WHERE user_id = ?',
+        args: ['u1'],
+      },
+    ]);
+
+    expect(fakeD1.batch).toHaveBeenCalledOnce();
+    expect(fakeD1.calls.map((call) => call.method)).toEqual(['batch', 'batch']);
+    expect(results[0]?.rowsAffected).toBe(1);
+    expect(results[1]?.rows[0]).toMatchObject({ balance: 4, 0: 4 });
   });
 
   it('throws a setup-specific error when the DB binding is missing', async () => {

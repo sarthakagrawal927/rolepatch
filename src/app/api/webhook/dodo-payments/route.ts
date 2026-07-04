@@ -74,16 +74,14 @@ export async function POST(request: Request) {
       return new Response('Already processed', { status: 200 });
     }
 
-    // Record payment + credit tokens in a single transaction
-    const tx = await db.transaction('write');
-    try {
-      await tx.execute({
+    // Record payment + credit tokens atomically in one D1 batch.
+    await db.batch([
+      {
         sql: `INSERT INTO payments (id, user_id, product_id, amount_cents, currency, tokens_granted, status, dodo_payload)
               VALUES (?, ?, ?, ?, ?, ?, 'completed', ?)`,
         args: [paymentId, userId, productId, totalAmount, currency, tokensToGrant, rawBody],
-      });
-
-      await tx.execute({
+      },
+      {
         sql: `INSERT INTO token_balances (user_id, balance, total_purchased, total_used)
               VALUES (?, ?, ?, 0)
               ON CONFLICT(user_id) DO UPDATE SET
@@ -91,25 +89,15 @@ export async function POST(request: Request) {
                 total_purchased = total_purchased + ?,
                 updated_at = unixepoch()`,
         args: [userId, tokensToGrant, tokensToGrant, tokensToGrant, tokensToGrant],
-      });
-
-      const balResult = await tx.execute({
-        sql: 'SELECT balance FROM token_balances WHERE user_id = ?',
-        args: [userId],
-      });
-      const newBalance = balResult.rows[0].balance as number;
-
-      await tx.execute({
+      },
+      {
         sql: `INSERT INTO token_transactions (id, user_id, amount, type, reference_id, balance_after)
-              VALUES (?, ?, ?, 'purchase', ?, ?)`,
-        args: [uuid(), userId, tokensToGrant, paymentId, newBalance],
-      });
-
-      await tx.commit();
-    } catch (err) {
-      await tx.rollback();
-      throw err;
-    }
+              SELECT ?, ?, ?, 'purchase', ?, balance
+              FROM token_balances
+              WHERE user_id = ?`,
+        args: [uuid(), userId, tokensToGrant, paymentId, userId],
+      },
+    ]);
   }
 
   if (eventType === 'refund.succeeded') {
@@ -130,41 +118,28 @@ export async function POST(request: Request) {
       const userId = row.user_id as string;
       const tokensToRevoke = row.tokens_granted as number;
 
-      // Deduct tokens + mark refunded in a single transaction. Without it,
+      // Deduct tokens + mark refunded atomically in one D1 batch. Without it,
       // a failure after the deduction leaves status = 'completed', and the
       // webhook retry would deduct the tokens a second time.
-      const tx = await db.transaction('write');
-      try {
-        // Deduct tokens (floor at 0 to avoid negative balance)
-        await tx.execute({
+      await db.batch([
+        {
           sql: `UPDATE token_balances
                 SET balance = MAX(0, balance - ?), updated_at = unixepoch()
                 WHERE user_id = ?`,
           args: [tokensToRevoke, userId],
-        });
-
-        const balResult = await tx.execute({
-          sql: 'SELECT balance FROM token_balances WHERE user_id = ?',
-          args: [userId],
-        });
-        const newBalance = balResult.rows[0]?.balance as number | undefined;
-
-        await tx.execute({
+        },
+        {
           sql: `UPDATE payments SET status = 'refunded' WHERE id = ?`,
           args: [paymentId],
-        });
-
-        await tx.execute({
+        },
+        {
           sql: `INSERT INTO token_transactions (id, user_id, amount, type, reference_id, balance_after)
-                VALUES (?, ?, ?, 'refund', ?, ?)`,
-          args: [uuid(), userId, -tokensToRevoke, paymentId, newBalance ?? 0],
-        });
-
-        await tx.commit();
-      } catch (err) {
-        await tx.rollback();
-        throw err;
-      }
+                SELECT ?, ?, ?, 'refund', ?, COALESCE(balance, 0)
+                FROM token_balances
+                WHERE user_id = ?`,
+          args: [uuid(), userId, -tokensToRevoke, paymentId, userId],
+        },
+      ]);
     }
   }
 
