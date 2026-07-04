@@ -52,6 +52,13 @@ export interface JobDiscoveryAlertRow {
   created_at: number;
 }
 
+export interface ObservedJobFeedPage {
+  jobs: JobDiscoveryAlertRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 const OBSERVED_JOB_FEED_USER_ID = 'ops-job-sync-observer';
 
 export interface CompanyWatchDbRow {
@@ -220,6 +227,34 @@ export async function listObservedJobFeed(limit = 100): Promise<JobDiscoveryAler
     args: [OBSERVED_JOB_FEED_USER_ID, safeLimit],
   });
   return JSON.parse(JSON.stringify(result.rows)) as JobDiscoveryAlertRow[];
+}
+
+export async function listObservedJobFeedPage(
+  page = 1,
+  pageSize = 50
+): Promise<ObservedJobFeedPage> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safePageSize = Math.max(10, Math.min(100, Math.floor(pageSize)));
+  const offset = (safePage - 1) * safePageSize;
+  const [jobsResult, countResult] = await Promise.all([
+    db.execute({
+      sql: `SELECT * FROM job_discovery_alerts
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?`,
+      args: [OBSERVED_JOB_FEED_USER_ID, safePageSize, offset],
+    }),
+    db.execute({
+      sql: 'SELECT COUNT(*) AS total FROM job_discovery_alerts WHERE user_id = ?',
+      args: [OBSERVED_JOB_FEED_USER_ID],
+    }),
+  ]);
+  return {
+    jobs: JSON.parse(JSON.stringify(jobsResult.rows)) as JobDiscoveryAlertRow[],
+    total: Number(countResult.rows[0]?.total ?? 0),
+    page: safePage,
+    pageSize: safePageSize,
+  };
 }
 
 export async function markJobDiscoveryAlertsSeen(): Promise<void> {
