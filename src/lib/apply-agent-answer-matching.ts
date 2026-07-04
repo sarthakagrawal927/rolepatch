@@ -155,3 +155,17 @@ export function matchApplyAgentAnswer(
 
   return best && best.score >= 2 ? best.answer : null;
 }
+
+export function missingRequiredApplicationFields(input: {
+  requiredFields: string[];
+  answers: MatchableProfileAnswer[];
+  hasCoverLetter?: boolean;
+}): string[] {
+  const hints = buildApplyAgentAnswerHints(input.answers);
+  return input.requiredFields.filter((field) => {
+    if (input.hasCoverLetter && /cover|message|why|interest|additional/i.test(field)) {
+      return false;
+    }
+    return !matchApplyAgentAnswer(field, hints);
+  });
+}

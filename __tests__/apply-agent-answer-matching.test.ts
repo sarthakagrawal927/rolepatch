@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildApplyAgentAnswerHints,
   matchApplyAgentAnswer,
+  missingRequiredApplicationFields,
 } from '@/lib/apply-agent-answer-matching';
 import type { ProfileAnswer } from '@/lib/types';
 
@@ -67,5 +68,31 @@ describe('apply-agent answer matching', () => {
     ]);
 
     expect(matchApplyAgentAnswer('Phone number', hints)).toBeNull();
+  });
+
+  it('returns only required fields that saved answers cannot fill', () => {
+    const missing = missingRequiredApplicationFields({
+      requiredFields: [
+        'Are you legally authorized to work in the United States?',
+        'Portfolio URL',
+        'Phone number',
+      ],
+      answers: [
+        answer({ category: 'work_authorization', label: 'Authorized to work?', answer: 'Yes' }),
+        answer({ category: 'links', label: 'Portfolio', answer: 'https://sarthak.dev' }),
+      ],
+    });
+
+    expect(missing).toEqual(['Phone number']);
+  });
+
+  it('treats required cover-letter fields as answerable when a cover letter exists', () => {
+    const missing = missingRequiredApplicationFields({
+      requiredFields: ['Why are you interested in this role?', 'Expected salary'],
+      answers: [answer({ category: 'salary', label: 'Desired salary', answer: '$180k' })],
+      hasCoverLetter: true,
+    });
+
+    expect(missing).toEqual([]);
   });
 });

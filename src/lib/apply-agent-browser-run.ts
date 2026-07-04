@@ -1,6 +1,9 @@
 import { v4 as uuid } from 'uuid';
 
-import { buildApplyAgentAnswerHints } from '@/lib/apply-agent-answer-matching';
+import {
+  buildApplyAgentAnswerHints,
+  missingRequiredApplicationFields,
+} from '@/lib/apply-agent-answer-matching';
 import { inferAtsProvider } from '@/lib/apply-agent';
 import { parseReadiness } from '@/lib/apply-agent';
 import { db } from '@/lib/db';
@@ -75,6 +78,8 @@ interface BrowserSignals {
   fieldsDetected: number;
   submitDetected: boolean;
   uploadFields: string[];
+  requiredFields: string[];
+  missingRequiredFields: string[];
   captchaDetected: boolean;
   failureReason: string | null;
 }
@@ -275,6 +280,25 @@ async function inspectWithCloudflareBrowser(url: string): Promise<BrowserSignals
           return (label || input.name || input.getAttribute('aria-label') || 'File upload').trim();
         })
         .slice(0, 12);
+      const requiredFields: string[] = [];
+      const radioGroups = new Set<string>();
+      for (const control of controls) {
+        const required =
+          (control as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).required ||
+          control.getAttribute('aria-required') === 'true';
+        if (!required) continue;
+        if (control instanceof HTMLInputElement && control.type === 'file') continue;
+        const label =
+          control instanceof HTMLElement
+            ? inputLabelFor(control, document) || control.getAttribute('name') || 'Required field'
+            : 'Required field';
+        if (control instanceof HTMLInputElement && control.type === 'radio') {
+          const group = control.name || label;
+          if (radioGroups.has(group)) continue;
+          radioGroups.add(group);
+        }
+        requiredFields.push(label.replace(/\s+/g, ' ').trim());
+      }
       const buttons = Array.from(document.querySelectorAll('button, input[type="submit"]'));
       const submitDetected = buttons.some((el) =>
         /submit|apply|send application/i.test(
@@ -287,10 +311,44 @@ async function inspectWithCloudflareBrowser(url: string): Promise<BrowserSignals
         fieldsDetected: controls.length,
         submitDetected,
         uploadFields,
+        requiredFields: Array.from(new Set(requiredFields)).slice(0, 20),
         captchaDetected: /captcha|recaptcha|hcaptcha|verify you are human/.test(text),
       };
+
+      function inputLabelFor(el: HTMLElement, doc: Document) {
+        const id = el.getAttribute('id');
+        const explicit = id
+          ? (doc.querySelector(`label[for="${CSS.escape(id)}"]`) as HTMLElement | null)?.innerText
+          : '';
+        const wrapping = el.closest('label')?.textContent ?? '';
+        const container =
+          el.closest(
+            '.field, .question, .application-question, [data-automation-id], [data-testid*="question"], [class*="form-field"]'
+          )?.textContent ?? '';
+        return (
+          [
+            el.getAttribute('aria-label') ?? '',
+            explicit,
+            wrapping,
+            (el as HTMLInputElement | HTMLTextAreaElement).placeholder ?? '',
+            el.getAttribute('name') ?? '',
+            container,
+          ]
+            .map((part) =>
+              String(part ?? '')
+                .replace(/\s+/g, ' ')
+                .trim()
+            )
+            .find(Boolean) ?? ''
+        );
+      }
     });
-    return { runtime: 'cloudflare_browser', failureReason: null, ...signals };
+    return {
+      runtime: 'cloudflare_browser',
+      failureReason: null,
+      missingRequiredFields: [],
+      ...signals,
+    };
   } catch (err) {
     return {
       runtime: 'cloudflare_browser',
@@ -298,6 +356,8 @@ async function inspectWithCloudflareBrowser(url: string): Promise<BrowserSignals
       fieldsDetected: 0,
       submitDetected: false,
       uploadFields: [],
+      requiredFields: [],
+      missingRequiredFields: [],
       captchaDetected: false,
       failureReason: err instanceof Error ? err.message : String(err),
     };
@@ -321,6 +381,8 @@ async function inspectWithFetch(url: string): Promise<BrowserSignals> {
       fieldsDetected: (html.match(/<(input|textarea|select)\b/gi) ?? []).length,
       submitDetected: /type=["']?submit|>\s*(submit|apply|send application)\s*</i.test(html),
       uploadFields: uploadMatches.map((_, idx) => `File upload ${idx + 1}`).slice(0, 12),
+      requiredFields: [],
+      missingRequiredFields: [],
       captchaDetected: /captcha|recaptcha|hcaptcha|verify you are human/.test(lower),
       failureReason: res.ok ? null : `HTTP ${res.status}`,
     };
@@ -331,6 +393,8 @@ async function inspectWithFetch(url: string): Promise<BrowserSignals> {
       fieldsDetected: 0,
       submitDetected: false,
       uploadFields: [],
+      requiredFields: [],
+      missingRequiredFields: [],
       captchaDetected: false,
       failureReason: err instanceof Error ? err.message : String(err),
     };
@@ -386,6 +450,14 @@ function statusForSignals(
       status: 'needs_user',
       summary: 'File upload fields detected; manual upload is required before submit.',
       failure_code: 'file_upload_required',
+      failure_reason: null,
+    };
+  }
+  if (signals.missingRequiredFields.length > 0) {
+    return {
+      status: 'needs_user',
+      summary: `Required fields are empty: ${signals.missingRequiredFields.slice(0, 8).join(', ')}`,
+      failure_code: 'missing_required_fields',
       failure_reason: null,
     };
   }
@@ -446,13 +518,23 @@ export async function runReviewedApplyBrowserCheckForUser(
 
   const provider = inferAtsProvider(queue.url);
   const supportedProvider = isReviewedBrowserProvider(provider);
-  const [signals, coverLetterResult] = await Promise.all([
+  const [signals, coverLetterResult, profileResult] = await Promise.all([
     inspectApplyPage(queue.url),
     db.execute({
       sql: 'SELECT id FROM cover_letters WHERE job_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 1',
       args: [queue.job_id, userId],
     }),
+    db.execute({
+      sql: 'SELECT id, category, label, answer, sensitive, created_at, updated_at FROM profile_answers WHERE user_id = ? ORDER BY updated_at DESC',
+      args: [userId],
+    }),
   ]);
+  const profileAnswers = JSON.parse(JSON.stringify(profileResult.rows)) as ProfileAnswer[];
+  signals.missingRequiredFields = missingRequiredApplicationFields({
+    requiredFields: signals.requiredFields,
+    answers: profileAnswers,
+    hasCoverLetter: Boolean(coverLetterResult.rows[0]?.id),
+  });
   const decision = statusForSignals(signals, supportedProvider);
   const receiptId = uuid();
   const fields: ApplicationReceiptField[] = [
@@ -467,6 +549,18 @@ export async function runReviewedApplyBrowserCheckForUser(
     {
       label: 'File upload fields',
       value: signals.uploadFields.length ? signals.uploadFields.join(' | ') : 'None detected',
+      source: 'system',
+    },
+    {
+      label: 'Required fields',
+      value: signals.requiredFields.length ? signals.requiredFields.join(' | ') : 'None detected',
+      source: 'system',
+    },
+    {
+      label: 'Missing answer fields',
+      value: signals.missingRequiredFields.length
+        ? signals.missingRequiredFields.join(' | ')
+        : 'None detected',
       source: 'system',
     },
     { label: 'Captcha detected', value: signals.captchaDetected ? 'Yes' : 'No', source: 'system' },
@@ -514,6 +608,8 @@ export async function runReviewedApplyBrowserCheckForUser(
     fields_detected: signals.fieldsDetected,
     submit_detected: signals.submitDetected,
     upload_fields: signals.uploadFields,
+    required_fields: signals.requiredFields,
+    missing_required_fields: signals.missingRequiredFields,
     captcha_detected: signals.captchaDetected,
     status: decision.status,
     summary: decision.summary,

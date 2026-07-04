@@ -329,6 +329,8 @@ export interface ReviewedBrowserCheckResult {
   fields_detected: number;
   submit_detected: boolean;
   upload_fields: string[];
+  required_fields: string[];
+  missing_required_fields: string[];
   captcha_detected: boolean;
   status: 'ready_to_submit' | 'needs_user' | 'failed';
   summary: string;
