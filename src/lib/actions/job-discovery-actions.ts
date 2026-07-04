@@ -52,6 +52,8 @@ export interface JobDiscoveryAlertRow {
   created_at: number;
 }
 
+const OBSERVED_JOB_FEED_USER_ID = 'ops-job-sync-observer';
+
 export interface CompanyWatchDbRow {
   id: string;
   user_id: string;
@@ -204,6 +206,18 @@ export async function listJobDiscoveryAlerts(): Promise<JobDiscoveryAlertRow[]> 
   const result = await db.execute({
     sql: 'SELECT * FROM job_discovery_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
     args: [userId],
+  });
+  return JSON.parse(JSON.stringify(result.rows)) as JobDiscoveryAlertRow[];
+}
+
+export async function listObservedJobFeed(limit = 100): Promise<JobDiscoveryAlertRow[]> {
+  const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
+  const result = await db.execute({
+    sql: `SELECT * FROM job_discovery_alerts
+          WHERE user_id = ?
+          ORDER BY created_at DESC
+          LIMIT ?`,
+    args: [OBSERVED_JOB_FEED_USER_ID, safeLimit],
   });
   return JSON.parse(JSON.stringify(result.rows)) as JobDiscoveryAlertRow[];
 }
