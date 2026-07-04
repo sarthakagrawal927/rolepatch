@@ -312,7 +312,7 @@ export async function recordSavedSearchRun(
   }
 
   const newJobs = diffNewJobs(jobs, previousIds);
-  for (const job of newJobs.slice(0, 10)) {
+  for (const job of newJobs) {
     await db.execute({
       sql: `INSERT INTO job_discovery_alerts (
               id, user_id, alert_type, title, detail, external_job_id, company, job_url, location, source
@@ -376,7 +376,7 @@ export async function runCompanyWatchForUser(watch: CompanyWatch, userId: string
 
   const newJobs = diffNewJobs(jobs, watch.last_result_ids);
 
-  for (const job of newJobs.slice(0, 10)) {
+  for (const job of newJobs) {
     await db.execute({
       sql: `INSERT INTO job_discovery_alerts (
               id, user_id, alert_type, title, detail, external_job_id, company, job_url, location, source

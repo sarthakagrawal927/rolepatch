@@ -137,6 +137,29 @@ describe('runCompanyWatchForUser', () => {
     ]);
   });
 
+  it('stores every new company-watch job instead of only the first ten', async () => {
+    mockDiscoverCompanyCareerJobs.mockResolvedValue({
+      source: 'ashby',
+      jobs: Array.from({ length: 12 }, (_, index) => ({
+        id: `job-${index}`,
+        title: `Engineer ${index}`,
+        company: 'Acme',
+        location: 'Remote',
+        job_url: `https://jobs.ashbyhq.com/acme/${index}`,
+      })),
+    });
+    mockExecute.mockResolvedValue({ rows: [] });
+
+    const { runCompanyWatchForUser } = await import('@/lib/actions/job-discovery-actions');
+    const count = await runCompanyWatchForUser(watch(), 'user-1');
+
+    const insertCalls = mockExecute.mock.calls.filter(([arg]) =>
+      String((arg as { sql?: string }).sql).includes('INSERT INTO job_discovery_alerts')
+    );
+    expect(count).toBe(12);
+    expect(insertCalls).toHaveLength(12);
+  });
+
   it('stores saved-search alert metadata for actionable queue import', async () => {
     mockExecute.mockImplementation((arg) => {
       if (String((arg as { sql?: string }).sql).includes('SELECT last_result_ids')) {
@@ -172,5 +195,31 @@ describe('runCompanyWatchForUser', () => {
       'Remote',
       'lever',
     ]);
+  });
+
+  it('stores every new saved-search job instead of only the first ten', async () => {
+    mockExecute.mockImplementation((arg) => {
+      if (String((arg as { sql?: string }).sql).includes('SELECT last_result_ids')) {
+        return Promise.resolve({ rows: [{ last_result_ids: '[]' }] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    const { recordSavedSearchRun } = await import('@/lib/actions/job-discovery-actions');
+    const jobs = Array.from({ length: 12 }, (_, index) => ({
+      id: `job-${index}`,
+      title: `Platform Engineer ${index}`,
+      company: 'Acme',
+      location: 'Remote',
+      job_url: `https://jobs.lever.co/acme/${index}`,
+      site: 'lever',
+    }));
+    const count = await recordSavedSearchRun('search-1', jobs);
+
+    const insertCalls = mockExecute.mock.calls.filter(([arg]) =>
+      String((arg as { sql?: string }).sql).includes('INSERT INTO job_discovery_alerts')
+    );
+    expect(count).toBe(12);
+    expect(insertCalls).toHaveLength(12);
   });
 });
