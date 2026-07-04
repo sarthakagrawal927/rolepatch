@@ -1,0 +1,40 @@
+name: Manual Job Sync
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Sync target to run"
+        required: true
+        default: "company-watchlist"
+        type: choice
+        options:
+          - company-watchlist
+          - weekly-digest
+
+jobs:
+  run-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run selected RolePatch sync
+        env:
+          TARGET: ${{ inputs.target }}
+          INTERNAL_SECRET: ${{ secrets.ROLEPATCH_INTERNAL_SECRET }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            company-watchlist|weekly-digest) ;;
+            *) echo "Unsupported sync target: $TARGET" >&2; exit 2 ;;
+          esac
+
+          curl_args=(
+            -fsS
+            -X POST
+            -H "x-rolepatch-internal: worker"
+            -w "\nHTTP_STATUS=%{http_code}\n"
+          )
+
+          if [ -n "${INTERNAL_SECRET:-}" ]; then
+            curl_args+=(-H "x-rolepatch-internal-secret: ${INTERNAL_SECRET}")
+          fi
+
+          curl "${curl_args[@]}" "https://rolepatch.com/api/internal/cron/${TARGET}"

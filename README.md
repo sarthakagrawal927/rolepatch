@@ -7,7 +7,7 @@ AI-powered resume tailoring. Paste a job URL, get a resume rewritten to match. G
 | Concern | Service |
 |---------|---------|
 | Hosting | Cloudflare Workers (`resume-tailor`) via `@opennextjs/cloudflare` — custom domain `rolepatch.com` |
-| Database | Turso (libSQL) |
+| Database | Cloudflare D1 |
 | Auth | better-auth + Google OAuth |
 | AI | free-ai-gateway (Workers AI chokepoint) via Vercel AI SDK / OpenAI-compatible adapter |
 | Payments | Dodo Payments |
@@ -17,7 +17,7 @@ PDF rendering uses the Cloudflare Workers Browser Rendering binding (`BROWSER`).
 
 ## Stack
 
-Next.js 16 · React 19 · TypeScript · Tailwind 4 · Turso (libsql) · better-auth (Google) · Vercel AI SDK · CodeMirror · Playwright · Vitest
+Next.js 16 · React 19 · TypeScript · Tailwind 4 · Cloudflare D1 · better-auth (Google) · Vercel AI SDK · CodeMirror · Playwright · Vitest
 
 ## Quick start
 
@@ -27,7 +27,7 @@ cp .env.example .env.local   # fill in values
 pnpm dev                     # http://localhost:3000
 ```
 
-Works fully as guest (localStorage). Sign in with Google to persist to Turso.
+Works fully as guest (localStorage). Sign in with Google to persist to Cloudflare D1.
 
 ## Scripts
 
@@ -44,7 +44,7 @@ pnpm test:e2e      # playwright
 
 See `.env.example`. Required for full use:
 
-- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` — signed-in persistence
+- Cloudflare D1 binding `DB` in `wrangler.toml` — signed-in persistence
 - `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` — OpenAI-compatible AI provider
 - `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth via better-auth
 - `DODO_PAYMENTS_*`, `DODO_PRODUCT_*` — token purchases (optional)

@@ -34,7 +34,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   images: { unoptimized: true },
   serverExternalPackages: [
-    '@libsql/client',
     '@sparticuz/chromium',
     'puppeteer-core',
     '@mozilla/readability',

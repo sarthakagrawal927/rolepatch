@@ -11,7 +11,7 @@ Markdown resume tailoring tool — job scraping + AI diff + cover letter generat
 - Framework: Next.js 16 (App Router), React 19
 - Language: TypeScript
 - Styling: Tailwind CSS v4
-- DB: Turso (libSQL)
+- DB: Cloudflare D1
 - Auth: better-auth (Google OAuth)
 - Editor: CodeMirror (Markdown editing) + react-diff-viewer (diff view)
 - AI: Vercel AI SDK with OpenAI-compatible adapter (swappable `baseURL`)
@@ -42,7 +42,7 @@ src/
     actions/           # Server actions — all data mutations + AI calls
     auth.ts            # better-auth config
     auth-utils.ts      # getCurrentUserId() helper
-    db.ts              # Turso client
+    db.ts              # Cloudflare D1 client
     ai.ts              # AI provider setup (swappable baseURL)
     local-storage.ts   # Guest mode data layer
     types.ts           # TypeScript interfaces
@@ -60,7 +60,7 @@ pnpm lint     # biome check .
 
 ## Architecture notes
 - **Server actions for all mutations** (`src/lib/actions/`). Each action calls `getCurrentUserId()` from `src/lib/auth-utils.ts`.
-- **Guest vs signed-in**: full app works without auth via localStorage (`src/lib/local-storage.ts`). Signed-in users persist to Turso with `user_id` filtering.
+- **Guest vs signed-in**: full app works without auth via localStorage (`src/lib/local-storage.ts`). Signed-in users persist to Cloudflare D1 with `user_id` filtering.
 - **AI provider**: single adapter in `src/lib/ai.ts` — supports free gateway, local AI, or BYOK via `baseURL` swap.
 - **Scraping**: Jina Reader is primary; `linkedom` + `@mozilla/readability` as fallback.
 - **SaaS Maker**: feedback widget + testimonials integrated. Config in `.saasmaker.json`. (SaaS Maker analytics removed — PostHog is the analytics path.)

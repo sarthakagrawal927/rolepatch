@@ -1,6 +1,7 @@
-// Minimal Turso HTTP client. Replaces @libsql/client so the Cloudflare Worker
-// bundle does not pull hrana-client → isomorphic-ws (blocked on workerd).
-// Interface matches the subset the app uses: db.execute({ sql, args }) → { rows }.
+// Minimal D1 client wrapper. Keeps the app-level db.execute/db.transaction API
+// stable while moving persistence onto the Cloudflare D1 binding.
+
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 type SqlArg = string | number | bigint | boolean | null | Uint8Array;
 
@@ -9,218 +10,135 @@ interface ExecuteArgs {
   args?: readonly SqlArg[] | SqlArg[];
 }
 
-interface TursoResultValue {
-  type: 'null' | 'integer' | 'float' | 'text' | 'blob';
-  value?: string;
-  base64?: string;
-}
+type RowValue = string | number | null | Uint8Array;
 
-interface TursoResult {
-  cols: Array<{ name: string }>;
-  rows: TursoResultValue[][];
-  affected_row_count?: number;
-  last_insert_rowid?: string | null;
-}
-
-interface PipelineResponse {
-  results: Array<
-    | { type: 'ok'; response: { type: 'execute'; result: TursoResult } | { type: 'close' } }
-    | { type: 'error'; error: { code?: string; message: string } }
-  >;
-}
-
-type Row = Record<string, string | number | null | Uint8Array> & {
-  [index: number]: string | number | null | Uint8Array;
+type Row = Record<string, RowValue> & {
+  [index: number]: RowValue;
 };
 
-function coerceArg(a: SqlArg) {
-  if (a === null || a === undefined) return { type: 'null' as const };
-  if (typeof a === 'number')
-    return Number.isInteger(a)
-      ? { type: 'integer' as const, value: String(a) }
-      : { type: 'float' as const, value: String(a) };
-  if (typeof a === 'bigint') return { type: 'integer' as const, value: a.toString() };
-  if (typeof a === 'boolean') return { type: 'integer' as const, value: a ? '1' : '0' };
-  if (a instanceof Uint8Array) {
-    let b = '';
-    for (const c of a) b += String.fromCharCode(c);
-    return { type: 'blob' as const, base64: btoa(b) };
-  }
-  return { type: 'text' as const, value: String(a) };
+interface D1Meta {
+  changes?: number;
+  last_row_id?: number;
 }
 
-function coerceRow(cols: Array<{ name: string }>, row: TursoResultValue[]): Row {
-  const out = {} as Row;
-  for (let i = 0; i < cols.length; i++) {
-    const cell = row[i];
-    let v: string | number | null | Uint8Array;
-    switch (cell.type) {
-      case 'null':
-        v = null;
-        break;
-      case 'integer':
-        v = cell.value != null ? Number(cell.value) : null;
-        break;
-      case 'float':
-        v = cell.value != null ? Number(cell.value) : null;
-        break;
-      case 'blob': {
-        if (!cell.base64) {
-          v = new Uint8Array();
-        } else {
-          const bin = atob(cell.base64);
-          const u = new Uint8Array(bin.length);
-          for (let j = 0; j < bin.length; j++) u[j] = bin.charCodeAt(j);
-          v = u;
-        }
-        break;
-      }
-      default:
-        v = cell.value ?? null;
-    }
-    out[cols[i].name] = v!;
-    out[i] = v!;
-  }
-  return out;
+interface D1Result {
+  results?: Record<string, RowValue>[];
+  meta?: D1Meta;
 }
 
-function httpUrlFromLibsqlUrl(raw: string | undefined): string {
-  if (!raw) return '';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw.replace(/\/$/, '');
-  if (raw.startsWith('libsql://'))
-    return `https://${raw.slice('libsql://'.length).replace(/\/$/, '')}`;
-  if (raw.startsWith('wss://')) return `https://${raw.slice('wss://'.length).replace(/\/$/, '')}`;
-  if (raw.startsWith('ws://')) return `http://${raw.slice('ws://'.length).replace(/\/$/, '')}`;
-  throw new Error(`Unsupported TURSO_DATABASE_URL scheme: ${raw}`);
+interface D1PreparedStatement {
+  bind(...values: SqlArg[]): D1PreparedStatement;
+  all<T = Record<string, RowValue>>(): Promise<{ results?: T[]; meta?: D1Meta }>;
+  run(): Promise<{ results?: Record<string, RowValue>[]; meta?: D1Meta }>;
 }
 
-interface ExecuteResult {
+interface D1DatabaseLike {
+  prepare(sql: string): D1PreparedStatement;
+}
+
+interface CloudflareEnv {
+  DB?: D1DatabaseLike;
+}
+
+export interface ExecuteResult {
   rows: Row[];
   columns: string[];
   rowsAffected: number;
   lastInsertRowid: bigint | null;
 }
 
-async function runPipeline(
-  base: string,
-  authToken: string | undefined,
-  baton: string | null,
-  requests: Array<
-    | { type: 'execute'; stmt: { sql: string; args: ReturnType<typeof coerceArg>[] } }
-    | { type: 'close' }
-  >
-): Promise<{ baton: string | null; results: PipelineResponse['results'] }> {
-  if (!base) {
-    throw new Error('TURSO_DATABASE_URL is not set');
+function getD1Binding(): D1DatabaseLike {
+  try {
+    const { env } = getCloudflareContext({ async: false });
+    const db = (env as CloudflareEnv | undefined)?.DB;
+    if (db) return db;
+  } catch {
+    // Outside OpenNext/Workers, there is no D1 binding. Throw below with a
+    // precise setup error rather than leaking an OpenNext context failure.
   }
-  const res = await fetch(`${base}/v2/pipeline`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(authToken ? { authorization: `Bearer ${authToken}` } : {}),
-    },
-    body: JSON.stringify(baton ? { baton, requests } : { requests }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Turso HTTP ${res.status}: ${body.slice(0, 200)}`);
-  }
-  const payload = (await res.json()) as PipelineResponse & { baton?: string | null };
-  for (const r of payload.results) {
-    if (r.type === 'error') throw new Error(`Turso error: ${r.error.message}`);
-  }
-  return { baton: payload.baton ?? null, results: payload.results };
+  throw new Error('Cloudflare D1 binding DB is not configured');
 }
 
-function extractExecute(result: PipelineResponse['results'][number]): ExecuteResult {
-  if (result.type !== 'ok' || result.response.type !== 'execute') {
-    throw new Error('Expected execute response');
-  }
-  const r = result.response.result;
-  const columns = r.cols.map((c) => c.name);
+function coerceArg(value: SqlArg): SqlArg {
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  return value;
+}
+
+function rowWithNumericIndexes(row: Record<string, RowValue>, columns: string[]): Row {
+  const out = { ...row } as Row;
+  columns.forEach((column, index) => {
+    out[index] = row[column] ?? null;
+  });
+  return out;
+}
+
+function statementReturnsRows(sql: string): boolean {
+  const normalized = sql
+    .trim()
+    .replace(/^\/\*[\s\S]*?\*\//, '')
+    .trim();
+  const firstKeyword = normalized.match(/^([a-z]+)/i)?.[1]?.toUpperCase();
+  return (
+    firstKeyword === 'SELECT' ||
+    firstKeyword === 'PRAGMA' ||
+    firstKeyword === 'EXPLAIN' ||
+    firstKeyword === 'WITH' ||
+    /\bRETURNING\b/i.test(normalized)
+  );
+}
+
+async function executeD1(db: D1DatabaseLike, input: ExecuteArgs | string): Promise<ExecuteResult> {
+  const sql = typeof input === 'string' ? input : input.sql;
+  const args = typeof input === 'string' ? [] : [...(input.args ?? [])].map(coerceArg);
+  const statement = db.prepare(sql);
+  const boundStatement = args.length > 0 ? statement.bind(...args) : statement;
+  const payload = (
+    statementReturnsRows(sql) ? await boundStatement.all() : await boundStatement.run()
+  ) as D1Result;
+  const rawRows = payload.results ?? [];
+  const columns = rawRows[0] ? Object.keys(rawRows[0]) : [];
+
   return {
     columns,
-    rows: r.rows.map((row) => coerceRow(r.cols, row)),
-    rowsAffected: r.affected_row_count ?? 0,
-    lastInsertRowid: r.last_insert_rowid ? BigInt(r.last_insert_rowid) : null,
+    rows: rawRows.map((row) => rowWithNumericIndexes(row, columns)),
+    rowsAffected: payload.meta?.changes ?? 0,
+    lastInsertRowid:
+      payload.meta?.last_row_id === undefined || payload.meta.last_row_id === null
+        ? null
+        : BigInt(payload.meta.last_row_id),
   };
 }
 
-function toExecuteRequest(input: ExecuteArgs | string) {
-  const stmt =
-    typeof input === 'string'
-      ? { sql: input, args: [] as SqlArg[] }
-      : { sql: input.sql, args: [...(input.args ?? [])] };
-  return { type: 'execute' as const, stmt: { sql: stmt.sql, args: stmt.args.map(coerceArg) } };
-}
-
-class Transaction {
-  private baton: string | null = null;
+class D1CompatibilityTransaction {
   private closed = false;
-  constructor(
-    private readonly base: string,
-    private readonly authToken: string | undefined,
-    initialBaton: string | null
-  ) {
-    this.baton = initialBaton;
-  }
+
+  constructor(private readonly binding: D1DatabaseLike) {}
 
   async execute(input: ExecuteArgs | string): Promise<ExecuteResult> {
     if (this.closed) throw new Error('Transaction is closed');
-    const { baton, results } = await runPipeline(this.base, this.authToken, this.baton, [
-      toExecuteRequest(input),
-    ]);
-    this.baton = baton;
-    return extractExecute(results[0]);
+    return executeD1(this.binding, input);
   }
 
   async commit(): Promise<void> {
-    if (this.closed) return;
     this.closed = true;
-    await runPipeline(this.base, this.authToken, this.baton, [
-      toExecuteRequest('COMMIT'),
-      { type: 'close' },
-    ]);
   }
 
   async rollback(): Promise<void> {
-    if (this.closed) return;
     this.closed = true;
-    try {
-      await runPipeline(this.base, this.authToken, this.baton, [
-        toExecuteRequest('ROLLBACK'),
-        { type: 'close' },
-      ]);
-    } catch {
-      // best-effort rollback
-    }
   }
 }
 
-class TursoHttpClient {
-  constructor(
-    private readonly base: string,
-    private readonly authToken?: string
-  ) {}
-
+class D1Client {
   async execute(input: ExecuteArgs | string): Promise<ExecuteResult> {
-    const { results } = await runPipeline(this.base, this.authToken, null, [
-      toExecuteRequest(input),
-      { type: 'close' },
-    ]);
-    return extractExecute(results[0]);
+    return executeD1(getD1Binding(), input);
   }
 
-  async transaction(_mode: 'read' | 'write' | 'deferred' = 'write'): Promise<Transaction> {
+  async transaction(
+    _mode: 'read' | 'write' | 'deferred' = 'write'
+  ): Promise<D1CompatibilityTransaction> {
     void _mode;
-    const { baton } = await runPipeline(this.base, this.authToken, null, [
-      toExecuteRequest('BEGIN'),
-    ]);
-    return new Transaction(this.base, this.authToken, baton);
+    return new D1CompatibilityTransaction(getD1Binding());
   }
 }
 
-export const db = new TursoHttpClient(
-  httpUrlFromLibsqlUrl(process.env.TURSO_DATABASE_URL),
-  process.env.TURSO_AUTH_TOKEN
-);
+export const db = new D1Client();

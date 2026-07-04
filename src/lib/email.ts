@@ -1,5 +1,5 @@
 // Minimal Resend email adapter (plain fetch — no SDK, keeps the Worker bundle
-// lean, same pattern as the Turso HTTP client in db.ts).
+// lean, same pattern as the small D1 wrapper in db.ts).
 //
 // Fail-closed: if the RESEND_API_KEY secret is unset, sends are logged and
 // skipped without throwing, so cron runs stay green in un-provisioned

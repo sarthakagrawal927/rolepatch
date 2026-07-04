@@ -258,14 +258,6 @@ CREATE TABLE IF NOT EXISTS application_receipts (
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_job_applications_cleaned_url
-  ON job_applications (url)
-  WHERE user_id IS NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_tailored_resumes_share_slug
-  ON tailored_resumes (share_slug)
-  WHERE share_slug IS NOT NULL;
-
 CREATE TABLE IF NOT EXISTS profile_answers (
   id TEXT PRIMARY KEY,
   user_id TEXT,
@@ -298,3 +290,11 @@ CREATE TABLE IF NOT EXISTS recruiter_reply_events (
   reply_send_error TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_job_applications_cleaned_url
+  ON job_applications (url)
+  WHERE user_id IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tailored_resumes_share_slug
+  ON tailored_resumes (share_slug)
+  WHERE share_slug IS NOT NULL;

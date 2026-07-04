@@ -60,7 +60,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-2">Data Storage</h2>
           <p>
-            Your data is stored in Turso (distributed SQLite) with encryption at rest. We use Vercel
+            Your data is stored in Cloudflare D1 with encryption at rest. We use Cloudflare Workers
             for hosting with edge-level TLS encryption.
           </p>
         </section>
@@ -87,10 +87,11 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Google Auth:</strong> Handles sign-in
             </li>
             <li>
-              <strong className="text-foreground">Vercel:</strong> Hosting and edge delivery
+              <strong className="text-foreground">Cloudflare Workers:</strong> Hosting and edge
+              delivery
             </li>
             <li>
-              <strong className="text-foreground">Turso:</strong> Database
+              <strong className="text-foreground">Cloudflare D1:</strong> Database
             </li>
           </ul>
         </section>

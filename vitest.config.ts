@@ -27,7 +27,6 @@ export default defineConfig({
         'src/**/*.config.{ts,js}',
         'src/**/__tests__/**',
         'src/lib/**/*.sql',
-        'src/lib/isomorphic-ws-shim.js',
       ],
       thresholds: {
         lines: 20,

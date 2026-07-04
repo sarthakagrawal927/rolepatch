@@ -4,8 +4,8 @@ import { createAdapter } from 'better-auth/adapters';
 import { db } from '@/lib/db';
 
 // ---------------------------------------------------------------------------
-// Lightweight SQLite adapter backed by the existing Turso HTTP client.
-// Avoids pulling @libsql/client + drizzle into the CF Worker bundle.
+// Lightweight SQLite adapter backed by the app's Cloudflare D1 wrapper.
+// Avoids pulling a full ORM into the CF Worker bundle.
 // ---------------------------------------------------------------------------
 
 type SqlArg = string | number | boolean | null;
@@ -74,10 +74,10 @@ function buildWhere(
   return { sql: parts.join(' '), args };
 }
 
-const tursoAdapter = createAdapter({
+const d1Adapter = createAdapter({
   config: {
-    adapterId: 'turso-http',
-    adapterName: 'Turso HTTP',
+    adapterId: 'cloudflare-d1',
+    adapterName: 'Cloudflare D1',
     supportsNumericIds: false,
     supportsJSON: false,
     supportsDates: false,
@@ -216,7 +216,7 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 export const auth = betterAuth({
   secret: authSecret,
   baseURL: process.env.BETTER_AUTH_URL,
-  database: tursoAdapter,
+  database: d1Adapter,
   socialProviders:
     googleClientId && googleClientSecret
       ? { google: { clientId: googleClientId, clientSecret: googleClientSecret } }

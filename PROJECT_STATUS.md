@@ -1,6 +1,6 @@
 # resume-tailor — PROJECT STATUS
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 ## Why / What
 
@@ -20,14 +20,14 @@ Live on `rolepatch.com` via Cloudflare Workers (OpenNext).
 
 ### External
 
-- **Turso (libSQL):** Signed-in persistence: jobs, applications, evidence, saved searches, alerts.
+- **Cloudflare D1:** Signed-in persistence: jobs, applications, evidence, saved searches, alerts.
 - **Dodo Payments:** Token purchases; webhook + success verification hardened in audit.
 - **LinkedIn (guest API):** In-Worker job search — no API key; datacenter IP rate limits possible.
 - **Cloudflare Browser Rendering:** PDF resume export (replaces broken puppeteer-core path).
 - **Cloudflare Email Routing:** Inbound recruiter replies to per-user forwarding addresses; Worker `email()` handler routes to internal ingestion.
 - **Resend:** Optional weekly digest sending path; fails closed when `RESEND_API_KEY` is unset.
 - **PostHog:** Product analytics.
-- **Env files:** `.env.example` — `TURSO_*`, `AI_*`, `BETTER_AUTH_*`, `GOOGLE_*`, optional `DODO_*`.
+- **Env files:** `.env.example` — `AI_*`, `BETTER_AUTH_*`, `GOOGLE_*`, optional `DODO_*`, `RESEND_*`, and RAG settings.
 
 ### Internal (fleet)
 
@@ -40,7 +40,7 @@ Live on `rolepatch.com` via Cloudflare Workers (OpenNext).
 
 ### Stack & commands
 
-**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind v4 · CodeMirror · Vitest · Playwright · Cloudflare Workers via `@opennextjs/cloudflare` · Turso · better-auth Google OAuth · Drizzle migrations · Vercel AI SDK · free-ai-gateway · Cloudflare Browser Rendering · Dodo Payments · PostHog · `@saas-maker/feedback` · local astro overlay scripts.
+**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind v4 · CodeMirror · Vitest · Playwright · Cloudflare Workers via `@opennextjs/cloudflare` · Cloudflare D1 · better-auth Google OAuth · Wrangler D1 migrations · Vercel AI SDK · free-ai-gateway · Cloudflare Browser Rendering · Dodo Payments · PostHog · `@saas-maker/feedback` · local astro overlay scripts.
 
 | Command | Purpose |
 | --- | --- |
@@ -175,7 +175,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - **2026-07-04 — Job-matched proof packets shipped:** Application packet proof items are now selected per job from role/JD overlap, so the TrueHire-style proof bridge favors relevant evidence instead of a generic global proof list.
 - **2026-07-04 — TrueHire contract audit shipped:** The TrueHire repo, landing position, public profile/export routes, schema contracts, verification artifacts, and privacy boundaries are inventoried in the RolePatch proof pipeline.
 - **2026-07-04 — TrueHire read-only proof preview shipped:** `/proof` can preview public TrueHire profile exports as RolePatch proof candidates through a no-persistence API/UI bridge, preserving the separate-project boundary.
-- **2026-07-04 — TrueHire opt-in evidence import shipped:** `/proof` can import previewed TrueHire public-work and confirmed-work proof into RolePatch achievement evidence with guest localStorage and signed-in Turso paths, deduped by source and still private until reviewed.
+- **2026-07-04 — TrueHire opt-in evidence import shipped:** `/proof` can import previewed TrueHire public-work and confirmed-work proof into RolePatch achievement evidence with guest localStorage and signed-in Cloudflare D1 paths, deduped by source and still private until reviewed.
 - **2026-07-04 — TrueHire pipeline task recorded:** Symphony task `2d15f69c` now tracks the next non-destructive TrueHire proof-project milestone decision under the `resume-tailor` project.
 - **2026-07-04 — Proof-aware receipts shipped:** Manual submission receipts now snapshot job-matched proof candidates available at review time across signed-in and guest flows, making proof context auditable without claiming automatic employer sharing.
 - **2026-07-04 — Copyable proof packets shipped:** Apply-agent packets now expose a manual copy/export control for job-matched proof points with explicit no-auto-share boundary text, giving users an opt-in proof sharing path.
@@ -199,9 +199,9 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - **2026-07-03 — Company watchlists shipped:** Dashboard can save target-company watches, manually check them, and run active watches daily through Workers cron.
 - **2026-07-03 — Apply-agent command center shipped:** Dashboard queue, readiness summary, packet drawer, profile-answer bank, manual receipts, extension packet API, and Chrome-assisted fill foundation shipped with guest parity.
 - **2026-07-02** — Added global try/catch error handler to OpenNext worker (`worker.mjs`).
-- **2026-06-12 — Application campaign CRM shipped:** Dashboard pipeline tracker with status funnel; inline status changes; follow-up/interview/offer metadata; `ApplicationCampaignTracker` + `JobDetailsModal`; `buildCampaignSummary()` metrics; overdue follow-up alerts; guest parity via localStorage; Turso migrations for campaign fields.
-- **2026-06-12 — Achievement evidence intelligence shipped:** Structured evidence bank at `/evidence`; quality scoring (strong/usable/weak); job-aware ranking injected into tailor prompts; Turso table `achievement_evidence`; guest localStorage key `rt-achievement-evidence`; unit tests in `achievement-evidence.test.ts`.
-- **2026-06-12 — Job discovery alerts shipped:** Saved job searches with pause/delete/re-run; shortlist with duplicate URL detection; in-dashboard alerts; Turso + guest parity; UI in `job-discovery.tsx`. Email notifications explicitly deferred.
+- **2026-06-12 — Application campaign CRM shipped:** Dashboard pipeline tracker with status funnel; inline status changes; follow-up/interview/offer metadata; `ApplicationCampaignTracker` + `JobDetailsModal`; `buildCampaignSummary()` metrics; overdue follow-up alerts; guest parity via localStorage; SQL migrations for campaign fields.
+- **2026-06-12 — Achievement evidence intelligence shipped:** Structured evidence bank at `/evidence`; quality scoring (strong/usable/weak); job-aware ranking injected into tailor prompts; Cloudflare D1 table `achievement_evidence`; guest localStorage key `rt-achievement-evidence`; unit tests in `achievement-evidence.test.ts`.
+- **2026-06-12 — Job discovery alerts shipped:** Saved job searches with pause/delete/re-run; shortlist with duplicate URL detection; in-dashboard alerts; Cloudflare D1 + guest parity; UI in `job-discovery.tsx`. Email notifications explicitly deferred.
 - **Privacy PRD (Option B):** `get-a-job/` and `research/` paths untracked from repo; repository set private. Git history purge (Option A) explicitly parked.
 - **Security audit:** Critical/high closed — guest data isolation, SSRF on scrape, payment webhook atomicity, success verification, AI model allowlist.
 
@@ -218,9 +218,9 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 ### Architecture
 
-- Browser (Next.js 16 App Router, React 19) → OpenNext → `worker.mjs` + ASSETS (`.open-next/assets`); Smart Placement → Turso region.
+- Browser (Next.js 16 App Router, React 19) → OpenNext → `worker.mjs` + ASSETS (`.open-next/assets`); signed-in persistence uses the D1 `DB` binding.
 - Cloudflare Worker `resume-tailor`: server actions, `/api/jobs` routes, Browser Rendering binding (`BROWSER`) for PDF export.
-- Turso libSQL + better-auth Google OAuth for signed-in users; guest flows use localStorage with signed-in sync.
+- Cloudflare D1 + better-auth Google OAuth for signed-in users; guest flows use localStorage with signed-in sync.
 - AI via `AI_BASE_URL` → free-ai-gateway; Dodo Payments for token checkout.
 - Landing: Astro static hero via local `scripts/run-overlay-astro-landing.mjs` overlaid during `cf:build` for fleet perf (psi-swarm TTFB/LCP improvement on `/`).
 - Job search runs natively in Worker — `src/lib/job-search.ts` queries LinkedIn public guest endpoint; `src/app/api/jobs/search/route.ts` exposes it to UI.
@@ -239,7 +239,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 ### Auth & guest mode
 
-- Guest mode via localStorage for full core flows; Google sign-in persists to Turso.
+- Guest mode via localStorage for full core flows; Google sign-in persists to Cloudflare D1.
 - Guest data isolation fixes from security audit.
 - Live production on `rolepatch.com`.
 
@@ -293,7 +293,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - Next actions include user-controlled recruiter and hiring-manager search links scoped to the company/role.
 - Overdue follow-up alerts in dashboard.
 - **Guest parity**: CRM fields stored in localStorage for unsigned users.
-- Tables/migrations for application campaign fields in Turso.
+- Tables/migrations for application campaign fields in Cloudflare D1.
 
 ### Achievement evidence intelligence (2026-06-12)
 
@@ -305,7 +305,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - Evidence cards derive proof-packet readiness from existing fields, showing proof-ready, packet-ready, needs-support, and needs-claim states without claiming external verification.
 - `/proof` previews shareable proof packet items and needs-cleanup items from signed-in evidence or guest localStorage evidence without publishing them.
 - Prepared application packets include optional proof items derived from proof-ready evidence, and the dashboard packet drawer links back to `/proof` for review before any employer sharing.
-- Turso table `achievement_evidence`; guest localStorage key `rt-achievement-evidence`.
+- Cloudflare D1 table `achievement_evidence`; guest localStorage key `rt-achievement-evidence`.
 - Unit tests in `achievement-evidence.test.ts`.
 
 ### Job discovery alerts (2026-06-12, expanded 2026-07-03)
@@ -318,7 +318,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - Dashboard discovery summarizes active saved searches and company watches, unseen alert volume, latest watch yield, fallback/source health, and a source-decision recommendation so expansion decisions can use product evidence.
 - Shortlist with duplicate URL detection.
 - In-dashboard alerts for new saved-search and company-watch matches.
-- Persistence: `saved_job_searches`, `company_watches`, `saved_job_shortlist`, `job_discovery_alerts` (Turso + guest parity). `company_watches` includes `last_source`, `last_found_count`, and `last_error`.
+- Persistence: `saved_job_searches`, `company_watches`, `saved_job_shortlist`, `job_discovery_alerts` (Cloudflare D1 + guest parity). `company_watches` includes `last_source`, `last_found_count`, and `last_error`.
 - UI: `job-discovery.tsx` component on dashboard.
 - Weekly digest scaffolding exists through Workers cron and Resend; it fails closed when `RESEND_API_KEY` is unset.
 - `worker.mjs` dispatches scheduled company-watch and weekly-digest runs to internal routes when production cron triggers are provisioned.

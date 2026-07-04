@@ -17,14 +17,14 @@ RolePatch — AI-powered resume tailoring system.
 
 RolePatch is an AI resume and job-application assistant. It helps users tailor resumes, generate cover letters, research companies, score role fit, prepare STAR stories, and run guest or signed-in application workflows.
 
-RolePatch AI-powered resume tailoring. Paste a job URL, get a resume rewritten to match. Generate cover letters with company research, fit scores, and STAR interview stories. Deployment & External Services Concern Service --------- --------- Hosting Cloudflare Workers resume-tailor via @opennextjs/cloudflare — custom domain rolepatch.com Database Turso libSQL Auth better-auth + Google OAuth AI free-ai-gateway Workers AI chokepoint via Vercel AI SDK / OpenAI-compatible adapter Payments Dodo Payments CI/CD GitHub Actions — auto-deploy to Cloudflare on push to main PDF rendering uses the Cloudflare Workers Browser Rendering binding BROWSER . Stack Next.js 16 · React 19 · TypeScript · Tailwind 4
+RolePatch AI-powered resume tailoring. Paste a job URL, get a resume rewritten to match. Generate cover letters with company research, fit scores, and STAR interview stories. Deployment & External Services Concern Service --------- --------- Hosting Cloudflare Workers resume-tailor via @opennextjs/cloudflare — custom domain rolepatch.com Database Cloudflare D1 Auth better-auth + Google OAuth AI free-ai-gateway Workers AI chokepoint via Vercel AI SDK / OpenAI-compatible adapter Payments Dodo Payments CI/CD GitHub Actions — auto-deploy to Cloudflare on push to main PDF rendering uses the Cloudflare Workers Browser Rendering binding BROWSER . Stack Next.js 16 · React 19 · TypeScript · Tailwind 4
 
 ## Feature Map
 
 - **Cloudflare and deploy**: Workers, Pages, edge runtime, queues, storage, and deploy automation. Keywords: cloudflare, worker, workers, pages, edge, deploy, wrangler, queue.
 - **UI workflows**: Dashboards, tables, forms, component systems, charts, and user workflows. Keywords: ui, ux, dashboard, table, component, react, next, tailwind.
 - **AI agents**: Agents, tool use, workflows, orchestration, RAG, evals, and model integration. Keywords: ai, agent, agents, llm, rag, embedding, eval, model.
-- **Database and storage**: SQL, document storage, migrations, cache, queues, vectors, and persistence. Keywords: database, db, sql, sqlite, postgres, turso, libsql, drizzle.
+- **Database and storage**: SQL, document storage, migrations, cache, queues, vectors, and persistence. Keywords: database, db, sql, sqlite, d1, cloudflare, drizzle.
 - **Testing and quality**: Unit tests, browser tests, evals, CI quality gates, and regression checks. Keywords: test, testing, quality, vitest, playwright, ci, eval, benchmark.
 - **Content and media**: Content production, video, reels, documents, markdown, and publishing workflows. Keywords: content, media, video, reel, markdown, document, publish, editor.
 - **Repo intelligence**: Repository understanding, metadata enrichment, code review, and evidence reports. Keywords: review, static, analysis, diff, history, evidence, verification.
@@ -90,7 +90,6 @@ Direct dependencies:
 - `@codemirror/view`
 - `@dodopayments/nextjs`
 - `@fontsource-variable/geist`
-- `@libsql/client`
 - `@mozilla/readability`
 - `@saas-maker/ai`
 - `@saas-maker/feedback`
