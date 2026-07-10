@@ -127,6 +127,14 @@ export default function RootLayout({
           <AuthProvider>
             <SiteNav />
             {children}
+            <footer className="border-t border-border/60 px-6 py-6 text-sm text-muted-foreground">
+              <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+                <span>RolePatch</span>
+                <a href="/proof" className="transition-colors hover:text-foreground">
+                  TrueHire proof
+                </a>
+              </div>
+            </footer>
           </AuthProvider>
           <VitalsReporter />
         </AnalyticsProvider>
