@@ -1,6 +1,6 @@
 # resume-tailor — PROJECT STATUS
 
-Last updated: 2026-07-05
+Last updated: 2026-07-10
 
 ## Why / What
 
@@ -391,7 +391,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 1. Add deeper provider-specific automation only after reviewed browser receipts have enough real failure-code evidence.
 2. Add live credentialed evidence for payment/provider callbacks once production credentials and callback events are available.
 3. Use saved-search/company-watch engagement and fallback health to decide whether broader job-board coverage is worth adding.
-4. TrueHire proof-project next milestone: tracked in Symphony task `2d15f69c`. Evaluate keeping TrueHire as a separate proof/credibility project under RolePatch, preserve the landing-page and brand strengths, and choose one next non-destructive milestone before any deeper merge.
+4. ~~TrueHire proof-project next milestone~~ — **Decision recorded 2026-07-10:** keep TrueHire as a separate proof/credibility project, with RolePatch retaining the `/proof` preview integration. No deeper merge is planned until live recruiter evidence justifies it.
 
 ### Deferred
 
@@ -405,6 +405,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 - Residual audit: no CORS config (same-origin default).
 - Unattended browser auto-submit and bulk unattended apply remain deferred until reviewed submit plus confirmation receipts prove reliable.
 - Live e2e coverage remains thin for credentialed payment/provider callback paths.
+- TrueHire is paused as a separate proof project after the MVP integration decision; reopen only for measured recruiter validation or a specific proof workflow.
 
 ### Blocked
 
