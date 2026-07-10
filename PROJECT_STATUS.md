@@ -1,6 +1,6 @@
 # resume-tailor — PROJECT STATUS
 
-Last updated: 2026-07-10
+Last updated: 2026-07-11
 
 ## Why / What
 
@@ -61,6 +61,8 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 **Entrypoints:** `worker.mjs` · server actions `src/lib/actions/*` · API routes `/api/jobs` · job search `src/lib/job-search.ts` · PDF `src/lib/pdf.ts` · guest layer `src/lib/local-storage.ts`.
 
 ## Timeline
+
+- **2026-07-11 — Test isolation:** Vitest now installs and resets a deterministic `localStorage` implementation before each test, preventing guest-mode state leakage between suites.
 
 - **2026-07-04 — Guest live job discovery shipped:** Dashboard discovery no longer dead-ends guests; unsigned users can run the native Cloudflare-safe LinkedIn search, save local shortlists/searches, and create local tailoring drafts from discovered jobs while recurring company watches stay signed-in-only.
 - **2026-07-04 — Standalone jobs browser shipped:** `/jobs` now exposes the live job browser outside the dashboard, hydrates guest local resumes for queue/tailor actions, and is linked from app navigation plus the Astro landing page.
