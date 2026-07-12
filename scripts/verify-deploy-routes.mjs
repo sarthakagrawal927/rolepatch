@@ -16,6 +16,7 @@ export const REQUIRED_DEPLOY_ROUTES = [
   '/api/apply-agent/receipts',
   '/api/extension/apply-packet',
   '/api/proof/truehire-preview',
+  '/api/proof/truehire-role-fit',
   '/api/internal/cron/weekly-digest',
 ];
 

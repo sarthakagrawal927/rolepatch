@@ -16,7 +16,7 @@ real migration plan exists.
 | Landing page | `apps/web/src/app/page.tsx`; proof-first positioning: "Your resume is gone. Your work still speaks." | Preserve the proof-first language direction on `/proof`; do not fold it into the resume-tailoring landing by default |
 | Public profile | `apps/web/src/app/[handle]/page.tsx`; profile at `/@handle`, score, evidence rail, risk flags, recruiter takeaway, Signal 2 employment, AI-build profile | Candidate proof profile or private recruiter link; first bridge is read-only preview on `/proof` |
 | Public JSON export | `apps/web/src/app/[handle]/data.json/route.ts`; returns handle, GitHub IDs, latest score, activity months, work history | Safe import source for RolePatch preview because it avoids scraping HTML and needs no secrets |
-| Role-fit JSON export | `apps/web/src/app/[handle]/role-fit/report.json/route.ts?jd=...` | Future RolePatch packet fit/explanation input; not yet wired |
+| Role-fit JSON export | `apps/web/src/app/[handle]/role-fit/report.json/route.ts?jd=...` | Read-only RolePatch `/proof` preview for fit score, verified strengths, and gaps; not imported into packets |
 | Badge / embed / CSV exports | `/badge.svg`, `/embed`, `/repos.csv` | Future optional proof link attachment; not included in application packets yet |
 | Work-history API | `apps/web/src/app/api/work-history/route.ts` | Not imported directly; owner-authenticated and should stay in TrueHire until consent/migration exists |
 | Verification request API | `apps/web/src/app/api/work-history/[id]/verify/route.ts` plus `/verify/[token]` | External verification remains unshipped in RolePatch; only confirmed public results may be previewed |
@@ -65,6 +65,18 @@ achievement evidence. Signed-in imports use Turso through the existing
 achievement evidence action path, guests use localStorage, and duplicate imports
 are skipped by source/title. Imported items remain private review material until
 a later opt-in proof attachment flow ships.
+
+RolePatch now consumes the public TrueHire role-fit JSON as a preview-only
+report on `/proof`:
+
+- API: `GET /api/proof/truehire-role-fit?handle=@handle&jd=...`
+- Mapper: `src/lib/truehire-proof.ts`
+- UI: `src/components/truehire-proof-preview.tsx`
+
+The report renders TrueHire fit score, verified strengths, and gaps for a pasted
+job description. It does not import role-fit results into achievement evidence,
+attach them to application packets, publish an employer-facing link, or change
+application receipts.
 
 ## Privacy And Safety Boundaries
 

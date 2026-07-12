@@ -121,6 +121,10 @@ Preferred direction:
   explicitly asks for proof, examples, GitHub, portfolio, references, or
   verification. This keeps proof sharing inside the existing editable reply flow
   instead of sending artifacts automatically.
+- The next non-destructive milestone is role-fit JSON consumption: RolePatch
+  reads TrueHire's public `role-fit/report.json` for a user-provided job
+  description and renders a preview-only strengths/gaps report on `/proof`
+  without importing, attaching, publishing, or sharing the result.
 - Keep TrueHire as a separate named project if its landing page, promise, and
   credibility-focused positioning are stronger than folding it into RolePatch.
 - Treat RolePatch as the operating system for job applications and TrueHire as

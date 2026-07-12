@@ -16,6 +16,9 @@ describe('deploy route verifier', () => {
     expect(manifestKeyForRoute('/api/proof/truehire-preview')).toBe(
       '/api/proof/truehire-preview/route'
     );
+    expect(manifestKeyForRoute('/api/proof/truehire-role-fit')).toBe(
+      '/api/proof/truehire-role-fit/route'
+    );
   });
 
   it('passes when all required deploy routes exist', () => {
