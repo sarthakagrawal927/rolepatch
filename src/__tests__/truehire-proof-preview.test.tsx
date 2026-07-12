@@ -196,4 +196,74 @@ describe('TrueHireProofPreview', () => {
 
     expect(await screen.findByText('TrueHire profile not found.')).toBeDefined();
   });
+
+  it('previews TrueHire role-fit JSON without import or share controls', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          boundary:
+            'Role-fit preview is read-only. RolePatch does not import, attach, or share this report automatically.',
+          role_fit: {
+            handle: 'sarthak',
+            generated_at: '2026-07-10T00:00:00.000Z',
+            profile_url: 'https://truehire.example/@sarthak',
+            fit_score: 82,
+            summary: {
+              total_requirements: 2,
+              verified_requirements: 1,
+              gap_count: 1,
+              top_languages: ['TypeScript'],
+            },
+            verified_strengths: [
+              {
+                label: 'TypeScript',
+                category: 'language',
+                score: 90,
+                remediation: 'Keep this proof fresh.',
+                strengths: [
+                  {
+                    repo_full_name: 'sarthak/rolepatch',
+                    primary_language: 'TypeScript',
+                    commits: 250,
+                    merged_prs: 4,
+                    stars: 40,
+                    matched_signals: ['typescript'],
+                  },
+                ],
+              },
+            ],
+            gaps: [
+              {
+                label: 'Testing discipline',
+                category: 'practice',
+                score: 20,
+                remediation: 'Add clearer tests.',
+                strengths: [],
+              },
+            ],
+          },
+        }),
+      })
+    );
+
+    render(<TrueHireProofPreview />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('TrueHire handle'), '@sarthak');
+    await user.type(
+      screen.getByLabelText('Role-fit job description'),
+      'Frontend TypeScript engineer role with React and testing requirements.'
+    );
+    await user.click(screen.getByRole('button', { name: 'Analyze role fit' }));
+
+    expect(await screen.findByText('TrueHire role-fit report')).toBeDefined();
+    expect(screen.getByText('82')).toBeDefined();
+    expect(screen.getByText('Verified strengths')).toBeDefined();
+    expect(screen.getByText('TypeScript')).toBeDefined();
+    expect(screen.getByText('sarthak/rolepatch')).toBeDefined();
+    expect(screen.getByText('Testing discipline')).toBeDefined();
+    expect(screen.queryByRole('button', { name: /import|attach|share/i })).toBeNull();
+  });
 });

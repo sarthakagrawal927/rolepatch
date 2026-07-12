@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   mapTrueHirePublicExportToProof,
+  mapTrueHireRoleFitExport,
   normalizeTrueHireHandle,
   trueHireDataUrl,
   trueHireEvidenceDedupeKey,
   trueHireProofItemToEvidenceInput,
+  trueHireRoleFitUrl,
 } from '@/lib/truehire-proof';
 
 describe('truehire proof mapping', () => {
@@ -21,6 +23,9 @@ describe('truehire proof mapping', () => {
   it('builds a stable public data URL', () => {
     expect(trueHireDataUrl('sarthak', 'https://truehire.example')).toBe(
       'https://truehire.example/@sarthak/data.json'
+    );
+    expect(trueHireRoleFitUrl('sarthak', 'frontend engineer', 'https://truehire.example')).toBe(
+      'https://truehire.example/@sarthak/role-fit/report.json?jd=frontend+engineer'
     );
   });
 
@@ -137,5 +142,86 @@ describe('truehire proof mapping', () => {
       impact_type: 'technical',
     });
     expect(trueHireEvidenceDedupeKey(input)).toContain('[TrueHire] sarthak/rolepatch');
+  });
+
+  it('maps TrueHire role-fit JSON into a preview-safe shape', () => {
+    const preview = mapTrueHireRoleFitExport(
+      {
+        handle: 'sarthak',
+        generatedAt: '2026-07-10T00:00:00.000Z',
+        report: {
+          fitScore: 76,
+          summary: {
+            totalRequirements: 3,
+            verifiedRequirements: 2,
+            gapCount: 1,
+            topLanguages: ['TypeScript', 'Go'],
+          },
+          verifiedStrengths: [
+            {
+              requirement: { label: 'TypeScript', category: 'language' },
+              score: 88,
+              remediation: 'Keep this proof fresh.',
+              strengths: [
+                {
+                  repoFullName: 'sarthak/rolepatch',
+                  primaryLanguage: 'TypeScript',
+                  commits: 250,
+                  mergedPrs: 4,
+                  stars: 40,
+                  matchedSignals: ['typescript', 'react'],
+                },
+              ],
+            },
+          ],
+          gaps: [
+            {
+              requirement: { label: 'Testing discipline', category: 'practice' },
+              score: 20,
+              remediation: 'Add tests and CI evidence.',
+              strengths: [],
+            },
+          ],
+        },
+      },
+      'https://truehire.example'
+    );
+
+    expect(preview).toMatchObject({
+      handle: 'sarthak',
+      profile_url: 'https://truehire.example/@sarthak',
+      fit_score: 76,
+      summary: {
+        total_requirements: 3,
+        verified_requirements: 2,
+        gap_count: 1,
+        top_languages: ['TypeScript', 'Go'],
+      },
+      verified_strengths: [
+        {
+          label: 'TypeScript',
+          category: 'language',
+          score: 88,
+          strengths: [
+            {
+              repo_full_name: 'sarthak/rolepatch',
+              primary_language: 'TypeScript',
+              commits: 250,
+              merged_prs: 4,
+              stars: 40,
+              matched_signals: ['typescript', 'react'],
+            },
+          ],
+        },
+      ],
+      gaps: [
+        {
+          label: 'Testing discipline',
+          category: 'practice',
+          score: 20,
+          remediation: 'Add tests and CI evidence.',
+        },
+      ],
+    });
   });
 });

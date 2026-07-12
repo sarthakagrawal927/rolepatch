@@ -39,6 +39,38 @@ export interface TrueHireProofEvidenceInput {
   impact_type: 'technical' | 'leadership' | 'other';
 }
 
+export interface TrueHireRoleFitEvidence {
+  repo_full_name: string;
+  primary_language: string | null;
+  commits: number;
+  merged_prs: number;
+  stars: number;
+  matched_signals: string[];
+}
+
+export interface TrueHireRoleFitRequirement {
+  label: string;
+  category: string;
+  score: number;
+  remediation: string;
+  strengths: TrueHireRoleFitEvidence[];
+}
+
+export interface TrueHireRoleFitPreview {
+  handle: string;
+  generated_at: string | null;
+  profile_url: string;
+  fit_score: number;
+  summary: {
+    total_requirements: number;
+    verified_requirements: number;
+    gap_count: number;
+    top_languages: string[];
+  };
+  verified_strengths: TrueHireRoleFitRequirement[];
+  gaps: TrueHireRoleFitRequirement[];
+}
+
 interface TrueHirePublicExport {
   handle?: unknown;
   lastScoredAt?: unknown;
@@ -54,6 +86,41 @@ interface TrueHirePublicExport {
     monthsActive?: unknown;
   } | null;
   workHistory?: unknown;
+}
+
+interface TrueHireRoleFitExport {
+  handle?: unknown;
+  generatedAt?: unknown;
+  report?: {
+    fitScore?: unknown;
+    summary?: {
+      totalRequirements?: unknown;
+      verifiedRequirements?: unknown;
+      gapCount?: unknown;
+      topLanguages?: unknown;
+    };
+    verifiedStrengths?: unknown;
+    gaps?: unknown;
+  };
+}
+
+interface TrueHireRoleFitResult {
+  requirement?: {
+    label?: unknown;
+    category?: unknown;
+  };
+  score?: unknown;
+  strengths?: unknown;
+  remediation?: unknown;
+}
+
+interface TrueHireRoleFitRawEvidence {
+  repoFullName?: unknown;
+  primaryLanguage?: unknown;
+  commits?: unknown;
+  mergedPrs?: unknown;
+  stars?: unknown;
+  matchedSignals?: unknown;
 }
 
 interface TrueHireEvidenceEntry {
@@ -103,6 +170,16 @@ export function trueHireProfileUrl(handle: string, baseUrl = TRUEHIRE_PUBLIC_BAS
 
 export function trueHireDataUrl(handle: string, baseUrl = TRUEHIRE_PUBLIC_BASE_URL): string {
   return new URL(`/@${handle}/data.json`, ensureTrailingSlash(baseUrl)).toString();
+}
+
+export function trueHireRoleFitUrl(
+  handle: string,
+  jobDescription: string,
+  baseUrl = TRUEHIRE_PUBLIC_BASE_URL
+): string {
+  const url = new URL(`/@${handle}/role-fit/report.json`, ensureTrailingSlash(baseUrl));
+  url.searchParams.set('jd', jobDescription);
+  return url.toString();
 }
 
 export function mapTrueHirePublicExportToProof(
@@ -185,6 +262,37 @@ export function mapTrueHirePublicExportToProof(
   return { profile, items: [...workItems, ...evidenceItems] };
 }
 
+export function mapTrueHireRoleFitExport(
+  payload: TrueHireRoleFitExport,
+  baseUrl = TRUEHIRE_PUBLIC_BASE_URL
+): TrueHireRoleFitPreview {
+  const handle = normalizeTrueHireHandle(String(payload.handle ?? '')) ?? 'unknown';
+  const report = payload.report ?? {};
+  const summary = report.summary ?? {};
+  return {
+    handle,
+    generated_at: typeof payload.generatedAt === 'string' ? payload.generatedAt : null,
+    profile_url: trueHireProfileUrl(handle, baseUrl),
+    fit_score: toNumber(report.fitScore),
+    summary: {
+      total_requirements: toNumber(summary.totalRequirements),
+      verified_requirements: toNumber(summary.verifiedRequirements),
+      gap_count: toNumber(summary.gapCount),
+      top_languages: parseUnknownList<string>(summary.topLanguages)
+        .filter((item) => typeof item === 'string' && item.trim())
+        .slice(0, 4),
+    },
+    verified_strengths: parseUnknownList<TrueHireRoleFitResult>(report.verifiedStrengths)
+      .map(mapRoleFitRequirement)
+      .filter((item) => item.label)
+      .slice(0, 4),
+    gaps: parseUnknownList<TrueHireRoleFitResult>(report.gaps)
+      .map(mapRoleFitRequirement)
+      .filter((item) => item.label)
+      .slice(0, 4),
+  };
+}
+
 export function trueHireProofItemToEvidenceInput(
   item: TrueHireProofItem,
   profile: TrueHireProofProfile
@@ -209,6 +317,31 @@ export function trueHireEvidenceDedupeKey(
   input: Pick<TrueHireProofEvidenceInput, 'title' | 'situation'>
 ) {
   return `${input.title}\n${input.situation}`;
+}
+
+function mapRoleFitRequirement(result: TrueHireRoleFitResult): TrueHireRoleFitRequirement {
+  return {
+    label: typeof result.requirement?.label === 'string' ? result.requirement.label : '',
+    category: typeof result.requirement?.category === 'string' ? result.requirement.category : '',
+    score: toNumber(result.score),
+    remediation: typeof result.remediation === 'string' ? result.remediation : '',
+    strengths: parseUnknownList<TrueHireRoleFitRawEvidence>(result.strengths)
+      .map((item) => ({
+        repo_full_name: typeof item.repoFullName === 'string' ? item.repoFullName : '',
+        primary_language:
+          typeof item.primaryLanguage === 'string' && item.primaryLanguage.trim()
+            ? item.primaryLanguage
+            : null,
+        commits: toNumber(item.commits),
+        merged_prs: toNumber(item.mergedPrs),
+        stars: toNumber(item.stars),
+        matched_signals: parseUnknownList<string>(item.matchedSignals)
+          .filter((signal) => typeof signal === 'string' && signal.trim())
+          .slice(0, 8),
+      }))
+      .filter((item) => item.repo_full_name)
+      .slice(0, 4),
+  };
 }
 
 function ensureTrailingSlash(value: string): string {
