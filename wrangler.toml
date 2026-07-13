@@ -36,7 +36,7 @@ database_id = "6d29da06-bc98-44e0-b0b4-a2fc56c61226"
 NODE_ENV = "production"
 # All AI traffic routes through free-ai-gateway (single Fleet-wide Workers AI
 # chokepoint with daily Neuron budget). Override per-env if needed.
-AI_BASE_URL = "https://free-ai-gateway.sarthakagrawal927.workers.dev/v1"
+AI_BASE_URL = "https://ai-gateway.sassmaker.com/v1"
 BETTER_AUTH_URL = "https://rolepatch.com"
 
 # Browser Rendering binding — replaces broken puppeteer-core + @sparticuz/chromium.

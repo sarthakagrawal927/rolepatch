@@ -47,7 +47,7 @@ All providers are OpenAI-compatible. Single Vercel AI SDK OpenAI adapter with sw
 
 | Preset | Base URL | Auth |
 |--------|----------|------|
-| Free AI Gateway | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` | Gateway key |
+| Free AI Gateway | `https://ai-gateway.sassmaker.com/v1` | Gateway key |
 | Local AI | `http://localhost:3456/api` | None (local) |
 | BYOK | User-provided | User-provided API key |
 

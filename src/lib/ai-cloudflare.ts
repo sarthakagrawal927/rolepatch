@@ -27,7 +27,7 @@ function createAIModel(
  */
 const DEFAULT_GATEWAY_MODEL = 'auto';
 
-const FALLBACK_GATEWAY_BASE_URL = 'https://free-ai-gateway.sarthakagrawal927.workers.dev/v1';
+const FALLBACK_GATEWAY_BASE_URL = 'https://ai-gateway.sassmaker.com/v1';
 const PROJECT_ID = 'resume-tailor';
 
 function getGatewayBaseUrl(): string {

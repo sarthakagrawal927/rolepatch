@@ -33,7 +33,7 @@ Live on `rolepatch.com` via Cloudflare Workers (OpenNext).
 
 | Service | Role |
 | --- | --- |
-| **free-ai** | All AI traffic via Workers AI chokepoint (`https://free-ai-gateway.sarthakagrawal927.workers.dev/v1`) |
+| **free-ai** | All AI traffic via Workers AI chokepoint (`https://ai-gateway.sassmaker.com/v1`) |
 | **knowledge-base** | Optional semantic job/resume similarity via the shared RAG service (`RAG_SERVICE_KEY` + `ROLEPATCH_RAG_INDEX_ID`) |
 | **SaaS Maker feedback** | Optional `NEXT_PUBLIC_SAASMAKER_API_KEY` |
 | **Local astro landing scripts** | Astro static hero overlaid during `cf:build` via `scripts/run-overlay-astro-landing.mjs` (fleet perf / psi-swarm TTFB-LCP on `/`) |
@@ -215,7 +215,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 | Primary app | `https://rolepatch.com` |
 | WWW redirect route | `https://www.rolepatch.com/*` |
 | Auth callback base | `BETTER_AUTH_URL=https://rolepatch.com` |
-| AI gateway | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` |
+| AI gateway | `https://ai-gateway.sassmaker.com/v1` |
 
 ## Features (shipped)
 
