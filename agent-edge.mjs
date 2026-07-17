@@ -6,7 +6,8 @@
 export const AGENT_SURFACE = {
   name: 'RolePatch',
   url: 'https://rolepatch.com',
-  llmsTxt: '# RolePatch\n' +
+  llmsTxt:
+    '# RolePatch\n' +
     '\n' +
     '> AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.\n' +
     '\n' +
@@ -25,7 +26,8 @@ export const AGENT_SURFACE = {
     '## Optional\n' +
     '\n' +
     '- [Foundry](https://sassmaker.com): Parent fleet showcase\n',
-  indexMd: '# RolePatch\n' +
+  indexMd:
+    '# RolePatch\n' +
     '\n' +
     'AI-powered resume tailoring and job-application assistant.\n' +
     '\n' +
@@ -55,7 +57,7 @@ export const AGENT_SURFACE = {
     sitemap: 'https://rolepatch.com/sitemap.xml',
     markdown: {
       suffix: '.md',
-      negotiation: true
+      negotiation: true,
     },
     surfaces: [
       {
@@ -63,29 +65,29 @@ export const AGENT_SURFACE = {
         url: 'https://rolepatch.com/',
         md: 'https://rolepatch.com/index.md',
         kind: 'static',
-        description: 'Product home'
+        description: 'Product home',
       },
       {
         id: 'pricing',
         url: 'https://rolepatch.com/pricing',
         md: null,
         kind: 'static',
-        description: 'Plans and limits'
+        description: 'Plans and limits',
       },
       {
         id: 'tools',
         url: 'https://rolepatch.com/tools',
         md: null,
         kind: 'static',
-        description: 'Public tools'
-      }
+        description: 'Public tools',
+      },
     ],
     auth: {
       public: true,
-      notes: 'Auth-walled app routes are not agent-indexed unless listed here.'
-    }
+      notes: 'Auth-walled app routes are not agent-indexed unless listed here.',
+    },
   },
-  llmsFull: null
+  llmsFull: null,
 };
 
 /**
