@@ -1,0 +1,39 @@
+{
+  "name": "RolePatch",
+  "version": "1",
+  "url": "https://rolepatch.com",
+  "llms": "https://rolepatch.com/llms.txt",
+  "llmsFull": null,
+  "sitemap": "https://rolepatch.com/sitemap.xml",
+  "markdown": {
+    "suffix": ".md",
+    "negotiation": true
+  },
+  "surfaces": [
+    {
+      "id": "home",
+      "url": "https://rolepatch.com/",
+      "md": "https://rolepatch.com/index.md",
+      "kind": "static",
+      "description": "Product home"
+    },
+    {
+      "id": "pricing",
+      "url": "https://rolepatch.com/pricing",
+      "md": null,
+      "kind": "static",
+      "description": "Plans and limits"
+    },
+    {
+      "id": "tools",
+      "url": "https://rolepatch.com/tools",
+      "md": null,
+      "kind": "static",
+      "description": "Public tools"
+    }
+  ],
+  "auth": {
+    "public": true,
+    "notes": "Auth-walled app routes are not agent-indexed unless listed here."
+  }
+}

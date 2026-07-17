@@ -1,25 +1,19 @@
 # RolePatch
 
-> AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep for interviews. Guest mode available; Google sign-in for saved resumes.
-
-Deployed on Cloudflare Workers. Uses Gemini for generation; Cloudflare D1 for persistence.
+> AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.
 
 ## Product
 
-- [Home](https://rolepatch.com/): Value prop, demo, and sign-in
-- [Free tools](https://rolepatch.com/tools): ATS check, keyword match, bullet check, word count, and more
+- [Home](https://rolepatch.com/): Product landing
 - [Pricing](https://rolepatch.com/pricing): Plans and limits
-- [Dashboard](https://rolepatch.com/dashboard): Saved resumes and tailoring history (signed in)
-- [Privacy](https://rolepatch.com/privacy): Data handling and Gemini usage
-- [Terms](https://rolepatch.com/terms): Terms of service
+- [Tools](https://rolepatch.com/tools): Public tools
 
-## Tools
+## Machine surfaces
 
-- [ATS check](https://rolepatch.com/tools/ats-check): Parse-friendly resume structure check
-- [Keywords](https://rolepatch.com/tools/keywords): Job-description keyword overlap
-- [Bullet check](https://rolepatch.com/tools/bullet-check): Action-verb and impact lint for bullets
+- [Agent catalog](https://rolepatch.com/api/ai): JSON inventory of public surfaces
+- [Homepage markdown](https://rolepatch.com/index.md): Product brief without JS
+- [This index](https://rolepatch.com/llms.txt)
 
 ## Optional
 
-- [GitHub](https://github.com/sarthak-fleet/resume-tailor): Source
-- [Foundry](https://sassmaker.com): Fleet context
+- [Foundry](https://sassmaker.com): Parent fleet showcase
