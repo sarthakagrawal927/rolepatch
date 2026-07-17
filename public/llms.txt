@@ -6,30 +6,12 @@
 
 - [Home](https://rolepatch.com/): Product landing
 - [Pricing](https://rolepatch.com/pricing): Plans and limits
-- [Proof](https://rolepatch.com/proof): Evidence and outcomes
-- [Evidence](https://rolepatch.com/evidence): How scoring works
-
-## Free tools (index these)
-
-- [Tools hub](https://rolepatch.com/tools): All free resume tools
-- [Resume diff](https://rolepatch.com/tools/diff): Compare two resume versions
-- [Keywords](https://rolepatch.com/tools/keywords): Job-description keyword finder
-- [ATS check](https://rolepatch.com/tools/ats-check): ATS parseability check
-- [Bullet check](https://rolepatch.com/tools/bullet-check): Bullet quality check
-- [Word count](https://rolepatch.com/tools/word-count): Resume length tool
-- [Snippets](https://rolepatch.com/tools/snippets): Resume snippet library
-
-## Blog
-
-- [Blog](https://rolepatch.com/blog): Career writing guides
-- [Why tailoring works](https://rolepatch.com/blog/why-tailoring-resume-matters)
-- [ATS scores explained](https://rolepatch.com/blog/ats-score-explained)
-- [Resume keywords guide](https://rolepatch.com/blog/resume-keywords-guide)
+- [Tools](https://rolepatch.com/tools): Public tools
 
 ## Machine surfaces
 
-- [Agent catalog](https://rolepatch.com/api/ai): JSON inventory
-- [Homepage markdown](https://rolepatch.com/index.md)
+- [Agent catalog](https://rolepatch.com/api/ai): JSON inventory of public surfaces
+- [Homepage markdown](https://rolepatch.com/index.md): Product brief without JS
 - [This index](https://rolepatch.com/llms.txt)
 
 ## Optional

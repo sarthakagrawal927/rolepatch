@@ -1,0 +1,47 @@
+# RolePatch — full agent brief
+
+AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.
+
+## Index
+
+# RolePatch
+
+AI-powered resume tailoring and job-application assistant.
+
+## What it is
+
+- Score resume fit against a job description
+- Rewrite bullets for the role
+- Cover letters, company research, STAR prep
+
+## Who it's for
+
+Job seekers who want reviewed, role-specific application materials — not generic AI fluff.
+
+## Agent entrypoints
+
+- https://rolepatch.com/llms.txt
+- https://rolepatch.com/api/ai
+- https://rolepatch.com/index.md
+
+Dashboard routes require auth and are not agent-indexed.
+
+## Product links
+
+- Home: https://rolepatch.com/ — Product landing
+- Pricing: https://rolepatch.com/pricing — Plans and limits
+- Tools: https://rolepatch.com/tools — Public tools
+
+## Machine surfaces
+
+- https://rolepatch.com/llms.txt
+- https://rolepatch.com/llms-full.txt
+- https://rolepatch.com/api/ai
+- https://rolepatch.com/index.md
+- https://rolepatch.com/sitemap.xml
+- https://rolepatch.com/robots.txt
+
+## Contact / fleet
+
+- Fleet: https://sassmaker.com
+- Agent email for directory verification: sarthakagrawal@agentmail.to

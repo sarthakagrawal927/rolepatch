@@ -3,8 +3,9 @@
   "version": "1",
   "url": "https://rolepatch.com",
   "llms": "https://rolepatch.com/llms.txt",
-  "llmsFull": null,
+  "llmsFull": "https://rolepatch.com/llms-full.txt",
   "sitemap": "https://rolepatch.com/sitemap.xml",
+  "robots": "https://rolepatch.com/robots.txt",
   "markdown": {
     "suffix": ".md",
     "negotiation": true
