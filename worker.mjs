@@ -23,8 +23,27 @@ export {
   BucketCachePurge,
 } from './.open-next/worker.js';
 
-const CACHE_PATH = '/';
 const CACHE_CONTROL = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
+// Marketing / value-add HTML — edge-cache like the homepage (anon only).
+const CACHEABLE_EXACT = new Set([
+  '/',
+  '/pricing',
+  '/proof',
+  '/evidence',
+  '/tools',
+  '/blog',
+  '/privacy',
+  '/terms',
+]);
+const CACHEABLE_PREFIXES = ['/tools', '/blog'];
+function isCacheableDocumentPath(pathname) {
+  if (!pathname) return false;
+  if (CACHEABLE_EXACT.has(pathname)) return true;
+  for (const prefix of CACHEABLE_PREFIXES) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return true;
+  }
+  return false;
+}
 const INTERNAL_PATH_PREFIX = '/api/internal/';
 const INTERNAL_HEADER = 'x-rolepatch-internal';
 const INTERNAL_HEADER_VALUE = 'worker';
@@ -132,7 +151,7 @@ export default {
       if (request.method !== 'GET') {
         return openNext.fetch(request, env, ctx);
       }
-      if (url.pathname !== CACHE_PATH) {
+      if (!isCacheableDocumentPath(url.pathname)) {
         return openNext.fetch(request, env, ctx);
       }
       // Auth-bearing requests pass straight through; the user is likely
@@ -146,12 +165,14 @@ export default {
       // For anon GET /, serve straight from the assets binding instead of
       // booting the full OpenNext stack (next-server, middleware handler,
       // Beasties pipeline, etc.). Cuts TTFB from ~250ms to ~30ms.
+      // Marketing subpages fall through to caches.default + OpenNext below.
       //
       // The Workers Static Assets binding does NOT auto-compress its
       // responses (Lighthouse flagged ~80 KB wasted on uncompressed HTML
       // even with CF Edge cache HIT). Compress with gzip here so the
       // response — and the downstream CF Edge cache entry — is small.
-      if (env.ASSETS) {
+      // Only Astro overlay at `/` is static; marketing pages use edge HTML cache.
+      if (env.ASSETS && url.pathname === '/') {
         const assetResp = await env.ASSETS.fetch(request);
         // The assets binding answers If-None-Match revalidations with 304.
         // Pass those through — falling through would serve the wrong page.
