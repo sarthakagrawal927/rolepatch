@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/jobs', label: 'Jobs' },
   { href: '/tools', label: 'Free Tools' },
+  { href: '/blog', label: 'Blog' },
   { href: '/evidence', label: 'Evidence' },
   { href: '/proof', label: 'Proof' },
   { href: '/stash', label: 'Stash' },
