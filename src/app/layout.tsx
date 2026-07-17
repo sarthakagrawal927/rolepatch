@@ -60,7 +60,7 @@ export const metadata: Metadata = {
       'Tailor your resume to any job description with AI. See exactly what changed word by word.',
     images: [
       {
-        url: '/og-image.svg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'RolePatch — See every change in your resume',
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     creator: '@sarthakcodes',
     title: 'RolePatch — AI Resume Tailoring with Diff View',
     description: 'Tailor your resume to any job description with AI. See exactly what changed.',
-    images: ['/og-image.svg'],
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
@@ -86,9 +86,8 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  alternates: {
-    canonical: 'https://rolepatch.com',
-  },
+  // No site-wide canonical — it was inherited by every page (including /tools/*)
+  // and de-indexed free tools. Homepage and routes set self-canonicals.
 };
 
 export default function RootLayout({

@@ -1,5 +1,8 @@
 # RolePatch
 
+**Product:** [rolepatch.com](https://rolepatch.com)
+
+
 AI-powered resume tailoring. Paste a job URL, get a resume rewritten to match. Generate cover letters with company research, fit scores, and STAR interview stories.
 
 ## Deployment & External Services
