@@ -9,55 +9,53 @@
  */
 
 /** @type {{ name: string, url: string, llmsTxt: string, llmsFullTxt?: string, indexMd: string, catalog: object }} */
+// biome-ignore format: generated payload from apply-agent-surfaces (JSON keys/quotes)
 export const AGENT_SURFACE = {
-  name: 'RolePatch',
-  url: 'https://rolepatch.com',
-  llmsFullTxt:
-    "# RolePatch — full agent brief\n\nAI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.\n\n## Index\n\n# RolePatch\n\nAI-powered resume tailoring and job-application assistant.\n\n## What it is\n\n- Score resume fit against a job description\n- Rewrite bullets for the role\n- Cover letters, company research, STAR prep\n\n## Who it's for\n\nJob seekers who want reviewed, role-specific application materials — not generic AI fluff.\n\n## Agent entrypoints\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n\nDashboard routes require auth and are not agent-indexed.\n\n## Product links\n\n- Home: https://rolepatch.com/ — Product landing\n- Pricing: https://rolepatch.com/pricing — Plans and limits\n- Tools: https://rolepatch.com/tools — Public tools\n\n## Machine surfaces\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/llms-full.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n- https://rolepatch.com/sitemap.xml\n- https://rolepatch.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
-  llmsTxt:
-    '# RolePatch\n\n> AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.\n\n## Product\n\n- [Home](https://rolepatch.com/): Product landing\n- [Pricing](https://rolepatch.com/pricing): Plans and limits\n- [Tools](https://rolepatch.com/tools): Public tools\n\n## Machine surfaces\n\n- [Agent catalog](https://rolepatch.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://rolepatch.com/index.md): Product brief without JS\n- [This index](https://rolepatch.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n',
-  indexMd:
-    "# RolePatch\n\nAI-powered resume tailoring and job-application assistant.\n\n## What it is\n\n- Score resume fit against a job description\n- Rewrite bullets for the role\n- Cover letters, company research, STAR prep\n\n## Who it's for\n\nJob seekers who want reviewed, role-specific application materials — not generic AI fluff.\n\n## Agent entrypoints\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n\nDashboard routes require auth and are not agent-indexed.\n",
-  catalog: {
-    name: 'RolePatch',
-    version: '1',
-    url: 'https://rolepatch.com',
-    llms: 'https://rolepatch.com/llms.txt',
-    llmsFull: 'https://rolepatch.com/llms-full.txt',
-    sitemap: 'https://rolepatch.com/sitemap.xml',
-    robots: 'https://rolepatch.com/robots.txt',
-    markdown: {
-      suffix: '.md',
-      negotiation: true,
+  "name": "RolePatch",
+  "url": "https://rolepatch.com",
+  "llmsFullTxt": "# RolePatch — full agent brief\n\nAI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.\n\n## Index\n\n# RolePatch\n\nAI-powered resume tailoring and job-application assistant.\n\n## What it is\n\n- Score resume fit against a job description\n- Rewrite bullets for the role\n- Cover letters, company research, STAR prep\n\n## Who it's for\n\nJob seekers who want reviewed, role-specific application materials — not generic AI fluff.\n\n## Agent entrypoints\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n\nDashboard routes require auth and are not agent-indexed.\n\n## Product links\n\n- Home: https://rolepatch.com/ — Product landing\n- Pricing: https://rolepatch.com/pricing — Plans and limits\n- Tools: https://rolepatch.com/tools — Public tools\n\n## Machine surfaces\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/llms-full.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n- https://rolepatch.com/sitemap.xml\n- https://rolepatch.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
+  "llmsTxt": "# RolePatch\n\n> AI-powered resume tailoring. Score fit against a job description, rewrite bullets for the role, and prep interviews.\n\n## Product\n\n- [Home](https://rolepatch.com/): Product landing\n- [Pricing](https://rolepatch.com/pricing): Plans and limits\n- [Tools](https://rolepatch.com/tools): Public tools\n\n## Machine surfaces\n\n- [Agent catalog](https://rolepatch.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://rolepatch.com/index.md): Product brief without JS\n- [This index](https://rolepatch.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n",
+  "indexMd": "# RolePatch\n\nAI-powered resume tailoring and job-application assistant.\n\n## What it is\n\n- Score resume fit against a job description\n- Rewrite bullets for the role\n- Cover letters, company research, STAR prep\n\n## Who it's for\n\nJob seekers who want reviewed, role-specific application materials — not generic AI fluff.\n\n## Agent entrypoints\n\n- https://rolepatch.com/llms.txt\n- https://rolepatch.com/api/ai\n- https://rolepatch.com/index.md\n\nDashboard routes require auth and are not agent-indexed.\n",
+  "catalog": {
+    "name": "RolePatch",
+    "version": "1",
+    "url": "https://rolepatch.com",
+    "llms": "https://rolepatch.com/llms.txt",
+    "llmsFull": "https://rolepatch.com/llms-full.txt",
+    "sitemap": "https://rolepatch.com/sitemap.xml",
+    "robots": "https://rolepatch.com/robots.txt",
+    "markdown": {
+      "suffix": ".md",
+      "negotiation": true
     },
-    surfaces: [
+    "surfaces": [
       {
-        id: 'home',
-        url: 'https://rolepatch.com/',
-        md: 'https://rolepatch.com/index.md',
-        kind: 'static',
-        description: 'Product home',
+        "id": "home",
+        "url": "https://rolepatch.com/",
+        "md": "https://rolepatch.com/index.md",
+        "kind": "static",
+        "description": "Product home"
       },
       {
-        id: 'pricing',
-        url: 'https://rolepatch.com/pricing',
-        md: null,
-        kind: 'static',
-        description: 'Plans and limits',
+        "id": "pricing",
+        "url": "https://rolepatch.com/pricing",
+        "md": null,
+        "kind": "static",
+        "description": "Plans and limits"
       },
       {
-        id: 'tools',
-        url: 'https://rolepatch.com/tools',
-        md: null,
-        kind: 'static',
-        description: 'Public tools',
-      },
+        "id": "tools",
+        "url": "https://rolepatch.com/tools",
+        "md": null,
+        "kind": "static",
+        "description": "Public tools"
+      }
     ],
-    auth: {
-      public: true,
-      notes: 'Auth-walled app routes are not agent-indexed unless listed here.',
-    },
-  },
+    "auth": {
+      "public": true,
+      "notes": "Auth-walled app routes are not agent-indexed unless listed here."
+    }
+  }
 };
 
 /**
