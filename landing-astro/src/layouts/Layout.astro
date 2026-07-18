@@ -16,9 +16,9 @@ interface Props {
 const { title, description } = Astro.props;
 
 const SITE_URL = 'https://rolepatch.com';
-// OG image is served from the Next.js Worker at /og-image.svg. Post-cutover
-// the Worker keeps that route; the URL stays resolvable.
-const OG_IMAGE = `${SITE_URL}/og-image.svg`;
+// Keep social previews on the stable raster asset; crawlers do not reliably
+// render SVG Open Graph images.
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 const jsonLd = {
   '@context': 'https://schema.org',

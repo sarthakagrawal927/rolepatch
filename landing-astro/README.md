@@ -78,8 +78,8 @@ landing-astro/
   route, so conversion events still fire on the Worker side. Add a
   PostHog `<script>` to `Layout.astro` later if upper-funnel
   attribution turns out to matter.
-- **OG image** — Next.js metadata pointed at `/og-image.svg`. The Astro
-  layout points OG/Twitter image at `https://rolepatch.com/og-image.svg`;
+- **OG image** — Next.js and Astro metadata point OG/Twitter previews at the
+  stable raster asset `https://rolepatch.com/og-image.png`;
   the Worker still owns that asset post-cutover so the URL resolves.
 
 ## Cutover (NOT done yet)

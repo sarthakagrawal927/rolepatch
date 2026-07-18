@@ -1,4 +1,8 @@
-# Apply-Agent HTTP API
+---
+title: Apply-agent CLI + MCP runbook
+---
+
+# Apply-agent HTTP API
 
 These routes expose the review-first apply-agent contracts for local CLIs,
 future MCP tools, and browser automation adapters. They use the existing

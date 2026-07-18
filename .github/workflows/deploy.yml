@@ -1,13 +1,19 @@
 name: Deploy to Cloudflare Workers
+# Rollback: `wrangler versions rollback` from the repo root, or via
+# dash.cloudflare.com → Workers → resume-tailor → Versions → "Rollback".
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   deploy-production:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -26,6 +32,7 @@ jobs:
   build-preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
