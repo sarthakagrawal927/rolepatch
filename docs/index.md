@@ -20,7 +20,7 @@ tree. Edit the Markdown here; never edit generated Blume output.
 - [App surfaces](product/surfaces.md) — every route and what it does.
 - [STATUS.md](../STATUS.md) — short view: current objective, active work, blockers, next steps.
 - [PROJECT_STATUS.md](../PROJECT_STATUS.md) — durable fleet-mandated status record (detail).
-- [AGENTS.md](../AGENTS.md) — agent bootloader (commands, constraints, doc nav).
+- [agents.md](../agents.md) — agent bootloader (commands, constraints, doc nav).
 
 ## Architecture
 
