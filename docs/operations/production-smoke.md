@@ -1,4 +1,8 @@
-# Production Smoke Checks
+---
+title: Production smoke checks
+---
+
+# Production smoke checks
 
 RolePatch ships a dependency-free production smoke harness for Cloudflare-first
 runtime checks.

@@ -1,4 +1,8 @@
-# Security Audit — 2026-03-29
+---
+title: Security audit (2026-03-29)
+---
+
+# Security audit — 2026-03-29
 
 ## Critical
 

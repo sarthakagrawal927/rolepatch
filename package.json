@@ -25,7 +25,10 @@
     "format:check": "biome format .",
     "check": "biome check .",
     "apply-agent": "node scripts/apply-agent-cli.mjs",
-    "apply-agent:mcp": "node scripts/apply-agent-mcp.mjs"
+    "apply-agent:mcp": "node scripts/apply-agent-mcp.mjs",
+    "docs:check": "node scripts/check-docs.mjs",
+    "docs:build": "blume build",
+    "docs:dev": "blume dev"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.41",
@@ -82,6 +85,7 @@
     "vitest": "^4.1.0",
     "@vitest/coverage-v8": "^4.1.9",
     "wrangler": "^4.85.0",
-    "@biomejs/biome": "2.5.0"
+    "@biomejs/biome": "2.5.0",
+    "blume": "1.0.4"
   }
 }

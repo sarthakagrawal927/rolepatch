@@ -65,3 +65,11 @@ next-env.d.ts
 # fallow cache
 .fallow/
 cache.bin
+
+# blume (docs presentation layer — generated from docs/, never committed)
+.blume/
+/dist/
+
+# local agent logs
+.devin/logs/
+.agent-logs/

@@ -1,3 +1,7 @@
+---
+title: Learnings — study queue
+---
+
 # new-things — study queue
 
 Short stubs for non-standard tech in this repo. 3–5 lines each. Fill `Why here:`
