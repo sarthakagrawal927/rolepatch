@@ -112,7 +112,8 @@ Never commit secrets. `.env*` is gitignored (except `.env.example`).
 
 ## Chrome extension
 
-The extension is a separate workspace package (`extension/`). Build
-with `corepack pnpm --filter @rolepatch/extension build` →
-`extension/dist/`. Load unpacked in Chrome. See the
+The extension is a separate workspace package (`extension/`, package
+name `@rolepatch/extension`). Build with `pnpm --dir extension build`
+(the command `scripts/release-verify.mjs` runs) → `extension/dist/`.
+Load unpacked in Chrome. See the
 [extension README](https://github.com/sarthak-fleet/rolepatch/blob/main/extension/README.md).

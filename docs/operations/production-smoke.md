@@ -9,7 +9,7 @@ runtime checks.
 
 ## Public Smoke
 
-For the complete publish checklist, see `docs/deploy-handoff.md`.
+For the complete publish checklist, see the [deploy runbook](deploy.md).
 
 Before deploying manually, verify that the built Next artifact contains the
 routes the smoke will check:

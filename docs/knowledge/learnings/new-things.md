@@ -25,16 +25,16 @@ yourself after learning; never invent rationale.
 - Gotcha (from code): `src/lib/ai-cloudflare.ts:50-55` — if user provides `endpointUrl + apiKey`, use that (BYO); otherwise route through free-ai-gateway with `x-gateway-project-id` header
 - Source: https://sdk.vercel.ai/docs
 
-## Monaco diff editor for LaTeX
-- What: Using Monaco (VS Code's editor) for side-by-side diff view comparing original vs AI-tailored LaTeX
+## react-diff-viewer-continued for the tailoring diff
+- What: Side-by-side diff view comparing the original resume against the AI-tailored version (markdown, not LaTeX)
 - Why here: TBD
-- Gotcha (from code): uses `react-diff-viewer-continued` which wraps Monaco — diff is side-by-side with line highlighting, separate from the CodeMirror editor used for editing
-- Source: https://microsoft.github.io/monaco-editor/
+- Gotcha (from code): `src/components/resume-diff.tsx` and `src/app/tools/diff/page.tsx` use `react-diff-viewer-continued` directly (`DiffMethod.WORDS`) — it does NOT wrap Monaco. Monaco was evaluated and rejected; see [failed-approaches](../failed-approaches.md). The diff is separate from the CodeMirror editor used for editing.
+- Source: https://github.com/Aeolun/react-diff-viewer-continued
 
-## CodeMirror 6 for LaTeX editing
-- What: Using CodeMirror 6 with markdown language support for the actual LaTeX editor — separate from Monaco which is only for diff view
+## CodeMirror 6 for resume editing
+- What: CodeMirror 6 with markdown language support for the resume editor (`/editor/[id]`)
 - Why here: TBD
-- Gotcha (from code): uses `@codemirror/lang-markdown` and `@codemirror/theme-one-dark` — two different editors in one app (CodeMirror for editing, Monaco for diff)
+- Gotcha (from code): uses `@codemirror/lang-markdown` and `@codemirror/theme-one-dark`. Two distinct libraries in one app — CodeMirror for editing, react-diff-viewer-continued for the diff view. Monaco is not a dependency.
 - Source: https://codemirror.net/
 
 ## Better-auth on Cloudflare Workers via OpenNext

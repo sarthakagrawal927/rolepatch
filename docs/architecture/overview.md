@@ -49,15 +49,19 @@ The custom Worker entry wraps the OpenNext-generated worker
 (`./.open-next/worker.js`) and adds three things the generated worker
 does not:
 
-1. **Edge cache for cacheable document paths.** For GET requests to `/`,
-   `/pricing`, `/proof`, `/evidence`, `/tools`, `/blog`, `/privacy`,
-   `/terms` (and `/tools/*`, `/blog/*`), the Worker consults
+1. **Edge cache for cacheable document paths.** For anonymous GET
+   requests (requests carrying a better-auth session cookie skip the
+   cache) to `/`, `/pricing`, `/proof`, `/evidence`, `/tools`, `/blog`,
+   `/privacy`, `/terms` (and `/tools/*`, `/blog/*`), the Worker consults
    `caches.default` first and only falls through to the Next handler on
    a miss. Cache headers are explicit
    (`public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800`)
    so CF Edge treats the response as cacheable. **Why:** the
    s-maxage-only approach was getting marked DYNAMIC at the zone level;
    `caches.default` sidesteps the zone-level Cache Rules requirement.
+   Anonymous GET `/` is special-cased: it is served straight from the
+   `ASSETS` binding (the overlaid Astro `index.html`) and gzip-compressed
+   inline, bypassing OpenNext entirely.
 2. **Scheduled task dispatch.** `event.cron` matches
    `SCHEDULED_TASKS` (company-watchlist hourly, weekly-digest weekly) and
    dispatches to `/api/internal/cron/*` via internal subrequests with
@@ -70,7 +74,9 @@ does not:
 All non-GET, non-cacheable requests pass straight through to OpenNext.
 `withTiming` wraps the fetch handler for observability;
 `handleAgentEdge` serves `llms.txt`, `llms-full.txt`, `/api/ai`, and
-agent-indexing surfaces.
+agent-indexing surfaces. The entry also exports an `email()` handler
+that ingests inbound recruiter replies (Cloudflare Email Routing) by
+POSTing to `/api/internal/email/recruiter-reply`.
 
 ## OpenNext incremental cache
 
