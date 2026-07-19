@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { AIConfig } from '@/lib/ai-vendor';
 import { useModelDiscovery } from '@/lib/ai-vendor-hooks';
 
-export interface AISettingsClassNames {
+interface AISettingsClassNames {
   container?: string;
   field?: string;
   label?: string;

@@ -16,7 +16,7 @@ export const APPLICATION_QUEUE_STATUSES: ApplicationQueueStatus[] = [
   'skipped',
 ];
 
-export const SUBMITTED_JOB_STATUSES: JobApplication['status'][] = [
+const SUBMITTED_JOB_STATUSES: JobApplication['status'][] = [
   'applied',
   'interview',
   'offer',
@@ -122,7 +122,7 @@ export function parseReadiness(raw: unknown): ApplyAgentReadiness {
   });
 }
 
-export function parseReceiptFields(raw: unknown): ApplicationReceiptField[] {
+function parseReceiptFields(raw: unknown): ApplicationReceiptField[] {
   if (Array.isArray(raw)) return raw as ApplicationReceiptField[];
   if (typeof raw === 'string') {
     try {

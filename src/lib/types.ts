@@ -1,12 +1,3 @@
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  image: string;
-  created_at: number;
-  updated_at: number;
-}
-
 export interface Resume {
   id: string;
   name: string;
@@ -159,9 +150,9 @@ export interface AchievementEvidence {
 }
 
 export type SkillPriority = 'high' | 'medium' | 'low';
-export type SkillResourceType = 'course' | 'doc' | 'project' | 'book';
+type SkillResourceType = 'course' | 'doc' | 'project' | 'book';
 
-export interface SkillResource {
+interface SkillResource {
   type: SkillResourceType;
   title: string;
   url?: string;
@@ -185,7 +176,7 @@ export interface SkillsRoadmap {
   created_at: number;
 }
 
-export type ApplyAgentReadinessStatus =
+type ApplyAgentReadinessStatus =
   | 'needs_resume'
   | 'needs_tailoring'
   | 'ready_for_review'
@@ -221,7 +212,7 @@ export interface ApplicationQueueEntry {
   updated_at: number;
 }
 
-export type ApplicationReceiptStatus = 'filled' | 'submitted' | 'failed' | 'skipped';
+type ApplicationReceiptStatus = 'filled' | 'submitted' | 'failed' | 'skipped';
 
 export interface ApplicationReceiptField {
   label: string;

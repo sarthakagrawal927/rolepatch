@@ -88,7 +88,7 @@ const STOPWORDS = new Set([
   'your',
 ]);
 
-export function normalizeApplicationQuestion(value: string): string {
+function normalizeApplicationQuestion(value: string): string {
   return value
     .toLowerCase()
     .replace(/h[\s-]?1b/g, 'h1b')

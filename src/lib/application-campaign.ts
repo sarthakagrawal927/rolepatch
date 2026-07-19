@@ -28,7 +28,7 @@ export interface CampaignSummary {
   nextActions: CampaignAction[];
 }
 
-export interface CampaignAction {
+interface CampaignAction {
   jobId: string;
   label: string;
   detail: string;

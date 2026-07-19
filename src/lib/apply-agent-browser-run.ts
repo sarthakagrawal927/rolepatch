@@ -18,7 +18,7 @@ import type {
   ReviewedBrowserCheckResult,
 } from '@/lib/types';
 
-export const REVIEWED_BROWSER_PROVIDERS = new Set([
+const REVIEWED_BROWSER_PROVIDERS = new Set([
   'greenhouse',
   'lever',
   'workday',

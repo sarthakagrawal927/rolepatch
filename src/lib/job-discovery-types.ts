@@ -14,9 +14,3 @@ export interface DiscoveredJob {
   description?: string | null;
   description_short?: string | null;
 }
-
-export interface JobSearchFilters {
-  query: string;
-  location?: string;
-  remote?: boolean;
-}

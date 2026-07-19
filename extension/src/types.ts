@@ -16,7 +16,7 @@ export interface ScrapedJob {
     | 'generic';
 }
 
-export interface ApplyPacketProfileAnswer {
+interface ApplyPacketProfileAnswer {
   id: string;
   category: string;
   label: string;
@@ -24,12 +24,12 @@ export interface ApplyPacketProfileAnswer {
   sensitive: number | boolean;
 }
 
-export interface ApplyPacketReceipt {
+interface ApplyPacketReceipt {
   id: string;
   status: 'filled' | 'submitted' | 'failed' | 'skipped';
 }
 
-export interface ApplyPacketProofItem {
+interface ApplyPacketProofItem {
   id: string;
   title: string;
   claim: string;
@@ -39,7 +39,7 @@ export interface ApplyPacketProofItem {
   source_url?: string;
 }
 
-export interface ApplyPacket {
+interface ApplyPacket {
   job_id: string;
   company?: string;
   role?: string;
@@ -54,20 +54,20 @@ export interface ApplyPacket {
   receipt?: ApplyPacketReceipt | null;
 }
 
-export interface ReceiptField {
+interface ReceiptField {
   label: string;
   value: string;
   source: 'profile' | 'resume' | 'cover_letter' | 'user' | 'system' | 'ats';
 }
 
-export interface FileAttachment {
+interface FileAttachment {
   kind: 'resume' | 'cover_letter' | 'other';
   name: string;
   type: string;
   base64: string;
 }
 
-export interface FillResult {
+interface FillResult {
   ok: boolean;
   job_id: string;
   url: string;
@@ -82,7 +82,7 @@ export interface FillResult {
   error?: string;
 }
 
-export interface SubmitResult {
+interface SubmitResult {
   ok: boolean;
   job_id: string;
   url: string;
@@ -96,7 +96,7 @@ export interface SubmitResult {
   error?: string;
 }
 
-export interface FieldSnapshotResult {
+interface FieldSnapshotResult {
   ok: boolean;
   fields: ReceiptField[];
   error?: string;

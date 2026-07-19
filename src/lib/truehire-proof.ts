@@ -39,7 +39,7 @@ export interface TrueHireProofEvidenceInput {
   impact_type: 'technical' | 'leadership' | 'other';
 }
 
-export interface TrueHireRoleFitEvidence {
+interface TrueHireRoleFitEvidence {
   repo_full_name: string;
   primary_language: string | null;
   commits: number;
@@ -164,7 +164,7 @@ export function normalizeTrueHireHandle(input: string): string | null {
   return /^[a-zA-Z0-9-]{1,39}$/.test(clean) ? clean : null;
 }
 
-export function trueHireProfileUrl(handle: string, baseUrl = TRUEHIRE_PUBLIC_BASE_URL): string {
+function trueHireProfileUrl(handle: string, baseUrl = TRUEHIRE_PUBLIC_BASE_URL): string {
   return new URL(`/@${handle}`, ensureTrailingSlash(baseUrl)).toString().replace(/\/$/, '');
 }
 

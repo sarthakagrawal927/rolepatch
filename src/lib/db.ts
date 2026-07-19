@@ -41,7 +41,7 @@ interface CloudflareEnv {
   DB?: D1DatabaseLike;
 }
 
-export interface ExecuteResult {
+interface ExecuteResult {
   rows: Row[];
   columns: string[];
   rowsAffected: number;

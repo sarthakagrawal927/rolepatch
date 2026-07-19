@@ -2,7 +2,7 @@ import { DEFAULT_EMAIL_FROM, isEmailConfigured } from '@/lib/email';
 
 export type OperationalReadinessStatus = 'ready' | 'needs_setup' | 'code_ready';
 
-export interface OperationalReadinessItem {
+interface OperationalReadinessItem {
   id: string;
   label: string;
   status: OperationalReadinessStatus;

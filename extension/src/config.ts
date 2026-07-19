@@ -1,7 +1,7 @@
 // Runtime config for the extension. API base is stored in chrome.storage so
 // users can point the extension at localhost or prod without rebuilding.
 export const DEFAULT_API_BASE = 'http://localhost:3000';
-export const STORAGE_KEY_API_BASE = 'rolepatch_api_base';
+const STORAGE_KEY_API_BASE = 'rolepatch_api_base';
 export const STORAGE_KEY_LAST_PACKET = 'rolepatch_last_apply_packet';
 export const SAVE_JOB_ENDPOINT = '/api/extension/save-job';
 export const TAILOR_ENDPOINT = '/api/extension/tailor';

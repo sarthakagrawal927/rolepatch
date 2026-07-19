@@ -1,7 +1,7 @@
 import type { AchievementEvidence } from '@/lib/types';
 
 export type EvidenceQuality = 'strong' | 'usable' | 'weak';
-export type ProofReadinessStatus = 'proof_ready' | 'packet_ready' | 'needs_support' | 'needs_claim';
+type ProofReadinessStatus = 'proof_ready' | 'packet_ready' | 'needs_support' | 'needs_claim';
 
 export interface ProofReadiness {
   status: ProofReadinessStatus;
@@ -180,7 +180,7 @@ function proofPacketSortScore(item: ProofPacketPreviewItem): number {
   return 1;
 }
 
-export function explainEvidenceMatch(
+function explainEvidenceMatch(
   entry: AchievementEvidence,
   role: string,
   jdText = ''
