@@ -27,8 +27,9 @@ when a route is added or removed.
 | `/blog/[slug]` | Blog post. Edge-cached. |
 | `/badge/[slug]` | Public share badge for a tailored resume. |
 | `/privacy`, `/terms` | Legal pages. |
-| `/about`, `/api-docs`, `/humans.txt`, `/.well-known/security.txt` | Static trust/agent surfaces. |
-| `/sitemap.xml`, `/robots.txt`, `/manifest.json` | Crawler + PWA. |
+| `/sitemap.xml` (`src/app/sitemap.ts`), `/robots.txt` (`src/app/robots.ts`) | Crawler surfaces. |
+| `/llms.txt`, `/llms-full.txt`, `/index.md`, `/api/ai` | Agent-indexing surfaces served by `agent-edge.mjs`. |
+| `/.well-known/security.txt` | Static trust surface (`public/.well-known/security.txt`). |
 
 ## App (auth-aware, guest works via localStorage)
 
@@ -56,7 +57,10 @@ when a route is added or removed.
 | `/api/render/[id]` | PDF export via Browser Rendering binding. |
 | `/api/extension/tailor` | Chrome extension → tailoring flow. |
 | `/api/extension/apply-packet` | Chrome extension → packet lookup for field fill. |
-| `/api/apply-agent/queue` | Apply-agent queue CRUD. |
+| `/api/extension/save-job` | Chrome extension → save a job to the queue. |
+| `/api/extension/fill-receipt` | Chrome extension → record a field-fill receipt. |
+| `/api/extension/submission-receipt` | Chrome extension → record a submission receipt. |
+| `/api/apply-agent/queue`, `/api/apply-agent/queue/[id]` | Apply-agent queue CRUD. |
 | `/api/apply-agent/packets` | Apply-agent packet read. |
 | `/api/apply-agent/receipts` | Apply-agent receipt read/record. |
 | `/api/apply-agent/browser-check` | Reviewed browser check (no submit). |

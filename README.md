@@ -38,7 +38,7 @@ Works fully as guest (localStorage). Sign in with Google to persist to Cloudflar
 pnpm dev           # next dev
 pnpm build         # production build
 pnpm start         # serve build
-pnpm lint          # eslint
+pnpm lint          # biome check .
 pnpm test          # vitest unit
 pnpm test:e2e      # playwright
 ```

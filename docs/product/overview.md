@@ -62,11 +62,12 @@ endpoint evidence.
 
 ## Monetization
 
-Token-based via Dodo Payments. 3 free tokens on sign-up; packs of 10 /
-30 / 100 tokens. Each tailor or cover-letter generation costs 1 token.
-Everything else is free. See
-[the token system ADR](../architecture/decisions/0003-apply-agent-review-first.md)
-context and `src/lib/actions/token-actions.ts` for the atomic debit
+Token-based via Dodo Payments. 3 free tokens on sign-up (`signup_bonus`
+in `src/lib/actions/token-actions.ts`); packs of 10 / 30 / 100 tokens
+($5 / $12 / $30 — see `src/lib/token-config.ts`). Each tailor or
+cover-letter generation costs 1 token. Everything else is free. See
+[the data model token section](../architecture/data-model.md#token-system)
+and `src/lib/actions/token-actions.ts` for the atomic debit
 implementation.
 
 ## Deployment surface
