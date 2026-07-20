@@ -1,4 +1,4 @@
-export const TOKEN_PACKS = [
+const TOKEN_PACKS = [
   { id: 'starter', name: 'Starter', tokens: 10, price: 500, priceLabel: '$5', perToken: '$0.50' },
   {
     id: 'pro',

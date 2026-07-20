@@ -1,7 +1,7 @@
 import { APPLICATION_QUEUE_STATUSES } from '@/lib/apply-agent';
 import type { ApplicationQueueStatus } from '@/lib/types';
 
-export interface ApplyAgentBrowserRunInput {
+interface ApplyAgentBrowserRunInput {
   queueId?: string;
   queueIds: string[];
   limit?: number;

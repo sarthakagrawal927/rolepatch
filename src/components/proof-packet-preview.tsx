@@ -120,7 +120,7 @@ export function ProofPacketPreview({ serverEntries }: Props) {
   );
 }
 
-export function formatProofProfileSummary(
+function formatProofProfileSummary(
   items: ReturnType<typeof buildProofPacketPreview>['shareable']
 ): string {
   const lines = [

@@ -1,11 +1,6 @@
 import type { JobApplication } from '@/lib/types';
 
-export type RecruiterReplyClassification =
-  | 'interview'
-  | 'offer'
-  | 'rejected'
-  | 'follow_up'
-  | 'other';
+type RecruiterReplyClassification = 'interview' | 'offer' | 'rejected' | 'follow_up' | 'other';
 
 export interface InboundRecruiterEmail {
   from: string;
@@ -42,7 +37,7 @@ export interface RecruiterReplyDraft {
   body: string;
 }
 
-export interface RecruiterReplyDraftProofItem {
+interface RecruiterReplyDraftProofItem {
   title: string;
   claim: string;
   source_url?: string;

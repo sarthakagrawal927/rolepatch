@@ -50,7 +50,7 @@ interface ApplyActivitySummary {
   providers: string[];
 }
 
-export function escapeHtml(value: string): string {
+function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
